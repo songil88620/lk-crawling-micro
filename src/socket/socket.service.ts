@@ -27,6 +27,7 @@ export class SocketService {
 
     async onModuleInit() {
         this.myIP = ip.address();
+        console.log(">>My ip", this.myIP)
         this.socket.on("connect", () => {
             // const engine = this.socket.io.engine;  
             // engine.on("close", (reason) => { });  
@@ -47,6 +48,7 @@ export class SocketService {
     }
 
     async messageToUser(data: any) {
+        console.log(">>to user", data)
         this.socket.emit('msg_from_micro_sever', data)
     }
 
