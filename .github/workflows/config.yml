@@ -1,0 +1,51 @@
+name: production
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                node-version: [16.x]
+
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v2
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - run: npm install
+            - run: npm run build
+            - run: zip -r deploy.zip . -x '*.git*'
+
+            - name: Get current time
+              uses: gerred/actions/current-time@master
+              id: current-time
+            - name: Use current time
+              env:
+                  TIME: "${{ steps.current-time.outputs.time }}"
+              run: echo $TIME
+
+            - uses: frabert/replace-string-action@v2.0
+              id: format-time
+              with:
+                  pattern: '[:\.]+'
+                  string: "${{ steps.current-time.outputs.time }}"
+                  replace-with: "-"
+                  flags: "g"
+
+            - uses: einaregilsson/beanstalk-deploy@v21
+              with:
+                  aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+                  aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+                  application_name: xxx
+                  environment_name: xxx-env
+                  version_label: "version-label-${{ steps.format-time.outputs.replaced }}"
+                  region: us-west-1
+                  deployment_package: deploy.zip
