@@ -15,6 +15,10 @@ export class LinkedInAccountsService {
     return await this.linkedinAccountRepository.findOne({ where: { id: id } });
   }
 
+  async findOneLinkdinAccountByIP(ip: string) {
+    return await this.linkedinAccountRepository.findOne({ where: { proxy: ip } });
+  }
+
   async findLinkedinIds(user_id: any) {
     const res = await this.linkedinAccountRepository.find({ where: { user_id: user_id } });
     var ids = [];

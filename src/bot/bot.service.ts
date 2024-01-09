@@ -42,6 +42,7 @@ export class BotService {
     private cached_linked_browser: LinkedInBrowser = { id: null, page: null, browser: null };
 
     private cnt: number;
+    private myIP = "";
 
     // captcha api key for bypassing captcha.... 
     private key = 'a85e506fcfd8ac9536d6ed4c903969c8';
@@ -59,15 +60,20 @@ export class BotService {
 
     }
     async onModuleInit() {
-        var ips = ip.address()
-        console.log(">>AA", ips)
+        this.myIP = ip.address()
+        console.log(">>AA", this.myIP)
     }
 
     // run bot every 10 mins
     @Cron(CronExpression.EVERY_5_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
-        const activeCampaigns = await this.prospectCampaignService.findActiveCampaigns();
-        activeCampaigns.forEach((ac: any) => {
+        // const activeCampaigns = await this.prospectCampaignService.findActiveCampaigns();
+        // activeCampaigns.forEach((ac: any) => {
+        //     this.goToLinkedIn(ac)
+        // })
+        const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
+        console.log(">>My campaign", myCampaign)
+        myCampaign.forEach((ac: any) => {
             this.goToLinkedIn(ac)
         })
     }
