@@ -7,26 +7,31 @@ import {
 import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { Server } from 'socket.io';
 import { io, Socket } from 'socket.io-client';
-import { BotService } from 'src/bot/bot.service'; 
+import { BotService } from 'src/bot/bot.service';
 import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';
+var ip = require('ip');
+
 
 @Injectable()
 export class SocketService {
 
 
     public socket = io('https://api.aippointing.com/')
+    private myIP = "";
+
+
     constructor(
         @Inject(forwardRef(() => BotService)) private botService: BotService,
-    ) { } 
-    
+    ) { }
+
 
     async onModuleInit() {
-
+        this.myIP = ip.address();
         this.socket.on("connect", () => {
             // const engine = this.socket.io.engine;  
             // engine.on("close", (reason) => { });  
 
-            this.socket.on('linkedin_login_request_micro', (data: LinkedinLoginDataType) => {
+            this.socket.on('linkedin_login_request_micro_' + this.myIP, (data: LinkedinLoginDataType) => {
                 console.log(">>>DETAIL", data)
                 if (data.mode == 'login') {
                     this.botService.loginLinkedIn(data)
