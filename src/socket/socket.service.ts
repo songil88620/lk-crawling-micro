@@ -26,7 +26,8 @@ export class SocketService {
 
 
     async onModuleInit() {
-        this.myIP = '167.172.42.53'; //ip.address();
+        // this.myIP = '167.172.42.53'; //ip.address();
+        this.myIP = ip.address();
         console.log(">>My ip", this.myIP)
         this.socket.on("connect", () => {
             // const engine = this.socket.io.engine;  
