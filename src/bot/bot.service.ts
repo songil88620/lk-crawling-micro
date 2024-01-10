@@ -61,7 +61,7 @@ export class BotService {
     }
     async onModuleInit() {
         // this.myIP = '167.172.42.53'; //ip.address()
-        this.myIP =  ip.address()
+        this.myIP = ip.address()
         console.log(">>AA", this.myIP)
     }
 
@@ -79,18 +79,18 @@ export class BotService {
     async runState() {
         var state = false;
         if (this.cached_linked_browser.page) {
-            const url = this.cached_linked_browser.page.url() 
-            if(url.includes('/feed/') || url.includes('/in/') || url.includes('/search/')){
-                state = true; 
-            }else{
+            const url = this.cached_linked_browser.page.url()
+            if (url.includes('/feed/') || url.includes('/in/') || url.includes('/search/')) {
+                state = true;
+            } else {
                 state = false;
             }
-        }else{
-            state = false; 
+        } else {
+            state = false;
         }
         const data = {
             id: this.cached_linked_browser.id,
-            state 
+            state
         }
         this.socketService.loginstateToMother(data)
     }
@@ -526,7 +526,7 @@ export class BotService {
                 }
             }
 
-            if (code != 'CAPCHA_NOT_READY') {
+            if (code != 'CAPCHA_NOT_READY' && code != 'ERROR_CAPTCHA_UNSOLVABLE') {
                 const v = code.substring(3);
                 await page.evaluate((v: any) => {
                     const inputField = document.querySelector('input[name="captchaUserResponseToken"]');
@@ -545,7 +545,7 @@ export class BotService {
                 return { page: page, success: true }
             } else {
                 return { page: page, success: false }
-            }
+            }  
 
         }
 
