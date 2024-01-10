@@ -66,7 +66,7 @@ export class BotService {
     }
 
     // run bot every 10 mins
-    @Cron(CronExpression.EVERY_5_MINUTES, { name: 'campaign bot' })
+    @Cron(CronExpression.EVERY_10_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
         console.log(">>My campaign", myCampaign)
