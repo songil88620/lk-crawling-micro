@@ -60,17 +60,13 @@ export class BotService {
 
     }
     async onModuleInit() {
-        this.myIP = ip.address()
+        this.myIP = '167.172.42.53'; //ip.address()
         console.log(">>AA", this.myIP)
     }
 
     // run bot every 10 mins
     @Cron(CronExpression.EVERY_5_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
-        // const activeCampaigns = await this.prospectCampaignService.findActiveCampaigns();
-        // activeCampaigns.forEach((ac: any) => {
-        //     this.goToLinkedIn(ac)
-        // })
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
         console.log(">>My campaign", myCampaign)
         myCampaign.forEach((ac: any) => {
@@ -78,9 +74,29 @@ export class BotService {
         })
     }
 
+    @Cron(CronExpression.EVERY_10_SECONDS, { name: 'ch bot' })
+    async runState() {
+        var state = false;
+        if (this.cached_linked_browser.page) {
+            const url = this.cached_linked_browser.page.url() 
+            if(url.includes('/feed/') || url.includes('/in/') || url.includes('/search/')){
+                state = true; 
+            }else{
+                state = false;
+            }
+        }else{
+            state = false; 
+        }
+        const data = {
+            id: this.cached_linked_browser.id,
+            state 
+        }
+        this.socketService.loginstateToMother(data)
+    }
+
     conf() {
         return {
-            headless: 'new',
+            headless: false,
             args: [
                 // `--proxy-server=${proxy}`,
                 '--start-maximized',
@@ -104,7 +120,7 @@ export class BotService {
             const id = login_data.id;
             const browser_old = this.cached_linked_browser.browser;
             await browser_old.close();
-            this.cached_linked_browser = { id: null, page: null, browser: null };
+            this.cached_linked_browser = { id: id, page: null, browser: null };
         } catch (e) {
             console.log(">>>err", e)
         }
@@ -113,10 +129,9 @@ export class BotService {
     async loginLinkedIn(login_data: LinkedinLoginDataType) {
         try {
             console.log(">>>login", login_data)
-            // const proxy_data = login_data.proxy;
-            // var proxy = proxy_data.split("@")[1];
-            // var username = proxy_data.split("@")[0].split(":")[0];
-            // var password = proxy_data.split("@")[0].split(":")[1];
+            // const login_email = 'songil88620@gmail.com';
+            // const login_password = 'Gjrjdahsus88620@';
+
             const login_email = login_data.email;
             const login_password = login_data.password;
 
@@ -125,7 +140,6 @@ export class BotService {
             await page.setExtraHTTPHeaders({
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
             });
-            // await page.authenticate({ username, password });
             await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
             await page.waitForTimeout(2000);
             await page.type('#session_key', login_email);
@@ -146,7 +160,6 @@ export class BotService {
 
             console.log(">>>", page.url())
             if (page.url().includes('/feed/')) {
-                // login success
                 const data = {
                     id: login_data.id,
                     msg: {
@@ -171,7 +184,7 @@ export class BotService {
 
             if (page.url().includes('checkpoint/challenge/')) {
                 console.log(">>check image")
-                await page.waitForTimeout(30000);
+                await page.waitForTimeout(20000);
                 var vcode = null;
                 try {
                     vcode = await page.waitForSelector('#input__email_verification_pin');
@@ -200,6 +213,23 @@ export class BotService {
                     const acceptBtn = await contentFrame_5.$(`#home button`);
                     await acceptBtn.click();
 
+                    // manual pass
+                    await page.waitForTimeout(4000);
+                    const src = await contentFrame_5.evaluate(() => {
+                        const imgElement = document.querySelector('#game_challengeItem_image');
+                        return imgElement ? imgElement['src'] : null;
+                    });
+                    const data = {
+                        id: login_data.id,
+                        msg: {
+                            type: 'puzzle_request',
+                            data: src
+                        }
+                    }
+                    this.socketService.messageToUser(data)
+                    return;
+
+                    await page.waitForTimeout(5000);
                     const pk = await page.$eval('input[name="captchaSiteKey"]', ({ value }) => value);
                     const key = this.key;
                     const siteurl = page.url();
@@ -209,12 +239,35 @@ export class BotService {
                     const id = res.data.split('|')[1];
                     console.log(">>ID", id)
 
-                    await this.delay(35000);
-                    const url_res = 'https://2captcha.com/res.php?key=' + key + '&action=get&id=' + id;
-                    const res_res = await axios.get(url_res)
-                    var code = res_res.data;
+                    await this.delay(40000);
+                    var code = 'CAPCHA_NOT_READY';
+                    const repeat = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5];
+                    for (var t of repeat) {
+                        const url_res = 'https://2captcha.com/res.php?key=' + key + '&action=get&id=' + id;
+                        const res_res = await axios.get(url_res)
+                        code = res_res.data;
+                        console.log(">>>code", code)
+                        await this.delay(10000);
+                        if (code != 'CAPCHA_NOT_READY') {
+                            break;
+                        }
+                    }
+
                     if (code != 'CAPCHA_NOT_READY') {
-                        const v = code.substring(3);
+                        var v = code.substring(3);
+                        console.log(">>>>VV", v)
+                        // await contentFrame_3.evaluate((v: any) => {
+                        //     const inputField = document.querySelector('input[name="verification-token"]');
+                        //     if (inputField) {
+                        //         inputField['value'] = v;
+                        //     }
+                        // }, v);
+                        // await contentFrame_3.evaluate((v: any) => {
+                        //     const inputField = document.querySelector('input[name="fc-token"]');
+                        //     if (inputField) {
+                        //         inputField['value'] = v;
+                        //     }
+                        // }, v);
                         await page.evaluate((v: any) => {
                             const inputField = document.querySelector('input[name="captchaUserResponseToken"]');
                             if (inputField) {
@@ -226,32 +279,32 @@ export class BotService {
                             const form = document.getElementById(formId) as HTMLFormElement | null;
                             if (form) {
                                 form.submit();
-                                await page.waitForTimeout(10000);
-                                if (page.url().includes('/feed/')) {
-                                    const data = {
-                                        id: login_data.id,
-                                        msg: {
-                                            type: 'login_success',
-                                            data: ''
-                                        }
-                                    }
-                                    this.socketService.messageToUser(data)
-                                    const cookiesSet = await page.cookies();
-                                    var session_id = "";
-                                    var li_at = "";
-                                    cookiesSet.forEach((c: any) => {
-                                        if (c.name == 'JSESSIONID') {
-                                            session_id = c.value;
-                                            console.log(">>session_id", session_id)
-                                        }
-                                        if (c.name == 'li_at') {
-                                            li_at = c.value;
-                                            console.log(">>li_at", li_at)
-                                        }
-                                    })
-                                    await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
-                                }
-                                return { page: page, success: true }
+                                // await page.waitForTimeout(10000);
+                                // if (page.url().includes('/feed/')) {
+                                //     const data = {
+                                //         id: login_data.id,
+                                //         msg: {
+                                //             type: 'login_success',
+                                //             data: ''
+                                //         }
+                                //     }
+                                //     this.socketService.messageToUser(data)
+                                //     const cookiesSet = await page.cookies();
+                                //     var session_id = "";
+                                //     var li_at = "";
+                                //     cookiesSet.forEach((c: any) => {
+                                //         if (c.name == 'JSESSIONID') {
+                                //             session_id = c.value;
+                                //             console.log(">>session_id", session_id)
+                                //         }
+                                //         if (c.name == 'li_at') {
+                                //             li_at = c.value;
+                                //             console.log(">>li_at", li_at)
+                                //         }
+                                //     })
+                                //     await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
+                                // }
+                                // return { page: page, success: true }
                             }
                         }, formId);
                     }
@@ -306,6 +359,67 @@ export class BotService {
         }
     }
 
+    async puzzleLinkedIn(login_data: LinkedinLoginDataType) {
+        try {
+            console.log(">>>puzzle", login_data)
+            const page = await this.cached_linked_browser.page;
+            await page.waitForTimeout(2000);
+            const frame_1 = await page.$("iframe[id='captcha-internal']");
+            const contentFrame_1 = await frame_1.contentFrame();
+            const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
+            const contentFrame_2 = await frame_2.contentFrame();
+            const frame_3 = await contentFrame_2.$("iframe[title='Verification challenge']");
+            const contentFrame_3 = await frame_3.contentFrame();
+            const frame_4 = await contentFrame_3.$("iframe[id='fc-iframe-wrap']");
+            const contentFrame_4 = await frame_4.contentFrame();
+            const frame_5 = await contentFrame_4.$("iframe[id='CaptchaFrame']");
+            const contentFrame_5 = await frame_5.contentFrame();
+
+            const idx = login_data.puzzle;
+            await contentFrame_5.click('#image' + idx + ' > a');
+
+            console.log(">>>>do actioin")
+            await page.waitForTimeout(10000);
+            console.log(">>>url do", page.url())
+            if (page.url().includes('checkpoint/challenge/')) {
+                const data = {
+                    id: login_data.id,
+                    msg: {
+                        type: 'vcode_request',
+                        data: ''
+                    }
+                }
+                this.socketService.messageToUser(data)
+            } else {
+                const data = {
+                    id: login_data.id,
+                    msg: {
+                        type: 'login_success',
+                        data: ''
+                    }
+                }
+                this.socketService.messageToUser(data)
+                const cookiesSet = await page.cookies();
+                var session_id = "";
+                var li_at = "";
+                cookiesSet.forEach((c: any) => {
+                    if (c.name == 'JSESSIONID') {
+                        session_id = c.value;
+                        console.log(">>session_id", session_id)
+                    }
+                    if (c.name == 'li_at') {
+                        li_at = c.value;
+                        console.log(">>li_at", li_at)
+                    }
+                })
+                await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
+            }
+
+        } catch (e) {
+
+        }
+    }
+
     async getLoginState(linked_in_account_id: any) {
         try {
             if (this.cached_linked_browser.id != null) {
@@ -328,10 +442,7 @@ export class BotService {
     }
 
     async internalLogin(linked_in_account: LinkedInAccountType) {
-        // const proxy_data = linked_in_account.proxy;
-        // var proxy = proxy_data.split("@")[1];
-        // var username = proxy_data.split("@")[0].split(":")[0];
-        // var password = proxy_data.split("@")[0].split(":")[1];
+
         const login_email = linked_in_account.email;
         const login_password = linked_in_account.password;
 
@@ -400,10 +511,20 @@ export class BotService {
             const id = res.data.split('|')[1];
             console.log(">>ID", id)
 
-            await this.delay(35000);
-            const url_res = 'https://2captcha.com/res.php?key=' + key + '&action=get&id=' + id;
-            const res_res = await axios.get(url_res)
-            var code = res_res.data;
+            await this.delay(40000);
+            var code = 'CAPCHA_NOT_READY';
+            const repeat = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5];
+            for (var t of repeat) {
+                const url_res = 'https://2captcha.com/res.php?key=' + key + '&action=get&id=' + id;
+                const res_res = await axios.get(url_res)
+                code = res_res.data;
+                console.log(">>>code", code)
+                await this.delay(10000);
+                if (code != 'CAPCHA_NOT_READY') {
+                    break;
+                }
+            }
+
             if (code != 'CAPCHA_NOT_READY') {
                 const v = code.substring(3);
                 await page.evaluate((v: any) => {
@@ -417,10 +538,12 @@ export class BotService {
                     const form = document.getElementById(formId) as HTMLFormElement | null;
                     if (form) {
                         form.submit();
-                        await this.delay(2000);
-                        return { page: page, success: true }
                     }
                 }, formId);
+                await this.delay(2000);
+                return { page: page, success: true }
+            } else {
+                return { page: page, success: false }
             }
 
         }
@@ -447,7 +570,7 @@ export class BotService {
                 } else {
                     const browser_old = this.cached_linked_browser.browser;
                     await browser_old.close();
-                    this.cached_linked_browser = { id: null, page: null, browser: null };
+                    this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
                     const res = await this.internalLogin(linked_in_account);
                     if (res.success) {
                         my_page = res.page

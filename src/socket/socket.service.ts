@@ -26,7 +26,7 @@ export class SocketService {
 
 
     async onModuleInit() {
-        this.myIP = ip.address();
+        this.myIP = '167.172.42.53'; //ip.address();
         console.log(">>My ip", this.myIP)
         this.socket.on("connect", () => {
             // const engine = this.socket.io.engine;  
@@ -43,6 +43,9 @@ export class SocketService {
                 if (data.mode == 'logout') {
                     this.botService.logout(data)
                 }
+                if (data.mode == 'puzzle') {
+                    this.botService.puzzleLinkedIn(data)
+                }
             })
         });
     }
@@ -50,6 +53,10 @@ export class SocketService {
     async messageToUser(data: any) {
         console.log(">>to user", data)
         this.socket.emit('msg_from_micro_sever', data)
+    }
+
+    async loginstateToMother(data: any) { 
+        this.socket.emit('loginstate_from_micro_sever', data)
     }
 
 }
