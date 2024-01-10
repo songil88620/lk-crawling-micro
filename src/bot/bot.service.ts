@@ -60,7 +60,8 @@ export class BotService {
 
     }
     async onModuleInit() {
-        this.myIP = '167.172.42.53'; //ip.address()
+        // this.myIP = '167.172.42.53'; //ip.address()
+        this.myIP =  ip.address()
         console.log(">>AA", this.myIP)
     }
 
@@ -96,7 +97,7 @@ export class BotService {
 
     conf() {
         return {
-            headless: false,
+            headless: 'new',
             args: [
                 // `--proxy-server=${proxy}`,
                 '--start-maximized',
