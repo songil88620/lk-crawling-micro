@@ -1,10 +1,11 @@
-import { Controller, Get, Post, UseGuards, Request, Body } from '@nestjs/common'; 
+import { Controller, Get, Post, UseGuards, Request, Body, Inject, forwardRef } from '@nestjs/common'; 
+import { BotService } from './bot/bot.service';
  
 
 @Controller()
 export class AppController {
   constructor(
-    
+    @Inject(forwardRef(() => BotService)) private botService: BotService,
   ) { }
 
   // @Public()
@@ -31,6 +32,12 @@ export class AppController {
   // googleAuthRedirect(@Request() req) {
   //   return this.authService.googleLogin(req);
   // } 
+
+  @Get('test')
+  getProfile(@Request() req) {
+    console.log(">>hii")
+    this.botService.loginTest()
+  }
  
 
 }

@@ -13,20 +13,16 @@ var ip = require('ip');
 
 
 @Injectable()
-export class SocketService {
-
+export class SocketService { 
 
     public socket = io('https://api.aippointing.com/')
-    private myIP = "";
-
+    private myIP = ""; 
 
     constructor(
         @Inject(forwardRef(() => BotService)) private botService: BotService,
     ) { }
-
-
-    async onModuleInit() {
-        // this.myIP = '167.172.42.53'; //ip.address();
+ 
+    async onModuleInit() { 
         this.myIP = ip.address();
         console.log(">>My ip", this.myIP)
         this.socket.on("connect", () => {
