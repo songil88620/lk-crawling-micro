@@ -11,19 +11,19 @@ import { LinkedInAccountType } from 'src/type/linkedin_account.type';
 import { LinkedInChatType } from 'src/type/linkedin_chat.type';
 import { PpcType } from 'src/type/ppc.type';
 import { ProspectType } from 'src/type/prospect.type';
-import axios from 'axios'; 
+import axios from 'axios';
 import { get_encoding, encoding_for_model } from "tiktoken";
 import { MessageType } from 'src/type/message.type';
 import { GptMessageType } from 'src/type/gptmessage.type';
 import { CampaignType } from 'src/type/campaign.type';
-import { PromptDataService } from 'src/prompt_data/prompt_data.service'; 
+import { PromptDataService } from 'src/prompt_data/prompt_data.service';
 import { SocketService } from 'src/socket/socket.service';
-import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';  
+import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';
 
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin())
-var ip = require('ip'); 
+var ip = require('ip');
 
 interface LinkedInBrowser {
     id: number, // linkedin account id
@@ -34,7 +34,7 @@ interface LinkedInBrowser {
 @Injectable()
 export class BotService {
 
-    private cached_linked_browser: LinkedInBrowser = { id: null, page: null, browser: null };  
+    private cached_linked_browser: LinkedInBrowser = { id: null, page: null, browser: null };
     private myIP = "";
     private state = false;
 
@@ -54,8 +54,10 @@ export class BotService {
 
     }
 
-    async onModuleInit() { 
+    async onModuleInit() {
         this.myIP = ip.address()
+
+        //this.myIP = '178.62.195.134';
         console.log(">>AA", this.myIP)
     }
 
@@ -65,12 +67,12 @@ export class BotService {
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
         console.log(">>My campaign", myCampaign)
         myCampaign.forEach((ac: any) => {
-            this.goToLinkedIn(ac)
+            // this.goToLinkedIn(ac)
         })
     }
 
     @Cron(CronExpression.EVERY_10_SECONDS, { name: 'ch bot' })
-    async runState() { 
+    async runState() {
         if (this.cached_linked_browser.page) {
             const url = this.cached_linked_browser.page.url()
             if (url.includes('/feed/') || url.includes('/in/') || url.includes('/search/')) {
@@ -95,7 +97,7 @@ export class BotService {
                 // `--proxy-server=${proxy}`,
                 '--start-maximized',
                 '--no-sandbox',
-                '--disable-setuid-sandbox', 
+                '--disable-setuid-sandbox',
                 '--disable-gpu',
                 '--disable-dev-shm-usage',
                 '--disable-web-security',
@@ -121,9 +123,9 @@ export class BotService {
 
     async loginLinkedIn(login_data: LinkedinLoginDataType) {
         try {
-            console.log(">>>login", login_data) 
+            console.log(">>>login", login_data)
             const login_email = login_data.email;
-            const login_password = login_data.password; 
+            const login_password = login_data.password;
             const browser = await puppeteer.launch(this.conf());
             const page = await browser.newPage();
             await page.setExtraHTTPHeaders({
@@ -134,7 +136,7 @@ export class BotService {
             await page.type('#session_key', login_email);
             await page.type('#session_password', login_password);
             await page.click('button.sign-in-form__submit-btn--full-width');
-            await page.waitForTimeout(5000); 
+            await page.waitForTimeout(5000);
 
             if (this.cached_linked_browser.browser != null) {
                 const browser_old = this.cached_linked_browser.browser;
@@ -155,7 +157,7 @@ export class BotService {
                         data: ''
                     }
                 }
-                this.socketService.messageToUser(data) 
+                this.socketService.messageToUser(data)
             }
 
             if (page.url().includes('checkpoint/challenge/')) {
@@ -237,7 +239,26 @@ export class BotService {
                         }
                     } catch (e) {
                         console.log(">>bypass")
-                    } 
+                    }
+                    await page.waitForTimeout(2000);
+                    console.log(">>>page", page.url())
+                    if (page.url().includes('checkpoint/challenge/')) {
+                        try {
+                            vcode = await page.waitForSelector('#input__email_verification_pin');
+                        } catch (e) { }
+                    }
+                    if (vcode) {
+                        const data = {
+                            id: login_data.id,
+                            msg: {
+                                type: 'vcode_request',
+                                data: ''
+                            }
+                        }
+                        this.socketService.messageToUser(data)
+                        return;
+                    }
+
                     const data = {
                         id: login_data.id,
                         msg: {
@@ -245,13 +266,13 @@ export class BotService {
                             data: ''
                         }
                     }
-                    this.socketService.messageToUser(data) 
+                    this.socketService.messageToUser(data)
                 }
             }
         } catch (e) {
             console.log(">>errr", e)
         }
-    } 
+    }
 
     async vcodeLinkedIn(login_data: LinkedinLoginDataType) {
         const page = await this.cached_linked_browser.page;
@@ -267,18 +288,92 @@ export class BotService {
                     data: ''
                 }
             }
-            this.socketService.messageToUser(data) 
-        } else {
-            const data = {
-                id: login_data.id,
-                msg: {
-                    type: 'vcode_request',
-                    data: 'wrong code you provide'
-                }
-            }
             this.socketService.messageToUser(data)
+        } else {
+            if (page.url().includes('checkpoint/challenge/')) {
+                var vcode = null;
+                try {
+                    vcode = await page.waitForSelector('#input__email_verification_pin');
+                } catch (e) { }
+                if(vcode){
+                    const data = {
+                        id: login_data.id,
+                        msg: {
+                            type: 'vcode_request',
+                            data: 'wrong code you provide'
+                        }
+                    }
+                    this.socketService.messageToUser(data)
+                }else{
+                    const frame_1 = await page.$("iframe[id='captcha-internal']");
+                    const contentFrame_1 = await frame_1.contentFrame();
+                    const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
+                    const contentFrame_2 = await frame_2.contentFrame();
+                    const frame_3 = await contentFrame_2.$("iframe[title='Verification challenge']");
+                    const contentFrame_3 = await frame_3.contentFrame();
+                    const frame_4 = await contentFrame_3.$("iframe[id='fc-iframe-wrap']");
+                    const contentFrame_4 = await frame_4.contentFrame();
+                    const frame_5 = await contentFrame_4.$("iframe[id='CaptchaFrame']");
+                    const contentFrame_5 = await frame_5.contentFrame();
+                    const acceptBtn = await contentFrame_5.$(`#home button`);
+                    await acceptBtn.click();
+                    //auto bypass for puzzle
+                    await page.waitForTimeout(4000);
+                    const loops = [1, 1, 1, 1, 1, 1, 1];
+                    try {
+                        for (var l of loops) {
+                            await contentFrame_5.$(`#game_children_text`);
+                            const src = await contentFrame_5.evaluate(() => {
+                                const imgElement = document.querySelector('#game_challengeItem_image');
+                                return imgElement ? imgElement['src'] : null;
+                            });
+                            const img = src.substring(23);
+                            const res = await axios.post('https://api.capsolver.com/createTask', {
+                                "clientKey": this.captcha_key,
+                                "task": {
+                                    "type": "FunCaptchaClassification",
+                                    "websiteURL": "https://www.linkedin.com",
+                                    "images": [
+                                        img
+                                    ],
+                                    "question": "rotated"
+                                }
+                            });
+                            if (res.data.status == 'ready') {
+                                console.log(">>>res", res.data)
+                                const idx = res.data.solution.objects[0] + 1;
+                                console.log(">>idx", idx)
+                                await contentFrame_5.click('#image' + idx + ' > a');
+                            }
+                            await page.waitForTimeout(4000);
+                        }
+                    } catch (e) {
+                        console.log(">>bypass")
+                    }
+                    await page.waitForTimeout(2000);
+                    if (page.url().includes('checkpoint/challenge/')) {
+                        const data = {
+                            id: login_data.id,
+                            msg: {
+                                type: 'login_failed',
+                                data: 'There is issue in login, contact support team'
+                            }
+                        }
+                        this.socketService.messageToUser(data)
+                    }else{
+                        const data = {
+                            id: login_data.id,
+                            msg: {
+                                type: 'login_success',
+                                data: ''
+                            }
+                        }
+                        this.socketService.messageToUser(data)
+                    } 
+                }
+            } 
         }
-    }  
+    }
 
     async getLoginState(linked_in_account_id: any) {
         try {
@@ -382,8 +477,8 @@ export class BotService {
                             "question": "rotated"
                         }
                     });
-                    if (res.data.status == 'ready') { 
-                        const idx = res.data.solution.objects[0] + 1; 
+                    if (res.data.status == 'ready') {
+                        const idx = res.data.solution.objects[0] + 1;
                         await contentFrame_5.click('#image' + idx + ' > a');
                     }
                     await page.waitForTimeout(4000);
@@ -403,8 +498,8 @@ export class BotService {
         const linked_in_account_id = ac.linked_in_account_id;
         try {
             console.log(">>>lin", linked_in_account_id)
-            const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id); 
-            var my_page: any = null; 
+            const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id);
+            var my_page: any = null;
             if (this.cached_linked_browser.id != null) {
                 const page = await this.cached_linked_browser.page;
                 await page.goto(`https://www.linkedin.com/feed/`, { timeout: 0 });
@@ -431,7 +526,7 @@ export class BotService {
                 } else {
                     return;
                 }
-            } 
+            }
 
             // ---------- linkedin has already logged in and start to work from now ----------
             // check if there are new message from the right sidebar and read new message one by one after click them. 
@@ -470,7 +565,7 @@ export class BotService {
                     if (u_name) {
                         var n = await (await u_name.getProperty('textContent')).jsonValue()
                         user_name = this.beautySpace(n);
-                    } 
+                    }
 
                     for (const msg of msgs) {
                         const date_ele = await msg.$('.msg-s-message-list__time-heading')
@@ -499,7 +594,7 @@ export class BotService {
                             content: msg_text.replace(/\+/g, '')
                         }
                         messages.push(msg_data);
-                    } 
+                    }
 
                     await my_page.evaluate(() => document.querySelector('.msg-s-message-list').scrollBy({ top: -1000, behavior: 'smooth' }))
 
@@ -1054,8 +1149,6 @@ export class BotService {
     }
 
 
-
-
     // ------------------------------------ ^_^ utils function ^_^ -------------------------------------------  
 
     beautySpace(str: any) {
@@ -1430,7 +1523,7 @@ export class BotService {
                         data: ''
                     }
                 }
-                this.socketService.messageToUser(data) 
+                this.socketService.messageToUser(data)
             }
 
         } catch (e) {
