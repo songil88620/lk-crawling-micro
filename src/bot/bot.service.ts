@@ -56,7 +56,6 @@ export class BotService {
 
     async onModuleInit() {
         this.myIP = ip.address()
-
         //this.myIP = '178.62.195.134';
         console.log(">>AA", this.myIP)
     }
@@ -87,6 +86,7 @@ export class BotService {
             id: this.cached_linked_browser.id,
             state: this.state
         }
+        console.log(">>DD", data)
         this.socketService.loginstateToMother(data)
     }
 
@@ -110,12 +110,26 @@ export class BotService {
         }
     }
 
+
+    async msg_to_user(id: any, msg: string) {
+        const data = {
+            id: id,
+            msg: {
+                type: 'current_page',
+                data: msg
+            }
+        }
+        this.socketService.messageToUser(data)
+    }
+
     async logout(login_data: LinkedinLoginDataType) {
         try {
             const id = login_data.id;
             const browser_old = this.cached_linked_browser.browser;
-            await browser_old.close();
             this.cached_linked_browser = { id: id, page: null, browser: null };
+            if (browser_old != null) {
+                await browser_old.close();
+            }
         } catch (e) {
             console.log(">>>err", e)
         }
@@ -137,10 +151,13 @@ export class BotService {
             await page.type('#session_password', login_password);
             await page.click('button.sign-in-form__submit-btn--full-width');
             await page.waitForTimeout(5000);
-
+            this.msg_to_user(login_data.id, 'Login page is passed...');
+            console.log(">>Url1", page.url())
             if (this.cached_linked_browser.browser != null) {
                 const browser_old = this.cached_linked_browser.browser;
-                await browser_old.close();
+                if (browser_old != null) {
+                    await browser_old.close();
+                }
             }
             this.cached_linked_browser = {
                 id: login_data.id,
@@ -161,8 +178,9 @@ export class BotService {
             }
 
             if (page.url().includes('checkpoint/challenge/')) {
+                this.msg_to_user(login_data.id, 'Verification page loading...');
                 console.log(">>check image")
-                await page.waitForTimeout(20000);
+                // await page.waitForTimeout(5000);
                 var vcode = null;
                 try {
                     vcode = await page.waitForSelector('#input__email_verification_pin');
@@ -177,7 +195,10 @@ export class BotService {
                         }
                     }
                     this.socketService.messageToUser(data)
+                    this.msg_to_user(login_data.id, 'Requiring verification code...');
                 } else {
+                    console.log(">>Url2", page.url())
+                    this.msg_to_user(login_data.id, 'Trying to solve the image puzzle...');
                     const frame_1 = await page.$("iframe[id='captcha-internal']");
                     const contentFrame_1 = await frame_1.contentFrame();
                     const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
@@ -208,8 +229,8 @@ export class BotService {
                     // return;
 
                     //auto bypass for puzzle
-                    await page.waitForTimeout(4000);
-                    const loops = [1, 1, 1, 1, 1, 1, 1];
+                    await page.waitForTimeout(1000);
+                    const loops = [1, 2, 3, 4, 5, 6, 7];
                     try {
                         for (var l of loops) {
                             await contentFrame_5.$(`#game_children_text`);
@@ -235,14 +256,16 @@ export class BotService {
                                 console.log(">>idx", idx)
                                 await contentFrame_5.click('#image' + idx + ' > a');
                             }
-                            await page.waitForTimeout(4000);
+                            await page.waitForTimeout(2000);
+                            this.msg_to_user(login_data.id, 'Solved puzzle No.' + l + "...");
                         }
                     } catch (e) {
                         console.log(">>bypass")
                     }
-                    await page.waitForTimeout(2000);
+                    await page.waitForTimeout(1000);
                     console.log(">>>page", page.url())
                     if (page.url().includes('checkpoint/challenge/')) {
+                        this.msg_to_user(login_data.id, 'Verification page loading...');
                         try {
                             vcode = await page.waitForSelector('#input__email_verification_pin');
                         } catch (e) { }
@@ -256,6 +279,7 @@ export class BotService {
                             }
                         }
                         this.socketService.messageToUser(data)
+                        this.msg_to_user(login_data.id, 'Requiring verification code...');
                         return;
                     }
 
@@ -279,7 +303,7 @@ export class BotService {
         await page.waitForTimeout(2000);
         await page.type('#input__email_verification_pin', login_data.vcode);
         await page.click('button#email-pin-submit-button');
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2000);
         if (page.url().includes('/feed/')) {
             const data = {
                 id: login_data.id,
@@ -295,16 +319,16 @@ export class BotService {
                 try {
                     vcode = await page.waitForSelector('#input__email_verification_pin');
                 } catch (e) { }
-                if(vcode){
+                if (vcode) {
                     const data = {
                         id: login_data.id,
                         msg: {
-                            type: 'vcode_request',
-                            data: 'wrong code you provide'
+                            type: 'vcode_wrong',
+                            data: ''
                         }
                     }
                     this.socketService.messageToUser(data)
-                }else{
+                } else {
                     const frame_1 = await page.$("iframe[id='captcha-internal']");
                     const contentFrame_1 = await frame_1.contentFrame();
                     const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
@@ -318,7 +342,7 @@ export class BotService {
                     const acceptBtn = await contentFrame_5.$(`#home button`);
                     await acceptBtn.click();
                     //auto bypass for puzzle
-                    await page.waitForTimeout(4000);
+                    await page.waitForTimeout(2000);
                     const loops = [1, 1, 1, 1, 1, 1, 1];
                     try {
                         for (var l of loops) {
@@ -360,7 +384,7 @@ export class BotService {
                             }
                         }
                         this.socketService.messageToUser(data)
-                    }else{
+                    } else {
                         const data = {
                             id: login_data.id,
                             msg: {
@@ -369,9 +393,9 @@ export class BotService {
                             }
                         }
                         this.socketService.messageToUser(data)
-                    } 
+                    }
                 }
-            } 
+            }
         }
     }
 
@@ -414,7 +438,9 @@ export class BotService {
 
         if (this.cached_linked_browser.browser != null) {
             const browser_old = this.cached_linked_browser.browser;
-            await browser_old.close();
+            if (browser_old != null) {
+                await browser_old.close();
+            }
         }
         this.cached_linked_browser = {
             id: linked_in_account.id,
@@ -508,7 +534,9 @@ export class BotService {
                     my_page = page;
                 } else {
                     const browser_old = this.cached_linked_browser.browser;
-                    await browser_old.close();
+                    if (browser_old != null) {
+                        await browser_old.close();
+                    }
                     this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
                     const res = await this.internalLogin(linked_in_account);
                     if (res.success) {
