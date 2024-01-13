@@ -84,7 +84,8 @@ export class BotService {
         }
         const data = {
             id: this.cached_linked_browser.id,
-            state: this.state
+            state: this.state,
+            ip: this.myIP
         }
         console.log(">>DD", data)
         this.socketService.loginstateToMother(data)
