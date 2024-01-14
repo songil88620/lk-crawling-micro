@@ -66,7 +66,7 @@ export class BotService {
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
         console.log(">>My campaign", myCampaign)
         myCampaign.forEach((ac: any) => {
-            // this.goToLinkedIn(ac)
+            this.goToLinkedIn(ac)
         })
     }
 
@@ -87,7 +87,7 @@ export class BotService {
             state: this.state,
             ip: this.myIP,
             stamp: Math.floor(Date.now() / 1000)
-        } 
+        }
         this.socketService.loginstateToMother(data)
     }
 

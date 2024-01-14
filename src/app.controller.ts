@@ -33,10 +33,9 @@ export class AppController {
   //   return this.authService.googleLogin(req);
   // } 
 
-  @Get('test')
+  @Get('')
   getProfile(@Request() req) {
-    console.log(">>hii")
-    this.botService.loginTest()
+     return 'running';
   }
  
 
