@@ -37,7 +37,9 @@ export class SocketService {
         });
         this.socket.on("disconnect", (reason) => {
             console.log(">>>>disconnected", reason)
-            this.connectSocket();
+            setTimeout(() => {
+                this.connectSocket();
+            }, 5000);
         });
     }
 
