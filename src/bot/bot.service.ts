@@ -56,7 +56,7 @@ export class BotService {
 
     async onModuleInit() {
         this.myIP = ip.address()
-        //this.myIP = '178.62.195.134';
+        this.myIP  = '167.172.42.53';
         console.log(">>AA", this.myIP)
     }
 
@@ -93,7 +93,7 @@ export class BotService {
 
     conf() {
         return {
-            headless: 'new',
+            headless: false,
             args: [
                 // `--proxy-server=${proxy}`,
                 '--start-maximized',
@@ -152,7 +152,7 @@ export class BotService {
             await page.type('#session_password', login_password);
             await page.click('button.sign-in-form__submit-btn--full-width');
             await page.waitForTimeout(5000);
-            this.msg_to_user(login_data.id, 'Login page is passed...');
+            this.msg_to_user(login_data.id, 'Processing...');
             console.log(">>Url1", page.url())
             if (this.cached_linked_browser.browser != null) {
                 const browser_old = this.cached_linked_browser.browser;
@@ -176,6 +176,7 @@ export class BotService {
                     }
                 }
                 this.socketService.messageToUser(data)
+                return
             }
 
             if (page.url().includes('checkpoint/challenge/')) {
@@ -263,7 +264,7 @@ export class BotService {
                     } catch (e) {
                         console.log(">>bypass")
                     }
-                    await page.waitForTimeout(1000);
+                    await page.waitForTimeout(3000);
                     console.log(">>>page", page.url())
                     if (page.url().includes('checkpoint/challenge/')) {
                         this.msg_to_user(login_data.id, 'Verification page loading...');
@@ -283,15 +284,27 @@ export class BotService {
                         this.msg_to_user(login_data.id, 'Requiring verification code...');
                         return;
                     }
-
-                    const data = {
-                        id: login_data.id,
-                        msg: {
-                            type: 'login_success',
-                            data: ''
+                    await page.waitForTimeout(1000);
+                    console.log(">>>page here", page.url())
+                    if(page.url().includes('/feed/')){
+                        const data = {
+                            id: login_data.id,
+                            msg: {
+                                type: 'login_success',
+                                data: ''
+                            }
                         }
-                    }
-                    this.socketService.messageToUser(data)
+                        this.socketService.messageToUser(data)
+                    }else{
+                        const data = {
+                            id: login_data.id,
+                            msg: {
+                                type: 'login_failed',
+                                data: 'Something unexpected happened. Please contact support team.'
+                            }
+                        }
+                        this.socketService.messageToUser(data)
+                    }                    
                 }
             }
         } catch (e) {
