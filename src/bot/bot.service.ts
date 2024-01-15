@@ -468,7 +468,8 @@ export class BotService {
             await this.linkedinAccountService.updateLinkedCookies(linked_in_account.id, li_at, session_id)
             return { page: page, success: true }
         } else {
-            await page.waitForTimeout(25000);
+            console.log(">>p..page.url()", page.url())
+            await page.waitForTimeout(35000);
             const frame_1 = await page.$("iframe[id='captcha-internal']");
             const contentFrame_1 = await frame_1.contentFrame();
             const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
@@ -481,7 +482,7 @@ export class BotService {
             const contentFrame_5 = await frame_5.contentFrame();
             const acceptBtn = await contentFrame_5.$(`#home button`);
             await acceptBtn.click();
-
+            console.log(">> clicked...")
             //auto bypass for puzzle
             await page.waitForTimeout(4000);
             const loops = [1, 1, 1, 1, 1, 1, 1];
