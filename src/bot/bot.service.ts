@@ -469,7 +469,7 @@ export class BotService {
             return { page: page, success: true }
         } else {
             console.log(">>p..page.url()", page.url())
-            await page.waitForTimeout(35000);
+            await page.waitForTimeout(45000);
             const frame_1 = await page.$("iframe[id='captcha-internal']");
             const contentFrame_1 = await frame_1.contentFrame();
             const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
@@ -514,6 +514,7 @@ export class BotService {
             } catch (e) {
                 console.log(">>bypass")
             }
+            console.log(">>p..page.url()", page.url())
             console.log(">>bypass")
             return { page: page, success: true }
 
