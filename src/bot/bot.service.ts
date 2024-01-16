@@ -55,9 +55,7 @@ export class BotService {
     }
 
     async onModuleInit() {
-        this.myIP = ip.address()
-        this.myIP  = '167.172.42.53';
-        console.log(">>AA", this.myIP)
+        this.myIP = ip.address()  
     }
 
     // run bot every 10 mins
