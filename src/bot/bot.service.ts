@@ -57,7 +57,8 @@ export class BotService {
     }
 
     async onModuleInit() {
-        this.myIP = ip.address()
+        // this.myIP = ip.address()
+        this.myIP = '167.172.42.53';
     } 
    
 
@@ -107,7 +108,7 @@ export class BotService {
 
     conf() {
         return {
-            headless: 'new',
+            headless: false,
             args: [
                 // `--proxy-server=${proxy}`,
                 '--start-maximized',

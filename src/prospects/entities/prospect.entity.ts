@@ -31,6 +31,9 @@ export class ProspectsEntity {
     @Column()
     linked_in_user_urn: string;  
 
+    @Column()
+    used: boolean; 
+
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(20)" })
     created_at: Date;
 

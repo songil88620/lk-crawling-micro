@@ -22,7 +22,7 @@ export class ProspectsService {
   }
 
   async getFreshProspects(c_id: number) {
-    const prospects: ProspectType[] = await this.prospectsRepository.find();
+    const prospects: ProspectType[] = await this.prospectsRepository.find({ where: { used: false } });
     const fresh: ProspectType[] = [];
     var cnt = 0;
     for (const prospect of prospects) {
@@ -36,11 +36,10 @@ export class ProspectsService {
       }
     }
     return fresh;
-  } 
+  }
 
-  async removeProspect(id: number){
-    console.log(">>DI", id)
-    await this.prospectsRepository.delete({id})
+  async removeProspect(id: number) {
+    await this.prospectsRepository.update({ id }, { used: true })
   }
 
 }
