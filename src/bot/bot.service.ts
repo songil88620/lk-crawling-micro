@@ -41,6 +41,8 @@ export class BotService {
     // captcha api key for bypassing captcha.... 
     private captcha_key = 'CAP-36E7BF9AEE1FCAE79456B4D6681DD2F4';
 
+    public login_fail = 0;
+
     constructor(
         private mailService: MailService,
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
@@ -55,17 +57,31 @@ export class BotService {
     }
 
     async onModuleInit() {
-        this.myIP = ip.address()  
-    }
+        this.myIP = ip.address()
+    } 
+   
 
     // run bot every 10 mins
     @Cron(CronExpression.EVERY_10_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
-        const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
-        console.log(">>My campaign", myCampaign)
-        myCampaign.forEach((ac: any) => {
-            this.goToLinkedIn(ac)
-        })
+        const _now = new Date();
+        const _h_now = _now.getHours();
+        console.log(">>>current time___", _h_now)
+        if (_h_now >= 8 && _h_now < 20 && this.login_fail <= 3) {
+            const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
+            myCampaign.forEach((ac: any) => {
+                this.goToLinkedIn(ac)
+            })
+        } else {
+            this.login_fail = 0;
+            const br = this.cached_linked_browser.browser;
+            if(br){
+                br.close()
+            }
+            this.cached_linked_browser.browser = null;
+            this.cached_linked_browser.page = null;
+            console.log(">>>rest time now")
+        }
     }
 
     @Cron(CronExpression.EVERY_10_SECONDS, { name: 'ch bot' })
@@ -284,7 +300,7 @@ export class BotService {
                     }
                     await page.waitForTimeout(1000);
                     console.log(">>>page here", page.url())
-                    if(page.url().includes('/feed/')){
+                    if (page.url().includes('/feed/')) {
                         const data = {
                             id: login_data.id,
                             msg: {
@@ -293,7 +309,8 @@ export class BotService {
                             }
                         }
                         this.socketService.messageToUser(data)
-                    }else{
+                        this.login_fail = 0;
+                    } else {
                         const data = {
                             id: login_data.id,
                             msg: {
@@ -302,7 +319,8 @@ export class BotService {
                             }
                         }
                         this.socketService.messageToUser(data)
-                    }                    
+                        this.login_fail = 3;
+                    }
                 }
             }
         } catch (e) {
@@ -524,11 +542,15 @@ export class BotService {
                 }
             } catch (e) {
                 console.log(">>bypass")
-            }
-            console.log(">>p..page.url()", page.url())
-            console.log(">>bypass")
-            return { page: page, success: true }
-
+            } 
+            await page.waitForTimeout(3000);   
+            if (page.url().includes('/feed/')) {
+                this.login_fail = 0;
+                return { page: page, success: true }
+            } else {
+                this.login_fail = this.login_fail + 1;
+                return { page: null, success: false }
+            }           
         }
     }
 
@@ -1817,3 +1839,5 @@ export class BotService {
 // } else {
 //     return { page: page, success: false }
 // }
+
+// https://dashboard.capsolver.com/dashboard/overview
