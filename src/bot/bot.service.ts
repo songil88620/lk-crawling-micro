@@ -65,10 +65,10 @@ export class BotService {
         const _now = new Date();
         const _h_now = _now.getHours();
 
-        const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
-        myCampaign.forEach((ac: any) => {
-            this.goToLinkedInLongMode(ac, 1)
-        })
+        // const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
+        // myCampaign.forEach((ac: any) => {
+        //     this.goToLinkedInLongMode(ac, 1)
+        // })
 
     }
 
