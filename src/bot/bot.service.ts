@@ -61,14 +61,14 @@ export class BotService {
 
     async onModuleInit() {
         this.myIP = ip.address()
-        // this.myIP = '167.172.42.53';
+        // this.myIP = '146.190.25.18';
         const _now = new Date();
         const _h_now = _now.getHours();
 
-        // const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
-        // myCampaign.forEach((ac: any) => {
-        //     this.goToLinkedInLongMode(ac, 1)
-        // })
+        const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
+        myCampaign.forEach((ac: any) => {
+            this.goToLinkedInLongMode(ac, 1)
+        })
 
     }
 
@@ -99,6 +99,7 @@ export class BotService {
 
     @Cron(CronExpression.EVERY_10_SECONDS, { name: 'ch bot' })
     async runState() {
+      
         if (this.cached_linked_browser.page) {
             const url = this.cached_linked_browser.page.url()
             if (url.includes('/feed/') || url.includes('/in/') || url.includes('/search/')) {
@@ -687,8 +688,12 @@ export class BotService {
                         user_name = this.beautySpace(n);
                     }
 
+                    const first_name = user_name.split(" ")[0];
+                    const first_msg = ac.first_message.replace('{FirstName}', first_name);
+
                     var member_id = null;
                     try {
+                        var campaign_msg = false;
                         for (const msg of msgs) {
                             const date_ele = await msg.$('.msg-s-message-list__time-heading')
                             if (date_ele) {
@@ -707,15 +712,22 @@ export class BotService {
                             }
                             const msg_body = await msg.$('.msg-s-event-listitem .msg-s-event__content .msg-s-event-listitem__body')
                             const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
+                        
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time));
-                            const msg_data: MessageType = {
-                                createdAt: b_date['date'],
-                                //stamp: b_date['stamp'],
-                                //name: this.beautySpace(name),
-                                role: this.beautySpace(name) == user_name ? 'user' : 'assistant',
-                                content: msg_text.replace(/\+/g, '')
+                            const _msg = msg_text.replace(/\+/g, '');
+                            if (_msg == first_msg) {
+                                campaign_msg = true;
                             }
-                            messages.push(msg_data);
+                            if (campaign_msg) {
+                                const msg_data: MessageType = {
+                                    createdAt: b_date['date'],
+                                    //stamp: b_date['stamp'],
+                                    //name: this.beautySpace(name),
+                                    role: this.beautySpace(name) == user_name ? 'user' : 'assistant',
+                                    content: _msg
+                                }
+                                messages.push(msg_data);
+                            }
                         }
 
                         // scroll up to get member profile link from the message box
@@ -740,6 +752,7 @@ export class BotService {
                         });
                         console.log(">>member id", member_id)
                     } catch (e) {
+                        console.log(">>EE", e)
                         console.log("sth went wrong")
                     }
 
@@ -755,10 +768,8 @@ export class BotService {
                         await my_page.click(close_btn_msgbox);
                     }
 
-                    // check message state for next step
+                    // check message state for next step   
 
-                    const first_name = user_name.split(" ")[0];
-                    const first_msg = ac.first_message.replace('{FirstName}', first_name);
                     if (first_msg == messages[0].content) {
                         console.log(">>platform message")
 
@@ -803,7 +814,7 @@ export class BotService {
             // check sidebar msg box end [for] 
 
             // sidebar message result
-            console.log(">>new message list", new_messages)
+            console.log(">>new message list", new_messages)  
 
             await my_page.reload();
             my_page.waitForTimeout(2000);
@@ -1457,6 +1468,7 @@ export class BotService {
     beautyDate(date_in: any, time_in: any) {
         try {
             const weeks = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 
             if (weeks.includes(date_in)) {
                 const dayMapping = {
