@@ -580,7 +580,7 @@ export class BotService {
             var my_page: any = null;
             if (this.cached_linked_browser.id != null) {
                 const page = await this.cached_linked_browser.page;
-
+                await page.waitForTimeout(5000);
                 await page.goto(`https://www.linkedin.com/feed/`, { timeout: 0 });
                 await page.waitForTimeout(5000);
                 if (page.url().includes('/feed/') || page.url().includes('/in/') || page.url().includes('/search/')) {
