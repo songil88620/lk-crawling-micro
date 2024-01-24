@@ -811,7 +811,8 @@ export class BotService {
             // ---------------------------^^^  send core message based on user's new message on the linkedin ^^^----------------------------------
             // there is no limitation in replying 
             for (const new_message of new_messages) {
-                if (!this.isLoginOn) {
+                if (!this.isLoginOn()) {
+                    console.log(">>>log out state")
                     return
                 }
                 const linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(new_message.member_id, campaign_id);
