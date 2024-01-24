@@ -44,8 +44,8 @@ export class SocketService {
     }
 
     async readEvent() {
-        // const my_ip = ip.address();
-        const my_ip = '167.172.42.53'; 
+        const my_ip = ip.address();
+        //const my_ip = '167.172.42.53'; 
 
         this.socket.on('linkedin_login_request_micro_' + my_ip, (data: LinkedinLoginDataType) => {
             console.log(">>>DETAIL", data)

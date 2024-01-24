@@ -60,8 +60,8 @@ export class BotService {
     }
 
     async onModuleInit() {
-        // this.myIP = ip.address()
-        this.myIP = '167.172.42.53';
+        this.myIP = ip.address()
+        // this.myIP = '167.172.42.53';
         const _now = new Date();
         const _h_now = _now.getHours();
 
