@@ -4,12 +4,14 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LinkedInChatsService } from 'src/linked_in_chats/linked_in_chats.service';
 import { ProspectType } from 'src/type/prospect.type';
+import { ProspectProspectionCampaignService } from 'src/prospect_prospection_campaign/prospect_prospection_campaign.service';
 
 @Injectable()
 export class ProspectsService {
   constructor(
     @InjectRepository(ProspectsEntity) private prospectsRepository: Repository<ProspectsEntity>,
     @Inject(forwardRef(() => LinkedInChatsService)) private chatService: LinkedInChatsService,
+    @Inject(forwardRef(() => ProspectProspectionCampaignService)) private ppcService: ProspectProspectionCampaignService,
   ) { }
 
   // this provides linkein member details including linked_in_member_id, first_name and last_name
@@ -22,17 +24,18 @@ export class ProspectsService {
   }
 
   async getFreshProspects(c_id: number) {
-    const prospects: ProspectType[] = await this.prospectsRepository.find({ where: { used: false } });
     const fresh: ProspectType[] = [];
+    const psc = await this.ppcService.findProspectsIdsByCampaignId(c_id);
     var cnt = 0;
-    for (const prospect of prospects) {
-      const chat = await this.chatService.findOneChatByProspect(c_id, prospect.id);
-      if (chat == undefined) {
-        fresh.push(prospect)
+    for (const ps of psc) {
+      const _prospect = await this.prospectsRepository.findOne({ where: { id: ps.prospect_id } });
+      const chat = await this.chatService.findOneChatByProspect(c_id, _prospect.id);
+      if (chat == null) {
+        fresh.push(_prospect)
         cnt++;
       }
-      if (cnt == 2) {
-        break
+      if (cnt == 100) {
+        break;
       }
     }
     return fresh;

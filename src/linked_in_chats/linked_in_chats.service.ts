@@ -1,15 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { LinkedInChatEntity } from './entities/linked_in_chat.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { LinkedInChatType } from 'src/type/linkedin_chat.type';
 import { ChatStatus } from 'src/type/chat_status.type';
+import { ProspectsService } from 'src/prospects/prospects.service';
 
 @Injectable()
 export class LinkedInChatsService {
   constructor(
-    @InjectRepository(LinkedInChatEntity)
-    private linkedinChatRepository: Repository<LinkedInChatEntity>
+    @InjectRepository(LinkedInChatEntity) private linkedinChatRepository: Repository<LinkedInChatEntity>,
+    @Inject(forwardRef(() => ProspectsService)) private prospectsService: ProspectsService,
   ) { }
 
   // this provides prospects(linkedin memeber id) list based on campaign id 
@@ -35,9 +36,21 @@ export class LinkedInChatsService {
   }
 
   async createNewChat(chat: LinkedInChatType) {
-    const c = this.linkedinChatRepository.create(chat);
-    await this.linkedinChatRepository.save(c);
-    return c;
+    try {
+      const ps = await this.prospectsService.findProspectByMemberId(chat.prospect_id.toString());
+      const ps_id = ps.id;
+      const res = await this.linkedinChatRepository.findOne({ where: { prospect_id: ps_id, prospection_campaign_id: chat.prospection_campaign_id } });
+      if (!res) {
+        var new_ct: LinkedInChatType = chat;
+        new_ct.prospect_id = ps_id;
+        const c = this.linkedinChatRepository.create(new_ct);
+        await this.linkedinChatRepository.save(c);
+        console.log(">>history created...")
+      }
+    } catch (e) {
+      console.log(">>err", chat.prospect_id)
+    }
+
   }
 
 }
