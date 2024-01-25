@@ -580,7 +580,7 @@ export class BotService {
             console.log(">>>lin", linked_in_account_id)
             const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id);
             var my_page: any = null;
-            if (this.cached_linked_browser.id != null) {
+            if (this.cached_linked_browser.browser != null) {
                 const page = await this.cached_linked_browser.page;
                 await page.waitForTimeout(5000);
                 await page.goto(`https://www.linkedin.com/feed/`, { timeout: 0 });
