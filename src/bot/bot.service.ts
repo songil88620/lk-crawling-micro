@@ -45,6 +45,7 @@ export class BotService {
     public login_fail = 0;
     public prs_read_idx = 0;
     public prs_total_len = 0;
+    public people_btn = false;
 
     constructor(
         private mailService: MailService,
@@ -80,6 +81,7 @@ export class BotService {
         const _h_now = _now.getHours();
         console.log(">>>current time___", _h_now)
         if ((_h_now >= 8 && _h_now < 20 && this.login_fail <= 5)) {
+            this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
             myCampaign.forEach((ac: any) => {
                 this.goToLinkedInLongMode(ac, this.prs_read_idx)
@@ -1201,7 +1203,7 @@ export class BotService {
             }
 
             const gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac, 'creative', user_id);
-            console.log(">>>core prompt", gen_core_prompt)
+
             const sysPrompt: GptMessageType = {
                 role: 'system',
                 content: gen_core_prompt
@@ -1211,7 +1213,7 @@ export class BotService {
             var maxTokens = 4096;
             var maxResponseTokens = 500;
             var payloadTokens = this.getMessagesTokensCount(prompt);
-            console.log(">>>prompt...", prompt)
+
 
             while (payloadTokens + maxResponseTokens >= maxTokens) {
                 // We unset index 1 because 0 is system prompt and we have to keep it
@@ -1292,13 +1294,16 @@ export class BotService {
 
             // people filter button click 
             const filter_btn = '#search-reusables__filters-bar > ul > li:nth-child(1) > button';
-            try {
-                await my_page.waitForSelector(filter_btn);
-                await my_page.click(filter_btn);
-                console.log(">>>selected filter")
-            } catch (e) {
-                console.log(">>>selected filter no")
-            }
+            if (!this.people_btn) {
+                try {
+                    await my_page.waitForSelector(filter_btn);
+                    await my_page.click(filter_btn);
+                    this.people_btn = true;
+                    console.log(">>>selected filter")
+                } catch (e) {
+                    console.log(">>>selected filter no")
+                }
+            } 
 
             // select reciever from list
             await my_page.waitForTimeout(3000);
@@ -1352,7 +1357,7 @@ export class BotService {
                         return true;
                     } catch (e) {
                         // close message box for next
-                        console.log(">>error" ,e)
+                        console.log(">>error", e)
                         await my_page.waitForTimeout(200);
                         const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
                         await my_page.waitForSelector(close_btn_msgbox);
