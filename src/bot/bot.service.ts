@@ -792,7 +792,9 @@ export class BotService {
                                 first_message_urn: "",
                                 automatic_answer: true,
                                 requires_human_intervention: false,
-                                follow_up_count: 0
+                                follow_up_count: 0,
+                                updated_at: this.isNowTime(),
+                                created_at: this.isNowTime()
                             }
                             this.chatService.createNewChat(new_linked_in_chat);
                         }
@@ -830,7 +832,7 @@ export class BotService {
                     this.cached_linked_browser.page = null;
                 } catch (e) {
 
-                } 
+                }
                 return;
             }
 
@@ -841,14 +843,18 @@ export class BotService {
                     console.log(">>>log out state")
                     return
                 }
-                const linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(new_message.member_id, campaign_id);
-                // console.log(">>>>LINK...", linked_in_chat)
-                if (linked_in_chat != null &&
-                    linked_in_chat.automatic_answer &&
-                    (linked_in_chat.chat_status != ChatStatus.ACCEPTED && linked_in_chat.chat_status != ChatStatus.REJECTED)
-                ) {
-                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
-                    await this.sendCoreMessage(linked_in_chat, prospect, new_message.messages, linked_in_account, ac)
+                try {
+                    const linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(new_message.member_id, campaign_id);
+                    // console.log(">>>>LINK...", linked_in_chat)
+                    if (linked_in_chat != null &&
+                        linked_in_chat.automatic_answer &&
+                        (linked_in_chat.chat_status != ChatStatus.ACCEPTED && linked_in_chat.chat_status != ChatStatus.REJECTED)
+                    ) {
+                        const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
+                        await this.sendCoreMessage(linked_in_chat, prospect, new_message.messages, linked_in_account, ac)
+                    }
+                } catch (e) {
+
                 }
             }
 
@@ -866,7 +872,7 @@ export class BotService {
                     this.cached_linked_browser.page = null;
                 } catch (e) {
 
-                } 
+                }
                 return;
             }
             this.prs_read_idx = this.prs_read_idx + 1;
@@ -948,6 +954,7 @@ export class BotService {
                     linked_in_chat.follow_up_count = 4;
                     messages.push(answer);
                     linked_in_chat.chat_history = JSON.stringify(messages);
+                    linked_in_chat.updated_at = this.isNowTime()
                     await this.chatService.updateChatOne(linked_in_chat);
                     return true;
                 } else {
@@ -985,6 +992,7 @@ export class BotService {
                 linked_in_chat.follow_up_count = linked_in_chat.follow_up_count + 1;
                 messages.push(answer_2);
                 linked_in_chat.chat_history = JSON.stringify(messages);
+                linked_in_chat.updated_at = this.isNowTime()
                 await this.chatService.updateChatOne(linked_in_chat);
                 return true;
             } else {
@@ -1029,6 +1037,7 @@ export class BotService {
             if (send_success) {
                 messages.push(answer);
                 linked_in_chat.chat_history = JSON.stringify(messages);
+                linked_in_chat.updated_at = this.isNowTime()
                 await this.chatService.updateChatOne(linked_in_chat);
                 return true;
             } else {
@@ -1075,6 +1084,7 @@ export class BotService {
             if (send_success) {
                 messages.push(answer);
                 linked_in_chat.chat_history = JSON.stringify(messages);
+                linked_in_chat.updated_at = this.isNowTime()
                 await this.chatService.updateChatOne(linked_in_chat);
                 return true;
             } else {
@@ -1109,6 +1119,7 @@ export class BotService {
                 linked_in_chat.automatic_answer = false;
                 linked_in_chat.chat_history = JSON.stringify(lastestChat);
                 linked_in_chat.chat_status = ChatStatus.INPROGRESS;
+                linked_in_chat.updated_at = this.isNowTime()
                 await this.chatService.updateChatOne(linked_in_chat);
                 // $linkedInAccount->user->notify(new PossibleSpamDetection($prospectionCampaign, $prospect));
                 return
@@ -1124,6 +1135,7 @@ export class BotService {
                 linked_in_chat.automatic_answer = false;
                 linked_in_chat.chat_history = JSON.stringify(lastestChat);
                 linked_in_chat.chat_status = ChatStatus.INPROGRESS;
+                linked_in_chat.updated_at = this.isNowTime()
                 await this.chatService.updateChatOne(linked_in_chat);
                 const reason = 'Insulto detectado en campaña ' + ac.name;
                 // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1146,6 +1158,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
+                    linked_in_chat.updated_at = this.isNowTime()
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Salida de contexto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1157,6 +1170,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
+                    linked_in_chat.updated_at = this.isNowTime()
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Petición de contacto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1168,6 +1182,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
+                    linked_in_chat.updated_at = this.isNowTime()
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Reunión presencial o telefónica detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1237,6 +1252,7 @@ export class BotService {
                 messages.push(answer);
                 linked_in_chat.chat_status = newChatStatus;
                 linked_in_chat.chat_history = JSON.stringify(messages);
+                linked_in_chat.updated_at = this.isNowTime()
                 await this.chatService.updateChatOne(linked_in_chat);
                 return;
             } else {
@@ -1590,6 +1606,17 @@ export class BotService {
         return `${month}/${day}/${year.toString().slice(-2)} ${hours}:${minutes}`;
     }
 
+    isNowTime() {
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const hours = String(currentDate.getHours()).padStart(2, '0');
+        const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+        const seconds = String(currentDate.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
     async getChat_mid_c_id(member_id: string, campaign_id: number) {
         const prospect = await this.prospectsService.findProspectByMemberId(member_id)
         const prospect_id = prospect.id;
@@ -1754,6 +1781,8 @@ export class BotService {
             return false;
         }
     }
+
+
 
     // this is for testing login process to check bypass puzzle
     async loginTest() {

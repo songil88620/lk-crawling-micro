@@ -41,9 +41,9 @@ export class LinkedInChatEntity {
     @Column()
     follow_up_count: number;  
 
-    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(20)" })
-    created_at: Date;
+    @CreateDateColumn()
+    created_at: string;
 
-    @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(20)", onUpdate: "CURRENT_TIMESTAMP(20)" })
-    updated_at: Date;
+    @UpdateDateColumn()
+    updated_at: string;
 }
