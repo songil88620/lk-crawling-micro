@@ -1316,11 +1316,11 @@ export class BotService {
                         var count = await my_page.$$eval('.msg-convo-wrapper', elements => elements.length);
                         while (count > 0) {
                             count--;
-                            await my_page.waitForTimeout(500);
+                            await my_page.waitForTimeout(1500);
                             const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
                             await my_page.waitForSelector(close_btn_msgbox);
                             await my_page.click(close_btn_msgbox);
-                            await this.delay(500)
+                            await this.delay(1500)
                         }
                     } catch (e) {
                         console.log(">>>error on close message boxes")
@@ -1338,12 +1338,12 @@ export class BotService {
                         }
                         // type message on the form
                         await my_page.keyboard.type(newMsg, { delay: 5 });
-                        await my_page.waitForTimeout(200);
+                        await my_page.waitForTimeout(1000);
                         // click send message button 
                         await my_page.click('button.msg-form__send-button');
 
                         // close message box for next
-                        await my_page.waitForTimeout(200);
+                        await my_page.waitForTimeout(1000);
                         const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
                         await my_page.waitForSelector(close_btn_msgbox);
                         await my_page.click(close_btn_msgbox);
@@ -1352,6 +1352,7 @@ export class BotService {
                         return true;
                     } catch (e) {
                         // close message box for next
+                        console.log(">>error" ,e)
                         await my_page.waitForTimeout(200);
                         const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
                         await my_page.waitForSelector(close_btn_msgbox);
