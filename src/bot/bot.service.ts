@@ -84,7 +84,6 @@ export class BotService {
             myCampaign.forEach((ac: any) => {
                 this.goToLinkedInLongMode(ac, this.prs_read_idx)
             })
-            this.prs_read_idx = this.prs_read_idx + 1;
         } else {
             this.login_fail = 0;
             const br = this.cached_linked_browser.browser;
@@ -100,7 +99,7 @@ export class BotService {
 
     @Cron(CronExpression.EVERY_10_SECONDS, { name: 'ch bot' })
     async runState() {
-      
+
         if (this.cached_linked_browser.page) {
             const url = this.cached_linked_browser.page.url()
             if (url.includes('/feed/') || url.includes('/in/') || url.includes('/search/')) {
@@ -713,7 +712,7 @@ export class BotService {
                             }
                             const msg_body = await msg.$('.msg-s-event-listitem .msg-s-event__content .msg-s-event-listitem__body')
                             const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
-                        
+
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time));
                             const _msg = msg_text.replace(/\+/g, '');
                             if (_msg == first_msg) {
@@ -815,10 +814,25 @@ export class BotService {
             // check sidebar msg box end [for] 
 
             // sidebar message result
-            console.log(">>new message list", new_messages)  
+            console.log(">>new message list", new_messages)
 
             await my_page.reload();
             my_page.waitForTimeout(2000);
+
+            if (!this.isLoginOn()) {
+                // await my_page.close();
+                console.log(">>loged out")
+                try {
+                    this.cached_linked_browser.browser = null;
+                    if (this.cached_linked_browser.page) {
+                        this.cached_linked_browser.page.close();
+                    }
+                    this.cached_linked_browser.page = null;
+                } catch (e) {
+
+                } 
+                return;
+            }
 
             // ---------------------------^^^  send core message based on user's new message on the linkedin ^^^----------------------------------
             // there is no limitation in replying 
@@ -840,6 +854,22 @@ export class BotService {
 
             await my_page.reload();
             my_page.waitForTimeout(2000);
+
+            if (!this.isLoginOn()) {
+                // await my_page.close();
+                console.log(">>loged out")
+                try {
+                    this.cached_linked_browser.browser = null;
+                    if (this.cached_linked_browser.page) {
+                        this.cached_linked_browser.page.close();
+                    }
+                    this.cached_linked_browser.page = null;
+                } catch (e) {
+
+                } 
+                return;
+            }
+            this.prs_read_idx = this.prs_read_idx + 1;
 
             // ---------------------------^^^  send inquire and follow  messages ^^^------------------------------------
             // read chat list from linked_in_chat DB and process 4 messages per once, 4 msgs per 10 mins, 24 msgs per 1 hour, max 576 msgs per day
