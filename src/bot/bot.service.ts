@@ -94,6 +94,7 @@ export class BotService {
             this.cached_linked_browser.browser = null;
             this.cached_linked_browser.page = null;
             console.log(">>>rest time now")
+            this.prs_read_idx = 0;
         }
     }
 
