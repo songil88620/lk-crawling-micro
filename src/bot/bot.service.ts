@@ -131,7 +131,7 @@ export class BotService {
 
     conf() {
         return {
-            headless: false,
+            headless: 'new',
             args: [
                 // `--proxy-server=${proxy}`,
                 '--start-maximized',
