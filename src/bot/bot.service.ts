@@ -67,8 +67,8 @@ export class BotService {
     }
 
     async onModuleInit() {
-        // this.myIP = ip.address()
-        this.myIP = '134.209.202.191';
+        this.myIP = ip.address()
+        // this.myIP = '134.209.202.191';
         const _now = new Date();
         const _h_now = _now.getHours();
 
@@ -87,7 +87,7 @@ export class BotService {
         const _now = new Date();
         const _h_now = _now.getHours();
         console.log(">>>current time___", _h_now)
-        if ((_h_now >= 8 && _h_now < 20 && this.login_fail <= 5) || true) {
+        if ((_h_now >= 8 && _h_now < 22 && this.login_fail <= 5)) {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
             myCampaign.forEach((ac: any) => {
@@ -643,9 +643,9 @@ export class BotService {
                 }
                 this.side_idx = this.side_idx + 1;
                 var sid = this.side_idx;
-                if(this.side_idx % 10 == 0){
+                if(this.side_idx % 13 == 0){
                     console.log(">>>rest a bit")
-                    await this.delay(5000) 
+                    await this.delay(15000) 
                 }
                 if (this.side_idx % 30 == 0) {
                     if (new_msg_count == 0) {
