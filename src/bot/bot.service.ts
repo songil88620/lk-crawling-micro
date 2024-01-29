@@ -25,6 +25,8 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin())
 var ip = require('ip');
+var process = require('process')
+
 
 interface LinkedInBrowser {
     id: number, // linkedin account id
@@ -47,6 +49,10 @@ export class BotService {
     public prs_total_len = 0;
     public people_btn = false;
 
+    public side_idx = 0;
+    public start_time = 0;
+    public notool_msg = 0;
+
     constructor(
         private mailService: MailService,
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
@@ -61,30 +67,32 @@ export class BotService {
     }
 
     async onModuleInit() {
-        this.myIP = ip.address()
-        // this.myIP = '146.190.25.18';
+        // this.myIP = ip.address()
+        this.myIP = '134.209.202.191';
         const _now = new Date();
         const _h_now = _now.getHours();
 
-        // const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
-        // myCampaign.forEach((ac: any) => {
-        //     this.goToLinkedInLongMode(ac, 1)
-        // })
+        const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
+        myCampaign.forEach((ac: any) => {
+            this.start_time = Date.now();
+            this.goToLinkedInFastMode(ac)
+        })
 
     }
 
 
-    // run bot every 10 mins
-    @Cron(CronExpression.EVERY_10_MINUTES, { name: 'campaign bot' })
+    // run bot every 30 mins
+    @Cron(CronExpression.EVERY_30_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
         const _now = new Date();
         const _h_now = _now.getHours();
         console.log(">>>current time___", _h_now)
-        if ((_h_now >= 8 && _h_now < 20 && this.login_fail <= 5)) {
+        if ((_h_now >= 8 && _h_now < 20 && this.login_fail <= 5) || true) {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
             myCampaign.forEach((ac: any) => {
-                this.goToLinkedInLongMode(ac, this.prs_read_idx)
+                this.start_time = Date.now();
+                this.goToLinkedInFastMode(ac)
             })
         } else {
             this.login_fail = 0;
@@ -123,7 +131,7 @@ export class BotService {
 
     conf() {
         return {
-            headless: 'new',
+            headless: false,
             args: [
                 // `--proxy-server=${proxy}`,
                 '--start-maximized',
@@ -244,22 +252,6 @@ export class BotService {
                     const acceptBtn = await contentFrame_5.$(`#home button`);
                     await acceptBtn.click();
 
-                    // manual pass for puzzle
-                    // await page.waitForTimeout(4000);
-                    // const src = await contentFrame_5.evaluate(() => {
-                    //     const imgElement = document.querySelector('#game_challengeItem_image');
-                    //     return imgElement ? imgElement['src'] : null;
-                    // });
-                    // const data = {
-                    //     id: login_data.id,
-                    //     msg: {
-                    //         type: 'puzzle_request',
-                    //         data: src
-                    //     }
-                    // }
-                    // this.socketService.messageToUser(data)
-                    // return;
-
                     //auto bypass for puzzle
                     await page.waitForTimeout(1000);
                     const loops = [1, 2, 3, 4, 5, 6, 7];
@@ -326,6 +318,20 @@ export class BotService {
                         }
                         this.socketService.messageToUser(data)
                         this.login_fail = 0;
+                        const cookiesSet = await page.cookies();
+                        var session_id = "";
+                        var li_at = "";
+                        cookiesSet.forEach((c: any) => {
+                            if (c.name == 'JSESSIONID') {
+                                session_id = c.value;
+                                console.log(">>session_id", session_id)
+                            }
+                            if (c.name == 'li_at') {
+                                li_at = c.value;
+                                console.log(">>li_at", li_at)
+                            }
+                        })
+                        await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
                     } else {
                         const data = {
                             id: login_data.id,
@@ -572,8 +578,8 @@ export class BotService {
 
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
     // long mode checks over 100 messages from the sidebar neither that has new message badge or not.
-    async goToLinkedInLongMode(ac: CampaignType, mode: number) {
-        const start_time = Date.now();
+    async goToLinkedInFastMode(ac: CampaignType) {
+
         const campaign_id = ac.id;
         const linked_in_account_id = ac.linked_in_account_id;
         try {
@@ -611,6 +617,316 @@ export class BotService {
                 }
             }
 
+            // await my_page.reload();
+            // my_page.waitForTimeout(2000);
+
+            // ---------- linkedin has already logged in and start to work from now ----------
+            // check the messages from the right sidebar and read new message one by one after click them. 
+            await my_page.setViewport({
+                width: 1920,
+                height: 880,
+                deviceScaleFactor: 1,
+            });
+
+            await my_page.mouse.move(1800, 750);
+            await my_page.waitForTimeout(500);
+            // await this.sideListScroll(my_page, 1500);
+
+            // scroll down to get the last 80 messages
+            var time_out = false;
+            var new_msg_count = 0;
+            while (!time_out) {
+                if (this.isOver() || !this.isLoginOn()) {
+                    time_out = true
+                    console.log(">>time out or logout")
+                    break;
+                }
+                this.side_idx = this.side_idx + 1;
+                var sid = this.side_idx;
+                if(this.side_idx % 10 == 0){
+                    console.log(">>>rest a bit")
+                    await this.delay(5000) 
+                }
+                if (this.side_idx % 30 == 0) {
+                    if (new_msg_count == 0) {
+                        await my_page.reload();
+                        await this.delay(5000)
+                    }
+                    this.side_idx = this.side_idx - 1;
+                    new_msg_count++;
+                    sid = new_msg_count;
+                    if (new_msg_count == 10) { 
+                        new_msg_count = 0;
+                        this.side_idx = this.side_idx + 1;
+                        await my_page.reload();
+                        await this.delay(5000)
+                    }
+                }
+
+                try {
+                    console.log(">>sid, IDX: ", sid, this.side_idx) 
+                    try {
+                        // close message box if it is opened
+                        var count = await my_page.$$eval('.msg-convo-wrapper', elements => elements.length);
+                        while (count > 0) {
+                            count--;
+                            await my_page.waitForTimeout(500);
+                            const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
+                            await my_page.waitForSelector(close_btn_msgbox);
+                            await my_page.click(close_btn_msgbox);
+                            await this.delay(500)
+                        }
+                    } catch (e) {
+                        console.log(">>>error on close message boxes")
+                    }
+
+                    // click item from list 
+                    try {
+                        const item = '.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link:nth-child(' + sid + ')';
+                        await my_page.waitForSelector(item);
+                        await my_page.click(item);
+                    } catch (e) {
+                        var sc_count = Math.floor(this.side_idx / 10);
+                        while (sc_count > 0) {
+                            sc_count--;
+                            await this.sideListScroll(my_page, 1500);
+                        }
+                        this.side_idx = this.side_idx - 1;
+                        continue;
+                    }
+
+
+                    // read message from message box that has message
+                    await my_page.waitForTimeout(2000);
+                    const msgs = await my_page.$$('li.msg-s-message-list__event')
+
+                    var messages: MessageType[] = []
+                    var date = '';
+                    var time = '';
+                    var name = '';
+                    var my_name: any = '';
+                    var user_name: any = '';
+                    const u_name = await my_page.$('.msg-overlay-bubble-header .msg-overlay-bubble-header__title span')
+                    if (u_name) {
+                        var n = await (await u_name.getProperty('textContent')).jsonValue()
+                        user_name = this.beautySpace(n);
+                    }
+
+                    const first_name = user_name.split(" ")[0];
+                    const first_msg = ac.first_message.replace('{FirstName}', first_name);
+
+                    var member_id = null;
+                    try {
+                        var campaign_msg = false;
+                        for (const msg of msgs) {
+                            const date_ele = await msg.$('.msg-s-message-list__time-heading')
+                            if (date_ele) {
+                                date = await (await date_ele.getProperty('textContent')).jsonValue();
+                            }
+                            const time_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__timestamp')
+                            if (time_ele) {
+                                time = await (await time_ele.getProperty('textContent')).jsonValue()
+                            }
+                            const name_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__name')
+                            if (name_ele) {
+                                name = await (await name_ele.getProperty('textContent')).jsonValue()
+                            }
+                            const msg_body = await msg.$('.msg-s-event-listitem .msg-s-event__content .msg-s-event-listitem__body')
+                            const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
+
+                            const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time));
+                            const _msg = msg_text.replace(/\+/g, '');
+                            if (_msg == first_msg) {
+                                campaign_msg = true;
+                            }
+                            if (campaign_msg) {
+                                const msg_data: MessageType = {
+                                    createdAt: b_date['date'],
+                                    //stamp: b_date['stamp'],
+                                    //name: this.beautySpace(name),
+                                    role: this.beautySpace(name) == user_name ? 'user' : 'assistant',
+                                    content: _msg
+                                }
+                                messages.push(msg_data);
+                            }
+                        }
+
+                        // scroll up to get member profile link from the message box
+                        // await my_page.evaluate(() => document.querySelector('.msg-s-message-list').scrollBy({ top: -3000, behavior: 'smooth' }))
+                        // await my_page.waitForTimeout(200);
+                        // await my_page.evaluate(() => document.querySelector('.msg-s-message-list').scrollBy({ top: -3000, behavior: 'smooth' }))
+                        // await my_page.waitForTimeout(200);
+                        await this.msgBoxScroll(my_page, 3)
+
+                        // open profile to get member id 
+                        // in some case, faild in this section bcs network, need to make exception
+                        await my_page.waitForTimeout(2000);
+                        const profile_link = '.artdeco-entity-lockup__title .profile-card-one-to-one__profile-link'
+                        await my_page.waitForSelector(profile_link);
+                        await my_page.click(profile_link);
+
+                        // wait and get member id
+                        await my_page.waitForTimeout(2000);
+                        const profile_sect = '.scaffold-layout__main .artdeco-card:nth-child(1)';
+                        member_id = await my_page.$eval(profile_sect, (el: any) => {
+                            return el.getAttribute("data-member-id")
+                        });
+                        console.log(">>member id", member_id)
+                    } catch (e) { 
+                        console.log("sth went wrong 777")
+                    }
+
+                    // check message state for next step   
+
+                    if (messages.length > 0 && first_msg == messages[0].content) { 
+                        // open message
+                        if (messages.length == 1 || (messages.length == 2 && messages[1].role == 'user')) {
+                            const nc: MessageType[] = [
+                                {
+                                    role: 'assistant',
+                                    content: first_msg,
+                                    createdAt: messages[0].createdAt
+                                }
+                            ]
+                            const new_linked_in_chat: LinkedInChatType = {
+                                id: 0,
+                                chat_history: JSON.stringify(nc),
+                                prospect_id: member_id,
+                                prospection_campaign_id: ac.id,
+                                chat_status: ChatStatus.OPENING,
+                                linked_in_chat_urn: "",
+                                first_message_urn: "",
+                                automatic_answer: true,
+                                requires_human_intervention: false,
+                                follow_up_count: 0,
+                                updated_at: this.isNowTime(),
+                                created_at: messages[0].createdAt
+                            }
+                            await this.chatService.createNewChat(new_linked_in_chat);
+                        }
+                        // new incoming message
+                        if (messages[messages.length - 1].role == 'user') {
+                            const new_message = {
+                                member_id,
+                                messages
+                            }
+                            try {
+                                const linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(new_message.member_id, campaign_id);
+                                // console.log(">>>>LINK...", linked_in_chat)
+                                if (linked_in_chat != null &&
+                                    linked_in_chat.automatic_answer &&
+                                    (linked_in_chat.chat_status != ChatStatus.ACCEPTED && linked_in_chat.chat_status != ChatStatus.REJECTED)
+                                ) {
+                                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
+                                    await this.sendCoreMessage(linked_in_chat, prospect, new_message.messages, linked_in_account, ac)
+                                }
+                            } catch (e) {
+                                console.log(">>err occured while replying for new message")
+                            }
+                        }
+                        // follow, inquring, ... 
+                        else {
+                            const chat = await this.chatService.getChatByMidCid(member_id, campaign_id);
+                            try {
+                                if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING || chat.chat_status == ChatStatus.UNANSWERED || chat.chat_status == ChatStatus.NOANSWERED) {
+                                    // inquiring and follow type 4 message section
+                                    const prospect_id = chat.prospect_id;
+                                    const prospect: ProspectType = await this.prospectsService.findProspectById(prospect_id);
+                                    var res = false;
+                                    if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING) {
+                                        console.log(">>>send inquiring message")
+                                        res = await this.sendInquiringMessage(chat, linked_in_account, prospect);
+                                    } else {
+                                        console.log(">>>>>send follow4 message")
+                                        res = await this.sendFollow4Message(chat, linked_in_account, prospect);
+                                    }
+                                    console.log(">>RES..", res)
+                                } else {
+                                    // normal follow type section
+                                    const prospect_id = chat.prospect_id;
+                                    const prospect: ProspectType = await this.prospectsService.findProspectById(prospect_id);
+                                    const lastestChat = JSON.parse(chat.chat_history);
+                                    const require_follow_up = this.getFollowUpStatus(lastestChat, chat);
+                                    if (require_follow_up && chat.follow_up_count < 4) {
+                                        console.log(">>>send follow up message")
+                                        const res = await this.sendFollowUpMessage(chat, linked_in_account, prospect)
+                                    }
+                                }
+                            } catch (e) {
+
+                            }
+                        }
+                        this.notool_msg = 0;
+                    } else {
+                        this.notool_msg = this.notool_msg + 1;
+                        if (this.notool_msg == 15) {
+                            this.notool_msg = 0;
+                            this.side_idx = 0;
+                        }
+                    }
+
+                    // close message box for next
+                    try {
+                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(5)';
+                        await my_page.waitForSelector(close_btn_msgbox);
+                        await my_page.click(close_btn_msgbox);
+                    } catch (e) {
+                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(4)';
+                        await my_page.waitForSelector(close_btn_msgbox);
+                        await my_page.click(close_btn_msgbox);
+                    }
+
+                    await my_page.waitForTimeout(1000);
+                } catch (e) {
+                    console.log(">>ERR", e)
+
+                }
+            }
+            if (!this.isLoginOn()) {
+                console.log(">>>>>>RE login")
+                this.goToLinkedInFastMode(ac)
+            } 
+        } catch (e) {
+            console.log(">>>error 889", e)
+        }
+    }
+
+    async goToLinkedInLongMode(ac: CampaignType, mode: number) {
+        const campaign_id = ac.id;
+        const linked_in_account_id = ac.linked_in_account_id;
+        try {
+            const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id);
+            var my_page: any = null;
+            if (this.cached_linked_browser.browser != null) {
+                const page = await this.cached_linked_browser.page;
+                await page.waitForTimeout(5000);
+                await page.goto(`https://www.linkedin.com/feed/`, { timeout: 0 });
+                await page.waitForTimeout(5000);
+                if (page.url().includes('/feed/') || page.url().includes('/in/') || page.url().includes('/search/')) {
+                    my_page = page;
+                } else {
+                    const browser_old = this.cached_linked_browser.browser;
+                    if (browser_old != null) {
+                        await browser_old.close();
+                    }
+                    this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
+                    const res = await this.internalLogin(linked_in_account);
+                    if (res.success) {
+                        my_page = res.page
+                    } else {
+                        return;
+                    }
+                }
+            } else {
+                const res = await this.internalLogin(linked_in_account);
+                if (res.success) {
+                    console.log(">>logged in")
+                    my_page = res.page
+                } else {
+                    return;
+                }
+            }
+
             await my_page.reload();
             my_page.waitForTimeout(2000);
 
@@ -636,12 +952,11 @@ export class BotService {
             var new_messages: any[] = [];
             console.log(">>>new message member count", msg_vlist.length)
 
-
             const range_mux = [[0, 20], [21, 40], [41, 60], [61, 80], [81, 100], [101, 120]];
             const _range = range_mux[mode % 6];
 
             // check sidebar msg box start
-            // this loop is for checking the new messages and new opened messages 
+            // this loop is for checking the new messages and new opened messages
             var i = 0;
             for (const msg_v of msg_vlist) {
                 // break;
@@ -758,18 +1073,6 @@ export class BotService {
                         console.log("sth went wrong")
                     }
 
-
-                    // close message box for next
-                    try {
-                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(5)';
-                        await my_page.waitForSelector(close_btn_msgbox);
-                        await my_page.click(close_btn_msgbox);
-                    } catch (e) {
-                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(4)';
-                        await my_page.waitForSelector(close_btn_msgbox);
-                        await my_page.click(close_btn_msgbox);
-                    }
-
                     // check message state for next step   
 
                     if (first_msg == messages[0].content) {
@@ -809,6 +1112,18 @@ export class BotService {
                             new_messages.push(new_msg)
                         }
                     }
+
+                    // close message box for next
+                    try {
+                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(5)';
+                        await my_page.waitForSelector(close_btn_msgbox);
+                        await my_page.click(close_btn_msgbox);
+                    } catch (e) {
+                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(4)';
+                        await my_page.waitForSelector(close_btn_msgbox);
+                        await my_page.click(close_btn_msgbox);
+                    }
+
                     await my_page.waitForTimeout(2000);
                 } catch (e) {
 
@@ -885,7 +1200,7 @@ export class BotService {
             var cnt = 0;
             for (const chat of chats_data) {
                 console.log(">>>>START INQUERING...")
-                if (this.isOver(start_time) || !this.isLoginOn()) {
+                if (this.isOver() || !this.isLoginOn()) {
                     // await my_page.close();
                     console.log(">>time out")
                     return;
@@ -1267,6 +1582,26 @@ export class BotService {
     }
 
     async sendMessageAtLinkedIn(prospect: ProspectType, linked_in_account: LinkedInAccountType, newMsg: string) {
+        var my_page = this.cached_linked_browser.page;
+        try {
+            // focus message box
+            const mgs_box_t1 = await my_page.waitForSelector('.msg-form__contenteditable');
+            if (mgs_box_t1) {
+                await my_page.focus('.msg-form__contenteditable')
+            }
+            // type message on the form
+            await my_page.keyboard.type(newMsg, { delay: 5 });
+            await my_page.waitForTimeout(1000);
+            // click send message button 
+            await my_page.click('button.msg-form__send-button');
+
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async sendMessageAtLinkedInByNameSearch(prospect: ProspectType, linked_in_account: LinkedInAccountType, newMsg: string) {
         try {
             var my_page = this.cached_linked_browser.page;
             const search_name = prospect.first_name + " " + prospect.last_name;
@@ -1303,7 +1638,7 @@ export class BotService {
                 } catch (e) {
                     console.log(">>>selected filter no")
                 }
-            } 
+            }
 
             // select reciever from list
             await my_page.waitForTimeout(3000);
@@ -1379,138 +1714,20 @@ export class BotService {
         }
     }
 
-    async readFirstMsgAtLinkedIn(prospect: ProspectType, linked_in_account: LinkedInAccountType, newMsg: string) {
-        try {
-            var my_page = this.cached_linked_browser.page;
-            const search_name = prospect.first_name + " " + prospect.last_name;
-            const member_id = prospect.linked_in_member_id;
-            await my_page.waitForSelector('#global-nav-typeahead .search-global-typeahead__input');
-            const inputValue = await my_page.$eval('#global-nav-typeahead .search-global-typeahead__input', el => el.value);
-
-            await my_page.click('#global-nav-typeahead .search-global-typeahead__input');
-            for (let i = 0; i < 40; i++) {
-                await my_page.keyboard.press('Backspace');
-                await my_page.waitForTimeout(40);
-                await my_page.keyboard.press('Delete');
-                await my_page.waitForTimeout(40);
-            }
-            await my_page.waitForTimeout(1000);
-            // focus & type search name 
-            const mgs_box_t1 = await my_page.waitForSelector('#global-nav-typeahead .search-global-typeahead__input');
-            if (mgs_box_t1) {
-                await my_page.focus('#global-nav-typeahead .search-global-typeahead__input')
-            }
-            await my_page.keyboard.type(search_name, { delay: 100 });
-            await my_page.keyboard.press('Enter');
-            await my_page.waitForTimeout(1000);
-
-            // await my_page.type('#global-nav-typeahead .search-global-typeahead__input', search_name);
-            // await my_page.keyboard.press('Enter');  
-
-            // people filter button click
-            await my_page.waitForTimeout(2000);
-            const filter_btn = '#search-reusables__filters-bar > ul > li:nth-child(1) > button';
-            try {
-                // await my_page.waitForSelector(filter_btn);
-                await my_page.waitForSelector(filter_btn);
-                await my_page.click(filter_btn);
-                console.log(">>>selected filter")
-            } catch (e) {
-                console.log(">>>selected filter no")
-            }
-
-            // select reciever from list
-            await my_page.waitForTimeout(2000);
-            const element = await my_page.waitForSelector('[data-chameleon-result-urn="urn:li:member:' + member_id + '"]');
-            if (element) {
-                const button = await element.$('button');
-                if (button) {
-                    const text = await (await button.getProperty('textContent')).jsonValue()
-                    if (this.beautySpace(text) != 'Message') {
-                        console.log(">>>>not connected prospect")
-                        return { status: false, msg: [] };
-                    }
-
-                    // click message button
-                    await button.click();
-                    await my_page.waitForTimeout(2000);
-
-                    try {
-                        const msgs = await my_page.$$('li.msg-s-message-list__event')
-                        var messages: MessageType[] = []
-                        var date = '';
-                        var time = '';
-                        var name = '';
-                        var my_name: any = '';
-                        var user_name: any = '';
-
-                        const u_name = await my_page.$('.msg-overlay-bubble-header .msg-overlay-bubble-header__title span')
-                        if (u_name) {
-                            var n = await (await u_name.getProperty('textContent')).jsonValue()
-                            user_name = this.beautySpace(n);
-                        }
-
-                        for (const msg of msgs) {
-                            const date_ele = await msg.$('.msg-s-message-list__time-heading')
-                            if (date_ele) {
-                                date = await (await date_ele.getProperty('textContent')).jsonValue();
-                            }
-                            const time_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__timestamp')
-                            if (time_ele) {
-                                time = await (await time_ele.getProperty('textContent')).jsonValue()
-                            }
-                            const name_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__name')
-                            if (name_ele) {
-                                name = await (await name_ele.getProperty('textContent')).jsonValue()
-
-                            }
-                            const msg_body = await msg.$('.msg-s-event-listitem .msg-s-event__content .msg-s-event-listitem__body')
-                            const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
-                            const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time));
-                            const msg_data: MessageType = {
-                                createdAt: b_date['date'],
-                                //stamp: b_date['stamp'],
-                                //name: this.beautySpace(name),
-                                role: this.beautySpace(name) == user_name ? 'user' : 'assistant',
-                                content: msg_text.replace(/\+/g, '')
-                            }
-                            messages.push(msg_data);
-                        }
-
-                        console.log(">>>>>NEW MESSAGE", messages)
-
-                        // close message box for next
-                        await my_page.waitForTimeout(1000);
-                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
-                        await my_page.waitForSelector(close_btn_msgbox);
-                        await my_page.click(close_btn_msgbox);
-
-                        await my_page.waitForTimeout(1000);
-                        console.log(">>message box closed")
-                        return { status: true, msg: messages };
-                    } catch (e) {
-                        // close message box for next
-                        await my_page.waitForTimeout(500);
-                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
-                        await my_page.waitForSelector(close_btn_msgbox);
-                        await my_page.click(close_btn_msgbox);
-
-                        await my_page.waitForTimeout(2000);
-                        console.log(">>message box closed")
-                        return { status: false, msg: [] }
-                    }
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        } catch (e) {
-            console.log(">>err", e)
-            return false;
-        }
+    async sideListScroll(my_page: any, amount: number) {
+        await my_page.mouse.move(1800, 750);
+        await my_page.waitForTimeout(200);
+        await my_page.mouse.wheel({ deltaY: amount });
+        await my_page.waitForTimeout(1000);
     }
 
+    async msgBoxScroll(my_page: any, amount: number) {
+        while (amount > 0) {
+            await my_page.evaluate(() => document.querySelector('.msg-s-message-list').scrollBy({ top: -3000, behavior: 'smooth' }))
+            await my_page.waitForTimeout(500);
+            amount--;
+        }
+    }
 
     // ------------------------------------ ^_^ utils function ^_^ -------------------------------------------  
 
@@ -1762,13 +1979,13 @@ export class BotService {
         }
     }
 
-    delay(ms: number) {
+    async delay(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    isOver(start_time: number) {
+    isOver() {
         const now_time = Date.now();
-        if ((now_time - start_time) > 9.5 * 60 * 1000) {
+        if ((now_time - this.start_time) > 28.5 * 60 * 1000) {
             return true
         } else {
             return false
@@ -1787,6 +2004,8 @@ export class BotService {
             return false;
         }
     }
+
+
 
 
 

@@ -50,7 +50,11 @@ export class LinkedInChatsService {
     } catch (e) {
       console.log(">>err", chat.prospect_id)
     }
+  }
 
+  async getChatByMidCid(member_id:string, campaign_id:number){
+    const prospect = await this.prospectsService.findProspectByMemberId(member_id);
+    return await this.findOneChatByProspect(campaign_id, prospect.id);
   }
 
 }
