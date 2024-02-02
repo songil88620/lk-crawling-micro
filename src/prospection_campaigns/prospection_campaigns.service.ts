@@ -19,9 +19,13 @@ export class ProspectionCampaignsService {
 
 
   async findMyCampaign(ip: string) {
-    const lk_ac = await this.linkedinAccountService.findOneLinkdinAccountByIP(ip);
-    const lk_id = lk_ac.id;
-    return await this.campaignRepository.find({ where: { status: Status.ACTIVE, linked_in_account_id: lk_id } })
+    try {
+      const lk_ac = await this.linkedinAccountService.findOneLinkdinAccountByIP(ip);
+      const lk_id = lk_ac.id;
+      return await this.campaignRepository.find({ where: { status: Status.ACTIVE, linked_in_account_id: lk_id } })
+    } catch (e) {
+
+    } 
   }
 
 

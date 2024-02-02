@@ -41,9 +41,9 @@ export class LinkedInChatEntity {
     @Column()
     follow_up_count: number;  
 
-    @CreateDateColumn()
+    @Column()
     created_at: string;
 
-    @UpdateDateColumn()
+    @Column()
     updated_at: string;
 }

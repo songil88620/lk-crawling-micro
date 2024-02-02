@@ -73,7 +73,7 @@ export class BotService {
         const _h_now = _now.getHours();
 
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
-        myCampaign.forEach((ac: any) => {
+        myCampaign && myCampaign.forEach((ac: any) => {
             this.start_time = Date.now();
             this.goToLinkedInFastMode(ac)
             // this.goToLinkedInTest(ac)
@@ -86,7 +86,7 @@ export class BotService {
     @Cron(CronExpression.EVERY_30_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
         const _now = new Date();
-        const _h_now = _now.getHours(); 
+        const _h_now = _now.getHours();
         console.log(">>>current time___", _h_now)
         if ((_h_now >= 8 && _h_now < 22 && this.login_fail <= 5)) {
             this.people_btn = false;
@@ -847,7 +847,7 @@ export class BotService {
                         else {
                             const chat = await this.chatService.getChatByMidCid(member_id, campaign_id);
                             try {
-                                if (chat.automatic_answer) {
+                                if (chat.automatic_answer && chat.chat_status != ChatStatus.ACCEPTED) {
                                     if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING || chat.chat_status == ChatStatus.UNANSWERED || chat.chat_status == ChatStatus.NOANSWERED) {
                                         // inquiring and follow type 4 message section
                                         const prospect_id = chat.prospect_id;
@@ -1126,7 +1126,7 @@ export class BotService {
                 linked_in_chat.automatic_answer = false;
                 linked_in_chat.chat_history = JSON.stringify(lastestChat);
                 linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
+                linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
                 await this.chatService.updateChatOne(linked_in_chat);
                 // $linkedInAccount->user->notify(new PossibleSpamDetection($prospectionCampaign, $prospect));
                 return
@@ -1142,7 +1142,7 @@ export class BotService {
                 linked_in_chat.automatic_answer = false;
                 linked_in_chat.chat_history = JSON.stringify(lastestChat);
                 linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
+                linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
                 await this.chatService.updateChatOne(linked_in_chat);
                 const reason = 'Insulto detectado en campaña ' + ac.name;
                 // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1165,7 +1165,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
+                    linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Salida de contexto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1177,7 +1177,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
+                    linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Petición de contacto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1189,7 +1189,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
+                    linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Reunión presencial o telefónica detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));

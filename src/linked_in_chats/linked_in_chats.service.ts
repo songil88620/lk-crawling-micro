@@ -13,6 +13,30 @@ export class LinkedInChatsService {
     @Inject(forwardRef(() => ProspectsService)) private prospectsService: ProspectsService,
   ) { }
 
+
+  async onModuleInit() {
+
+    const chats: LinkedInChatType[] = await this.linkedinChatRepository.find();
+
+    // for (var ct of chats) {
+    //   const id = ct.id;
+    //   const ch = JSON.parse(ct.chat_history)
+    //   const createdAt = ch[0].createdAt;
+    //   ct.created_at = createdAt
+    //   if (createdAt) {
+    //     await this.linkedinChatRepository.update({ id }, ct)
+    //   }  
+    //   await this.delay(200);
+    // }
+    // console.log(">>DONE")
+
+
+  }
+
+  async delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   // this provides prospects(linkedin memeber id) list based on campaign id 
   async findOneChatByProspect(c_id: number, p_id: number) {
     return await this.linkedinChatRepository.findOne({ where: { prospection_campaign_id: c_id, prospect_id: p_id } });
@@ -52,9 +76,13 @@ export class LinkedInChatsService {
     }
   }
 
-  async getChatByMidCid(member_id:string, campaign_id:number){
+  async getChatByMidCid(member_id: string, campaign_id: number) {
     const prospect = await this.prospectsService.findProspectByMemberId(member_id);
     return await this.findOneChatByProspect(campaign_id, prospect.id);
   }
+
+
+
+
 
 }
