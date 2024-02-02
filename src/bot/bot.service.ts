@@ -818,7 +818,7 @@ export class BotService {
                                 automatic_answer: true,
                                 requires_human_intervention: false,
                                 follow_up_count: 0,
-                                updated_at: this.isNowTime(),
+                                updated_at: messages[0].createdAt,
                                 created_at: messages[0].createdAt
                             }
                             await this.chatService.createNewChat(new_linked_in_chat);
@@ -1046,7 +1046,7 @@ export class BotService {
             if (send_success) {
                 messages.push(answer);
                 linked_in_chat.chat_history = JSON.stringify(messages);
-                linked_in_chat.updated_at = this.isNowTime()
+                linked_in_chat.updated_at = this.getTimestamp();
                 await this.chatService.updateChatOne(linked_in_chat);
                 return true;
             } else {
@@ -1091,7 +1091,7 @@ export class BotService {
             if (send_success) {
                 messages.push(answer);
                 linked_in_chat.chat_history = JSON.stringify(messages);
-                linked_in_chat.updated_at = this.isNowTime()
+                linked_in_chat.updated_at = this.getTimestamp();
                 await this.chatService.updateChatOne(linked_in_chat);
                 return true;
             } else {
@@ -1126,7 +1126,7 @@ export class BotService {
                 linked_in_chat.automatic_answer = false;
                 linked_in_chat.chat_history = JSON.stringify(lastestChat);
                 linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                linked_in_chat.updated_at = this.isNowTime()
+                linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
                 await this.chatService.updateChatOne(linked_in_chat);
                 // $linkedInAccount->user->notify(new PossibleSpamDetection($prospectionCampaign, $prospect));
                 return
@@ -1142,7 +1142,7 @@ export class BotService {
                 linked_in_chat.automatic_answer = false;
                 linked_in_chat.chat_history = JSON.stringify(lastestChat);
                 linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                linked_in_chat.updated_at = this.isNowTime()
+                linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
                 await this.chatService.updateChatOne(linked_in_chat);
                 const reason = 'Insulto detectado en campaña ' + ac.name;
                 // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1165,7 +1165,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = this.isNowTime()
+                    linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Salida de contexto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1177,7 +1177,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = this.isNowTime()
+                    linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Petición de contacto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1189,7 +1189,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = this.isNowTime()
+                    linked_in_chat.updated_at = lastestChat[lastestChat.length-1].createdAt;
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Reunión presencial o telefónica detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1259,10 +1259,11 @@ export class BotService {
                 messages.push(answer);
                 linked_in_chat.chat_status = newChatStatus;
                 linked_in_chat.chat_history = JSON.stringify(messages);
-                linked_in_chat.updated_at = this.isNowTime()
+                linked_in_chat.updated_at = answer.createdAt
                 await this.chatService.updateChatOne(linked_in_chat);
                 return;
             } else {
+
                 return;
             }
         } catch (e) {
