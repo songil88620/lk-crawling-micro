@@ -847,7 +847,7 @@ export class BotService {
                         else {
                             const chat = await this.chatService.getChatByMidCid(member_id, campaign_id);
                             try {
-                                if (chat.automatic_answer && chat.chat_status != ChatStatus.ACCEPTED) {
+                                if (chat.automatic_answer) {
                                     if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING || chat.chat_status == ChatStatus.UNANSWERED || chat.chat_status == ChatStatus.NOANSWERED) {
                                         // inquiring and follow type 4 message section
                                         const prospect_id = chat.prospect_id;
