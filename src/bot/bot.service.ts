@@ -68,7 +68,7 @@ export class BotService {
 
     async onModuleInit() {
         this.myIP = ip.address()
-        // this.myIP = '134.209.202.191';
+        // this.myIP = '146.190.25.18';
         const _now = new Date();
         const _h_now = _now.getHours();
 
@@ -76,6 +76,7 @@ export class BotService {
         myCampaign.forEach((ac: any) => {
             this.start_time = Date.now();
             this.goToLinkedInFastMode(ac)
+            // this.goToLinkedInTest(ac)
         })
 
     }
@@ -85,7 +86,7 @@ export class BotService {
     @Cron(CronExpression.EVERY_30_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
         const _now = new Date();
-        const _h_now = _now.getHours();
+        const _h_now = _now.getHours(); 
         console.log(">>>current time___", _h_now)
         if ((_h_now >= 8 && _h_now < 22 && this.login_fail <= 5)) {
             this.people_btn = false;
@@ -576,6 +577,24 @@ export class BotService {
         }
     }
 
+    async internalLoginWithCookie(linked_in_account: LinkedInAccountType) {
+        const li_at = linked_in_account.li_at;
+        const browser = await puppeteer.launch(this.conf());
+        const page = await browser.newPage();
+        await page.setExtraHTTPHeaders({
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+        });
+        // await page.authenticate({ username, password });  
+
+        await page.setCookie({
+            name: 'li_at',
+            value: li_at,
+            domain: 'www.linkedin.com'
+        })
+        await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
+        console.log(">>>opened new page")
+    }
+
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
     // long mode checks over 100 messages from the sidebar neither that has new message badge or not.
     async goToLinkedInFastMode(ac: CampaignType) {
@@ -643,9 +662,9 @@ export class BotService {
                 }
                 this.side_idx = this.side_idx + 1;
                 var sid = this.side_idx;
-                if(this.side_idx % 13 == 0){
+                if (this.side_idx % 13 == 0) {
                     console.log(">>>rest a bit")
-                    await this.delay(15000) 
+                    await this.delay(15000)
                 }
                 if (this.side_idx % 30 == 0) {
                     if (new_msg_count == 0) {
@@ -655,7 +674,7 @@ export class BotService {
                     this.side_idx = this.side_idx - 1;
                     new_msg_count++;
                     sid = new_msg_count;
-                    if (new_msg_count == 10) { 
+                    if (new_msg_count == 10) {
                         new_msg_count = 0;
                         this.side_idx = this.side_idx + 1;
                         await my_page.reload();
@@ -664,7 +683,7 @@ export class BotService {
                 }
 
                 try {
-                    console.log(">>sid, IDX: ", sid, this.side_idx) 
+                    console.log(">>sid, IDX: ", sid, this.side_idx)
                     try {
                         // close message box if it is opened
                         var count = await my_page.$$eval('.msg-convo-wrapper', elements => elements.length);
@@ -772,13 +791,13 @@ export class BotService {
                             return el.getAttribute("data-member-id")
                         });
                         console.log(">>member id", member_id)
-                    } catch (e) { 
+                    } catch (e) {
                         console.log("sth went wrong 777")
                     }
 
                     // check message state for next step   
 
-                    if (messages.length > 0 && first_msg == messages[0].content) { 
+                    if (messages.length > 0 && first_msg == messages[0].content) {
                         // open message
                         if (messages.length == 1 || (messages.length == 2 && messages[1].role == 'user')) {
                             const nc: MessageType[] = [
@@ -828,28 +847,30 @@ export class BotService {
                         else {
                             const chat = await this.chatService.getChatByMidCid(member_id, campaign_id);
                             try {
-                                if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING || chat.chat_status == ChatStatus.UNANSWERED || chat.chat_status == ChatStatus.NOANSWERED) {
-                                    // inquiring and follow type 4 message section
-                                    const prospect_id = chat.prospect_id;
-                                    const prospect: ProspectType = await this.prospectsService.findProspectById(prospect_id);
-                                    var res = false;
-                                    if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING) {
-                                        console.log(">>>send inquiring message")
-                                        res = await this.sendInquiringMessage(chat, linked_in_account, prospect);
+                                if (chat.automatic_answer) {
+                                    if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING || chat.chat_status == ChatStatus.UNANSWERED || chat.chat_status == ChatStatus.NOANSWERED) {
+                                        // inquiring and follow type 4 message section
+                                        const prospect_id = chat.prospect_id;
+                                        const prospect: ProspectType = await this.prospectsService.findProspectById(prospect_id);
+                                        var res = false;
+                                        if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING) {
+                                            console.log(">>>send inquiring message")
+                                            res = await this.sendInquiringMessage(chat, linked_in_account, prospect);
+                                        } else {
+                                            console.log(">>>>>send follow4 message")
+                                            res = await this.sendFollow4Message(chat, linked_in_account, prospect);
+                                        }
+                                        console.log(">>RES..", res)
                                     } else {
-                                        console.log(">>>>>send follow4 message")
-                                        res = await this.sendFollow4Message(chat, linked_in_account, prospect);
-                                    }
-                                    console.log(">>RES..", res)
-                                } else {
-                                    // normal follow type section
-                                    const prospect_id = chat.prospect_id;
-                                    const prospect: ProspectType = await this.prospectsService.findProspectById(prospect_id);
-                                    const lastestChat = JSON.parse(chat.chat_history);
-                                    const require_follow_up = this.getFollowUpStatus(lastestChat, chat);
-                                    if (require_follow_up && chat.follow_up_count < 4) {
-                                        console.log(">>>send follow up message")
-                                        const res = await this.sendFollowUpMessage(chat, linked_in_account, prospect)
+                                        // normal follow type section
+                                        const prospect_id = chat.prospect_id;
+                                        const prospect: ProspectType = await this.prospectsService.findProspectById(prospect_id);
+                                        const lastestChat = JSON.parse(chat.chat_history);
+                                        const require_follow_up = this.getFollowUpStatus(lastestChat, chat);
+                                        if (require_follow_up && chat.follow_up_count < 4) {
+                                            console.log(">>>send follow up message")
+                                            const res = await this.sendFollowUpMessage(chat, linked_in_account, prospect)
+                                        }
                                     }
                                 }
                             } catch (e) {
@@ -885,13 +906,13 @@ export class BotService {
             if (!this.isLoginOn()) {
                 console.log(">>>>>>RE login")
                 this.goToLinkedInFastMode(ac)
-            } 
+            }
         } catch (e) {
             console.log(">>>error 889", e)
         }
     }
 
-    async goToLinkedInLongMode(ac: CampaignType, mode: number) {
+    async goToLinkedInTest(ac: CampaignType) {
         const campaign_id = ac.id;
         const linked_in_account_id = ac.linked_in_account_id;
         try {
@@ -910,340 +931,11 @@ export class BotService {
                         await browser_old.close();
                     }
                     this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
-                    const res = await this.internalLogin(linked_in_account);
-                    if (res.success) {
-                        my_page = res.page
-                    } else {
-                        return;
-                    }
+                    const res = await this.internalLoginWithCookie(linked_in_account);
+
                 }
             } else {
-                const res = await this.internalLogin(linked_in_account);
-                if (res.success) {
-                    console.log(">>logged in")
-                    my_page = res.page
-                } else {
-                    return;
-                }
-            }
-
-            await my_page.reload();
-            my_page.waitForTimeout(2000);
-
-            // ---------- linkedin has already logged in and start to work from now ----------
-            // check the messages from the right sidebar and read new message one by one after click them. 
-            await my_page.setViewport({
-                width: 1920,
-                height: 880,
-                deviceScaleFactor: 1,
-            });
-            await my_page.mouse.move(1800, 750);
-            await my_page.waitForTimeout(10000);
-
-            // scroll down to get the last 80 messages
-            const scroll_step = [1, 1, 1, 1, 1];
-            for (var i of scroll_step) {
-                await my_page.mouse.wheel({ deltaY: 1500 });
-                await my_page.waitForTimeout(1500);
-            }
-            await my_page.waitForTimeout(1000);
-
-            const msg_vlist = await my_page.$$('.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link');
-            var new_messages: any[] = [];
-            console.log(">>>new message member count", msg_vlist.length)
-
-            const range_mux = [[0, 20], [21, 40], [41, 60], [61, 80], [81, 100], [101, 120]];
-            const _range = range_mux[mode % 6];
-
-            // check sidebar msg box start
-            // this loop is for checking the new messages and new opened messages
-            var i = 0;
-            for (const msg_v of msg_vlist) {
-                // break;
-                if (mode % 6 == 5) {
-                    break;
-                }
-                i++;
-                if (!(_range[0] <= i && i < _range[1])) {
-                    continue;
-                }
-                try {
-                    console.log(">>IDX: ", i)
-                    try {
-                        // close message box if it is opened
-                        var count = await my_page.$$eval('.msg-convo-wrapper', elements => elements.length);
-                        while (count > 0) {
-                            count--;
-                            await my_page.waitForTimeout(500);
-                            const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
-                            await my_page.waitForSelector(close_btn_msgbox);
-                            await my_page.click(close_btn_msgbox);
-                            await this.delay(500)
-                        }
-                    } catch (e) {
-                        console.log(">>>error on close message boxes")
-                    }
-
-                    // click item from list 
-                    const item = '.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link:nth-child(' + i + ')';
-                    await my_page.waitForSelector(item);
-                    await my_page.click(item);
-
-                    // read message from message box that has message
-                    await my_page.waitForTimeout(2000);
-                    const msgs = await my_page.$$('li.msg-s-message-list__event')
-
-                    var messages: MessageType[] = []
-                    var date = '';
-                    var time = '';
-                    var name = '';
-                    var my_name: any = '';
-                    var user_name: any = '';
-                    const u_name = await my_page.$('.msg-overlay-bubble-header .msg-overlay-bubble-header__title span')
-                    if (u_name) {
-                        var n = await (await u_name.getProperty('textContent')).jsonValue()
-                        user_name = this.beautySpace(n);
-                    }
-
-                    const first_name = user_name.split(" ")[0];
-                    const first_msg = ac.first_message.replace('{FirstName}', first_name);
-
-                    var member_id = null;
-                    try {
-                        var campaign_msg = false;
-                        for (const msg of msgs) {
-                            const date_ele = await msg.$('.msg-s-message-list__time-heading')
-                            if (date_ele) {
-                                date = await (await date_ele.getProperty('textContent')).jsonValue();
-                            }
-                            const time_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__timestamp')
-                            if (time_ele) {
-                                time = await (await time_ele.getProperty('textContent')).jsonValue()
-                            }
-                            const name_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__name')
-                            if (name_ele) {
-                                name = await (await name_ele.getProperty('textContent')).jsonValue()
-                                if (i == 0) {
-                                    // my_name = this.beautySpace(name);
-                                }
-                            }
-                            const msg_body = await msg.$('.msg-s-event-listitem .msg-s-event__content .msg-s-event-listitem__body')
-                            const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
-
-                            const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time));
-                            const _msg = msg_text.replace(/\+/g, '');
-                            if (_msg == first_msg) {
-                                campaign_msg = true;
-                            }
-                            if (campaign_msg) {
-                                const msg_data: MessageType = {
-                                    createdAt: b_date['date'],
-                                    //stamp: b_date['stamp'],
-                                    //name: this.beautySpace(name),
-                                    role: this.beautySpace(name) == user_name ? 'user' : 'assistant',
-                                    content: _msg
-                                }
-                                messages.push(msg_data);
-                            }
-                        }
-
-                        // scroll up to get member profile link from the message box
-                        await my_page.evaluate(() => document.querySelector('.msg-s-message-list').scrollBy({ top: -3000, behavior: 'smooth' }))
-                        await my_page.waitForTimeout(200);
-                        await my_page.evaluate(() => document.querySelector('.msg-s-message-list').scrollBy({ top: -3000, behavior: 'smooth' }))
-                        await my_page.waitForTimeout(200);
-
-                        // open profile to get member id
-                        console.log(">>open profile to get member id")
-                        // in some case, faild in this section bcs network, need to make exception
-                        await my_page.waitForTimeout(2000);
-                        const profile_link = '.artdeco-entity-lockup__title .profile-card-one-to-one__profile-link'
-                        await my_page.waitForSelector(profile_link);
-                        await my_page.click(profile_link);
-
-                        // wait and get member id
-                        await my_page.waitForTimeout(2000);
-                        const profile_sect = '.scaffold-layout__main .artdeco-card:nth-child(1)';
-                        member_id = await my_page.$eval(profile_sect, (el: any) => {
-                            return el.getAttribute("data-member-id")
-                        });
-                        console.log(">>member id", member_id)
-                    } catch (e) {
-                        console.log(">>EE", e)
-                        console.log("sth went wrong")
-                    }
-
-                    // check message state for next step   
-
-                    if (first_msg == messages[0].content) {
-                        console.log(">>platform message")
-
-                        // open message
-                        if (messages.length == 1 || (messages.length == 2 && messages[1].role == 'user')) {
-                            const nc: MessageType[] = [
-                                {
-                                    role: 'assistant',
-                                    content: first_msg,
-                                    createdAt: messages[0].createdAt
-                                }
-                            ]
-                            const new_linked_in_chat: LinkedInChatType = {
-                                id: 0,
-                                chat_history: JSON.stringify(nc),
-                                prospect_id: member_id,
-                                prospection_campaign_id: ac.id,
-                                chat_status: ChatStatus.OPENING,
-                                linked_in_chat_urn: "",
-                                first_message_urn: "",
-                                automatic_answer: true,
-                                requires_human_intervention: false,
-                                follow_up_count: 0,
-                                updated_at: this.isNowTime(),
-                                created_at: this.isNowTime()
-                            }
-                            this.chatService.createNewChat(new_linked_in_chat);
-                        }
-                        // new message
-                        if (messages[messages.length - 1].role == 'user') {
-                            const new_msg = {
-                                member_id,
-                                messages
-                            }
-                            new_messages.push(new_msg)
-                        }
-                    }
-
-                    // close message box for next
-                    try {
-                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(5)';
-                        await my_page.waitForSelector(close_btn_msgbox);
-                        await my_page.click(close_btn_msgbox);
-                    } catch (e) {
-                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(4)';
-                        await my_page.waitForSelector(close_btn_msgbox);
-                        await my_page.click(close_btn_msgbox);
-                    }
-
-                    await my_page.waitForTimeout(2000);
-                } catch (e) {
-
-                }
-
-            }
-            // check sidebar msg box end [for] 
-
-            // sidebar message result
-            console.log(">>new message list", new_messages)
-
-            await my_page.reload();
-            my_page.waitForTimeout(2000);
-
-            if (!this.isLoginOn()) {
-                // await my_page.close();
-                console.log(">>loged out")
-                try {
-                    this.cached_linked_browser.browser = null;
-                    if (this.cached_linked_browser.page) {
-                        this.cached_linked_browser.page.close();
-                    }
-                    this.cached_linked_browser.page = null;
-                } catch (e) {
-
-                }
-                return;
-            }
-
-            // ---------------------------^^^  send core message based on user's new message on the linkedin ^^^----------------------------------
-            // there is no limitation in replying 
-            for (const new_message of new_messages) {
-                if (!this.isLoginOn()) {
-                    console.log(">>>log out state")
-                    return
-                }
-                try {
-                    const linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(new_message.member_id, campaign_id);
-                    // console.log(">>>>LINK...", linked_in_chat)
-                    if (linked_in_chat != null &&
-                        linked_in_chat.automatic_answer &&
-                        (linked_in_chat.chat_status != ChatStatus.ACCEPTED && linked_in_chat.chat_status != ChatStatus.REJECTED)
-                    ) {
-                        const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
-                        await this.sendCoreMessage(linked_in_chat, prospect, new_message.messages, linked_in_account, ac)
-                    }
-                } catch (e) {
-
-                }
-            }
-
-            await my_page.reload();
-            my_page.waitForTimeout(2000);
-
-            if (!this.isLoginOn()) {
-                // await my_page.close();
-                console.log(">>loged out")
-                try {
-                    this.cached_linked_browser.browser = null;
-                    if (this.cached_linked_browser.page) {
-                        this.cached_linked_browser.page.close();
-                    }
-                    this.cached_linked_browser.page = null;
-                } catch (e) {
-
-                }
-                return;
-            }
-            this.prs_read_idx = this.prs_read_idx + 1;
-
-            // ---------------------------^^^  send inquire and follow  messages ^^^------------------------------------
-            // read chat list from linked_in_chat DB and process 4 messages per once, 4 msgs per 10 mins, 24 msgs per 1 hour, max 576 msgs per day
-            const chats_data = await this.chatService.getChatForInquireAndFollow(campaign_id);
-            var cnt = 0;
-            for (const chat of chats_data) {
-                console.log(">>>>START INQUERING...")
-                if (this.isOver() || !this.isLoginOn()) {
-                    // await my_page.close();
-                    console.log(">>time out")
-                    return;
-                }
-                try {
-                    if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING || chat.chat_status == ChatStatus.UNANSWERED || chat.chat_status == ChatStatus.NOANSWERED) {
-                        // inquiring and follow type 4 message section
-                        const prospect_id = chat.prospect_id;
-                        const prospect: ProspectType = await this.prospectsService.findProspectById(prospect_id);
-                        var res = false;
-                        if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING) {
-                            console.log(">>>send inquiring message")
-                            res = await this.sendInquiringMessage(chat, linked_in_account, prospect);
-                        } else {
-                            console.log(">>>>>send follow4 message")
-                            res = await this.sendFollow4Message(chat, linked_in_account, prospect);
-                        }
-                        console.log(">>RES..", res)
-                        if (res) {
-                            cnt++;
-                        }
-                    } else {
-                        // normal follow type section
-                        const prospect_id = chat.prospect_id;
-                        const prospect: ProspectType = await this.prospectsService.findProspectById(prospect_id);
-                        const lastestChat = JSON.parse(chat.chat_history);
-                        const require_follow_up = this.getFollowUpStatus(lastestChat, chat);
-                        if (require_follow_up && chat.follow_up_count < 4) {
-                            console.log(">>>send follow up message")
-                            const res = await this.sendFollowUpMessage(chat, linked_in_account, prospect)
-                            if (res) {
-                                cnt++;
-                            }
-                        }
-                    }
-
-                    console.log(">>cnt...", cnt)
-                    if (cnt == 6) {
-                        // break;
-                    }
-                } catch (e) {
-
-                }
+                const res = await this.internalLoginWithCookie(linked_in_account);
             }
 
             return;
@@ -1376,8 +1068,6 @@ export class BotService {
                 content: '',
                 createdAt: this.getTimestamp()
             }
-
-            console.log(">>>follow8888", first_msg)
 
             linked_in_chat.chat_status = ChatStatus.NOANSWERED;
 
