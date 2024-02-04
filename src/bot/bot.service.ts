@@ -963,7 +963,8 @@ export class BotService {
                     linked_in_chat.follow_up_count = 4;
                     messages.push(answer);
                     linked_in_chat.chat_history = JSON.stringify(messages);
-                    linked_in_chat.updated_at = this.isNowTime()
+                    linked_in_chat.updated_at = this.getTimestamp();
+                    linked_in_chat.chat_status = ChatStatus.STANDBY;
                     await this.chatService.updateChatOne(linked_in_chat);
                     return true;
                 } else {
@@ -976,7 +977,7 @@ export class BotService {
                     content: ''
                 }
             ]
-            var newChatStatus = await this.detectOnHoldStatus(linked_in_chat, linked_in_account.user_id, linked_in_account.apikey);
+            var newChatStatus: any = await this.detectOnHoldStatus(linked_in_chat, linked_in_account.user_id, linked_in_account.apikey);
             if (newChatStatus == ChatStatus.ONHOLD || linked_in_chat.chat_status == ChatStatus.ONHOLD) {
                 payload[0].content = await this.promptService.generateFollowUpSchedulePrompt(prospect, linked_in_chat.follow_up_count, linked_in_account.user_id);
                 newChatStatus = ChatStatus.ONHOLD;
@@ -1001,7 +1002,8 @@ export class BotService {
                 linked_in_chat.follow_up_count = linked_in_chat.follow_up_count + 1;
                 messages.push(answer_2);
                 linked_in_chat.chat_history = JSON.stringify(messages);
-                linked_in_chat.updated_at = this.isNowTime()
+                linked_in_chat.updated_at = this.getTimestamp();
+                linked_in_chat.chat_status = newChatStatus;
                 await this.chatService.updateChatOne(linked_in_chat);
                 return true;
             } else {
