@@ -1448,7 +1448,8 @@ export class BotService {
                 const difference = (dayMapping[date_in] - currentDay - 7) % 7;
                 const targetDate = new Date(currentDate);
                 targetDate.setDate(currentDate.getDate() + difference);
-                const date_res = `${(targetDate.getMonth() + 1).toString().padStart(2, '0')}/${targetDate.getDate().toString().padStart(2, '0')}/${targetDate.getFullYear().toString().slice(-2)}`;
+                // const date_res = `${(targetDate.getMonth() + 1).toString().padStart(2, '0')}/${targetDate.getDate().toString().padStart(2, '0')}/${targetDate.getFullYear().toString().slice(-2)}`;
+                const date_res = targetDate.getFullYear().toString() + "-" + (targetDate.getMonth() + 1).toString().padStart(2, '0') + targetDate.getDate().toString().padStart(2, '0');
 
                 const [time, period] = time_in.split(' ');
                 let [hours, minutes] = time.split(':');
@@ -1486,7 +1487,8 @@ export class BotService {
                 const parts = d_in.split(' ');
                 const month = monthNumber[parts[0]];
                 const day = parts[1];
-                const date_res = `${month}/${day.padStart(2, '0')}/${year.toString().slice(-2)}`;
+                // const date_res = `${month}/${day.padStart(2, '0')}/${year.toString().slice(-2)}`;
+                const date_res = year.toString() + "-" + month + "-" + day.padStart(2, '0');
 
                 const [time, period] = time_in.split(' ');
                 let [hours, minutes] = time.split(':');
@@ -1519,6 +1521,7 @@ export class BotService {
         const year = currentDate.getFullYear();
         const hours = padZero(currentDate.getHours());
         const minutes = padZero(currentDate.getMinutes());
+        return year + "-" + month + "-" + day + " " + hours + ":" + minutes;
         return `${month}/${day}/${year.toString().slice(-2)} ${hours}:${minutes}`;
     }
 
