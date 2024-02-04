@@ -1449,7 +1449,7 @@ export class BotService {
                 const targetDate = new Date(currentDate);
                 targetDate.setDate(currentDate.getDate() + difference);
                 // const date_res = `${(targetDate.getMonth() + 1).toString().padStart(2, '0')}/${targetDate.getDate().toString().padStart(2, '0')}/${targetDate.getFullYear().toString().slice(-2)}`;
-                const date_res = targetDate.getFullYear().toString() + "-" + (targetDate.getMonth() + 1).toString().padStart(2, '0') + targetDate.getDate().toString().padStart(2, '0');
+                const date_res = targetDate.getFullYear().toString() + "-" + (targetDate.getMonth() + 1).toString().padStart(2, '0') + "-" + targetDate.getDate().toString().padStart(2, '0');
 
                 const [time, period] = time_in.split(' ');
                 let [hours, minutes] = time.split(':');

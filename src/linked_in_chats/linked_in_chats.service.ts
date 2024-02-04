@@ -16,13 +16,16 @@ export class LinkedInChatsService {
 
   async onModuleInit() {
 
-    const chats: LinkedInChatType[] = await this.linkedinChatRepository.find();
+    // const chats: LinkedInChatType[] = await this.linkedinChatRepository.find();
 
     // for (var ct of chats) {
     //   const id = ct.id;
-    //   const ch = JSON.parse(ct.chat_history)
-    //   const createdAt = ch[0].createdAt;
-    //   ct.created_at = createdAt
+    //   var createdAt = ct.created_at;
+    //   var updatedAt = ct.updated_at;
+    //   createdAt = "20" + createdAt.substr(6, 2) + "-" + createdAt.substr(0, 2) + "-" + createdAt.substr(3, 2) + " " + createdAt.substr(9, 5);
+    //   updatedAt = "20" + updatedAt.substr(6, 2) + "-" + updatedAt.substr(0, 2) + "-" + updatedAt.substr(3, 2) + " " + updatedAt.substr(9, 5);
+    //   ct.updated_at = updatedAt; 
+    //   ct.created_at = createdAt;
     //   if (createdAt) {
     //     await this.linkedinChatRepository.update({ id }, ct)
     //   }  
