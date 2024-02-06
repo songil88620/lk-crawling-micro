@@ -823,7 +823,7 @@ export class BotService {
                             }
                             await this.chatService.createNewChat(new_linked_in_chat);
                         }
-                        // new incoming message
+
                         if (messages[messages.length - 1].role == 'user') {
                             const new_message = {
                                 member_id,
@@ -1656,15 +1656,15 @@ export class BotService {
 
     isNowAfter(hour: number, times: string) {
         //const times = "01/23/23 05:23";
-        const parts = times.split(/[\s/:]+/);
-        const year = parseInt(parts[2], 10) + 2000;
-        const month = parseInt(parts[0], 10) - 1;
-        const day = parseInt(parts[1], 10);
+        const parts = times.split(/[ \-:]+/); // Split using space, hyphen, or colon
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
         const hours = parseInt(parts[3], 10);
         const minutes = parseInt(parts[4], 10);
         const msg_stamp = new Date(year, month, day, hours, minutes).getTime();
 
-        const now_stamp = Date.now()
+        const now_stamp = Date.now();
         const milli_diff = now_stamp - msg_stamp;
         const hour_diff = milli_diff / (1000 * 60 * 60);
 

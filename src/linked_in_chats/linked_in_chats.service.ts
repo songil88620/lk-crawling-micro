@@ -19,17 +19,25 @@ export class LinkedInChatsService {
     // const chats: LinkedInChatType[] = await this.linkedinChatRepository.find();
 
     // for (var ct of chats) {
-    //   const id = ct.id;
-    //   var createdAt = ct.created_at;
-    //   var updatedAt = ct.updated_at;
-    //   createdAt = "20" + createdAt.substr(6, 2) + "-" + createdAt.substr(0, 2) + "-" + createdAt.substr(3, 2) + " " + createdAt.substr(9, 5);
-    //   updatedAt = "20" + updatedAt.substr(6, 2) + "-" + updatedAt.substr(0, 2) + "-" + updatedAt.substr(3, 2) + " " + updatedAt.substr(9, 5);
-    //   ct.updated_at = updatedAt; 
-    //   ct.created_at = createdAt;
-    //   if (createdAt) {
+    //   try {
+    //     const id = ct.id;
+    //     if (id == 2178) {
+    //       continue;
+    //     }
+    //     var chat_history = JSON.parse(ct.chat_history);
+    //     chat_history.forEach((ch: any, idx: number) => {
+    //       var createdAt = ch.createdAt;
+    //       createdAt = "20" + createdAt.substr(6, 2) + "-" + createdAt.substr(0, 2) + "-" + createdAt.substr(3, 2) + " " + createdAt.substr(9, 5);
+    //       chat_history[idx].createdAt = createdAt;
+    //     });
+    //     ct.chat_history = JSON.stringify(chat_history);
     //     await this.linkedinChatRepository.update({ id }, ct)
-    //   }  
-    //   await this.delay(200);
+
+    //     await this.delay(200);
+    //   } catch (e) {
+
+    //   }
+
     // }
     // console.log(">>DONE")
 
