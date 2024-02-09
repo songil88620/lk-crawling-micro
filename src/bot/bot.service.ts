@@ -830,8 +830,8 @@ export class BotService {
                                 messages
                             }
                             try {
-                                const linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(new_message.member_id, campaign_id);
-                                // console.log(">>>>LINK...", linked_in_chat)
+                                var linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(new_message.member_id, campaign_id);
+                                // normal case
                                 if (linked_in_chat != null &&
                                     linked_in_chat.automatic_answer &&
                                     (linked_in_chat.chat_status != ChatStatus.ACCEPTED && linked_in_chat.chat_status != ChatStatus.REJECTED)
@@ -839,13 +839,31 @@ export class BotService {
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
                                     await this.sendCoreMessage(linked_in_chat, prospect, new_message.messages, linked_in_account, ac)
                                 }
+                                // human intervention case
+                                if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
+                                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
+                                    const msg_history = JSON.parse(linked_in_chat.chat_history)
+                                    var msg_last_one = msg_history[msg_history.length - 1];
+                                    var chats = new_message.messages;
+                                    if (msg_last_one.role == 'assistant') {
+                                        msg_last_one.createdAt = this.getTimestamp();
+                                        chats.push(msg_last_one);
+                                        const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
+                                        if (res) {
+                                            linked_in_chat.follow_up_count = 10;
+                                        }
+                                    }
+                                    linked_in_chat.chat_history = JSON.stringify(chats);
+                                    await this.chatService.updateChatOne(linked_in_chat);
+                                }
+
                             } catch (e) {
                                 console.log(">>err occured while replying for new message")
                             }
                         }
                         // follow, inquring, ... 
                         else {
-                            const chat = await this.chatService.getChatByMidCid(member_id, campaign_id);
+                            var chat = await this.chatService.getChatByMidCid(member_id, campaign_id);
                             try {
                                 if (chat.automatic_answer) {
                                     if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING || chat.chat_status == ChatStatus.UNANSWERED || chat.chat_status == ChatStatus.NOANSWERED) {
@@ -871,6 +889,17 @@ export class BotService {
                                             console.log(">>>send follow up message")
                                             const res = await this.sendFollowUpMessage(chat, linked_in_account, prospect)
                                         }
+                                    }
+                                }
+
+                                if (chat.requires_human_intervention && chat.follow_up_count != 10) {
+                                    const msg_history = JSON.parse(linked_in_chat.chat_history)
+                                    var msg_last_one = msg_history[msg_history.length - 1];
+                                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(member_id);
+                                    const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
+                                    if (res) {
+                                        chat.follow_up_count = 10;
+                                        await this.chatService.updateChatOne(chat)
                                     }
                                 }
                             } catch (e) {

@@ -23,9 +23,10 @@ export class ProspectionCampaignsService {
       const lk_ac = await this.linkedinAccountService.findOneLinkdinAccountByIP(ip);
       const lk_id = lk_ac.id;
       return await this.campaignRepository.find({ where: { status: Status.ACTIVE, linked_in_account_id: lk_id } })
+      //return await this.campaignRepository.find({ where: [{ status: Status.ACTIVE, linked_in_account_id: lk_id }, { requires_human_intervention: true, linked_in_account_id: lk_id }] })
     } catch (e) {
 
-    } 
+    }
   }
 
 
