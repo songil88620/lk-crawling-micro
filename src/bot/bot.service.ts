@@ -893,13 +893,15 @@ export class BotService {
                                 }
 
                                 if (chat.requires_human_intervention && chat.follow_up_count != 10) {
-                                    const msg_history = JSON.parse(linked_in_chat.chat_history)
+                                    const msg_history = JSON.parse(chat.chat_history)
                                     var msg_last_one = msg_history[msg_history.length - 1];
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(member_id);
-                                    const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
-                                    if (res) {
-                                        chat.follow_up_count = 10;
-                                        await this.chatService.updateChatOne(chat)
+                                    if (msg_last_one.role == 'assistant') {
+                                        const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
+                                        if (res) {
+                                            chat.follow_up_count = 10;
+                                            await this.chatService.updateChatOne(chat)
+                                        }
                                     }
                                 }
                             } catch (e) {
