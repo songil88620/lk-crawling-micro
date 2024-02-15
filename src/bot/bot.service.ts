@@ -87,7 +87,7 @@ export class BotService {
     async runCampaign() {
         const _now = new Date();
         const _h_now = _now.getHours();
-        console.log(">>>current time___", _h_now)
+        // console.log(">>>current time___", _h_now)
         if ((_h_now >= 8 && _h_now < 22 && this.login_fail <= 5)) {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
@@ -103,7 +103,7 @@ export class BotService {
             }
             this.cached_linked_browser.browser = null;
             this.cached_linked_browser.page = null;
-            console.log(">>>rest time now")
+            // console.log(">>>rest time now")
             this.prs_read_idx = 0;
         }
     }
@@ -171,13 +171,13 @@ export class BotService {
                 await browser_old.close();
             }
         } catch (e) {
-            console.log(">>>err", e)
+            // console.log(">>>err", e)
         }
     }
 
     async loginLinkedIn(login_data: LinkedinLoginDataType) {
         try {
-            console.log(">>>login", login_data)
+            // console.log(">>>login", login_data)
             const login_email = login_data.email;
             const login_password = login_data.password;
             const browser = await puppeteer.launch(this.conf());
@@ -192,7 +192,7 @@ export class BotService {
             await page.click('button.sign-in-form__submit-btn--full-width');
             await page.waitForTimeout(5000);
             this.msg_to_user(login_data.id, 'Processing...');
-            console.log(">>Url1", page.url())
+            // console.log(">>Url1", page.url())
             if (this.cached_linked_browser.browser != null) {
                 const browser_old = this.cached_linked_browser.browser;
                 if (browser_old != null) {
@@ -205,7 +205,7 @@ export class BotService {
                 browser: browser
             }
 
-            console.log(">>>", page.url())
+            // console.log(">>>", page.url())
             if (page.url().includes('/feed/')) {
                 const data = {
                     id: login_data.id,
@@ -220,7 +220,7 @@ export class BotService {
 
             if (page.url().includes('checkpoint/challenge/')) {
                 this.msg_to_user(login_data.id, 'Verification page loading...');
-                console.log(">>check image")
+                // console.log(">>check image")
                 // await page.waitForTimeout(5000);
                 var vcode = null;
                 try {
@@ -238,7 +238,7 @@ export class BotService {
                     this.socketService.messageToUser(data)
                     this.msg_to_user(login_data.id, 'Requiring verification code...');
                 } else {
-                    console.log(">>Url2", page.url())
+                    // console.log(">>Url2", page.url())
                     this.msg_to_user(login_data.id, 'Trying to solve the image puzzle...');
                     const frame_1 = await page.$("iframe[id='captcha-internal']");
                     const contentFrame_1 = await frame_1.contentFrame();
@@ -276,19 +276,19 @@ export class BotService {
                                 }
                             });
                             if (res.data.status == 'ready') {
-                                console.log(">>>res", res.data)
+                                // console.log(">>>res", res.data)
                                 const idx = res.data.solution.objects[0] + 1;
-                                console.log(">>idx", idx)
+                                // console.log(">>idx", idx)
                                 await contentFrame_5.click('#image' + idx + ' > a');
                             }
                             await page.waitForTimeout(2000);
                             this.msg_to_user(login_data.id, 'Solved puzzle No.' + l + "...");
                         }
                     } catch (e) {
-                        console.log(">>bypass")
+                        // console.log(">>bypass")
                     }
                     await page.waitForTimeout(3000);
-                    console.log(">>>page", page.url())
+                    // console.log(">>>page", page.url())
                     if (page.url().includes('checkpoint/challenge/')) {
                         this.msg_to_user(login_data.id, 'Verification page loading...');
                         try {
@@ -308,7 +308,7 @@ export class BotService {
                         return;
                     }
                     await page.waitForTimeout(1000);
-                    console.log(">>>page here", page.url())
+                    // console.log(">>>page here", page.url())
                     if (page.url().includes('/feed/')) {
                         const data = {
                             id: login_data.id,
@@ -325,11 +325,11 @@ export class BotService {
                         cookiesSet.forEach((c: any) => {
                             if (c.name == 'JSESSIONID') {
                                 session_id = c.value;
-                                console.log(">>session_id", session_id)
+                                // console.log(">>session_id", session_id)
                             }
                             if (c.name == 'li_at') {
                                 li_at = c.value;
-                                console.log(">>li_at", li_at)
+                                // console.log(">>li_at", li_at)
                             }
                         })
                         await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
@@ -347,7 +347,7 @@ export class BotService {
                 }
             }
         } catch (e) {
-            console.log(">>errr", e)
+            // console.log(">>errr", e)
         }
     }
 
@@ -417,15 +417,15 @@ export class BotService {
                                 }
                             });
                             if (res.data.status == 'ready') {
-                                console.log(">>>res", res.data)
+                                // console.log(">>>res", res.data)
                                 const idx = res.data.solution.objects[0] + 1;
-                                console.log(">>idx", idx)
+                                // console.log(">>idx", idx)
                                 await contentFrame_5.click('#image' + idx + ' > a');
                             }
                             await page.waitForTimeout(4000);
                         }
                     } catch (e) {
-                        console.log(">>bypass")
+                        // console.log(">>bypass")
                     }
                     await page.waitForTimeout(2000);
                     if (page.url().includes('checkpoint/challenge/')) {
@@ -510,17 +510,17 @@ export class BotService {
             cookiesSet.forEach((c: any) => {
                 if (c.name == 'JSESSIONID') {
                     session_id = c.value;
-                    console.log(">>session_id", session_id)
+                    // console.log(">>session_id", session_id)
                 }
                 if (c.name == 'li_at') {
                     li_at = c.value;
-                    console.log(">>li_at", li_at)
+                    // console.log(">>li_at", li_at)
                 }
             })
             await this.linkedinAccountService.updateLinkedCookies(linked_in_account.id, li_at, session_id)
             return { page: page, success: true }
         } else {
-            console.log(">>p..page.url()", page.url())
+            // console.log(">>p..page.url()", page.url())
             await page.waitForTimeout(45000);
             const frame_1 = await page.$("iframe[id='captcha-internal']");
             const contentFrame_1 = await frame_1.contentFrame();
@@ -534,7 +534,7 @@ export class BotService {
             const contentFrame_5 = await frame_5.contentFrame();
             const acceptBtn = await contentFrame_5.$(`#home button`);
             await acceptBtn.click();
-            console.log(">> clicked...")
+            // console.log(">> clicked...")
             //auto bypass for puzzle
             await page.waitForTimeout(4000);
             const loops = [1, 1, 1, 1, 1, 1, 1];
@@ -564,7 +564,7 @@ export class BotService {
                     await page.waitForTimeout(4000);
                 }
             } catch (e) {
-                console.log(">>bypass")
+                // console.log(">>bypass")
             }
             await page.waitForTimeout(3000);
             if (page.url().includes('/feed/')) {
@@ -592,7 +592,7 @@ export class BotService {
             domain: 'www.linkedin.com'
         })
         await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
-        console.log(">>>opened new page")
+        // console.log(">>>opened new page")
     }
 
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
@@ -602,7 +602,7 @@ export class BotService {
         const campaign_id = ac.id;
         const linked_in_account_id = ac.linked_in_account_id;
         try {
-            console.log(">>>lin", linked_in_account_id)
+            // console.log(">>>lin", linked_in_account_id)
             const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id);
             var my_page: any = null;
             if (this.cached_linked_browser.browser != null) {
@@ -626,10 +626,10 @@ export class BotService {
                     }
                 }
             } else {
-                console.log(">>>>inter login")
+                // console.log(">>>>inter login")
                 const res = await this.internalLogin(linked_in_account);
                 if (res.success) {
-                    console.log(">>logged in")
+                    // console.log(">>logged in")
                     my_page = res.page
                 } else {
                     return;
@@ -657,13 +657,13 @@ export class BotService {
             while (!time_out) {
                 if (this.isOver() || !this.isLoginOn()) {
                     time_out = true
-                    console.log(">>time out or logout")
+                    // console.log(">>time out or logout")
                     break;
                 }
                 this.side_idx = this.side_idx + 1;
                 var sid = this.side_idx;
                 if (this.side_idx % 13 == 0) {
-                    console.log(">>>rest a bit")
+                    // console.log(">>>rest a bit")
                     await this.delay(15000)
                 }
                 if (this.side_idx % 30 == 0) {
@@ -683,7 +683,7 @@ export class BotService {
                 }
 
                 try {
-                    console.log(">>sid, IDX: ", sid, this.side_idx)
+                    // console.log(">>sid, IDX: ", sid, this.side_idx)
                     try {
                         // close message box if it is opened
                         var count = await my_page.$$eval('.msg-convo-wrapper', elements => elements.length);
@@ -696,7 +696,7 @@ export class BotService {
                             await this.delay(500)
                         }
                     } catch (e) {
-                        console.log(">>>error on close message boxes")
+                        // console.log(">>>error on close message boxes")
                     }
 
                     // click item from list 
@@ -790,9 +790,9 @@ export class BotService {
                         member_id = await my_page.$eval(profile_sect, (el: any) => {
                             return el.getAttribute("data-member-id")
                         });
-                        console.log(">>member id", member_id)
+                        // console.log(">>member id", member_id)
                     } catch (e) {
-                        console.log("sth went wrong 777")
+                        // console.log("sth went wrong 777")
                     }
 
                     // check message state for next step   
@@ -841,10 +841,12 @@ export class BotService {
                                 }
                                 // human intervention case
                                 if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
+                                    console.log(">>>HUMAN................844")
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
                                     const msg_history = JSON.parse(linked_in_chat.chat_history)
                                     var msg_last_one = msg_history[msg_history.length - 1];
                                     var chats = new_message.messages;
+                                    console.log(">>>HUMAN................849", msg_last_one)
                                     if (msg_last_one.role == 'assistant') {
                                         msg_last_one.createdAt = this.getTimestamp();
                                         chats.push(msg_last_one);
@@ -858,7 +860,7 @@ export class BotService {
                                 }
 
                             } catch (e) {
-                                console.log(">>err occured while replying for new message")
+                                // console.log(">>err occured while replying for new message")
                             }
                         }
                         // follow, inquring, ... 
@@ -872,13 +874,13 @@ export class BotService {
                                         const prospect: ProspectType = await this.prospectsService.findProspectById(prospect_id);
                                         var res = false;
                                         if (chat.chat_status == ChatStatus.OPENING || chat.chat_status == ChatStatus.INQUIRING) {
-                                            console.log(">>>send inquiring message")
+                                            // console.log(">>>send inquiring message")
                                             res = await this.sendInquiringMessage(chat, linked_in_account, prospect);
                                         } else {
-                                            console.log(">>>>>send follow4 message")
+                                            // console.log(">>>>>send follow4 message")
                                             res = await this.sendFollow4Message(chat, linked_in_account, prospect);
                                         }
-                                        console.log(">>RES..", res)
+                                        // console.log(">>RES..", res)
                                     } else {
                                         // normal follow type section
                                         const prospect_id = chat.prospect_id;
@@ -886,17 +888,19 @@ export class BotService {
                                         const lastestChat = JSON.parse(chat.chat_history);
                                         const require_follow_up = this.getFollowUpStatus(lastestChat, chat);
                                         if (require_follow_up && chat.follow_up_count < 4) {
-                                            console.log(">>>send follow up message")
+                                            // console.log(">>>send follow up message")
                                             const res = await this.sendFollowUpMessage(chat, linked_in_account, prospect)
                                         }
                                     }
                                 }
 
                                 if (chat.requires_human_intervention && chat.follow_up_count != 10) {
+                                    console.log(">>>HUMAN................898")
                                     const msg_history = JSON.parse(chat.chat_history)
                                     var msg_last_one = msg_history[msg_history.length - 1];
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(member_id);
                                     if (msg_last_one.role == 'assistant') {
+                                        console.log(">>>HUMAN................903", msg_last_one.content)
                                         const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
                                         if (res) {
                                             chat.follow_up_count = 10;
@@ -930,16 +934,16 @@ export class BotService {
 
                     await my_page.waitForTimeout(1000);
                 } catch (e) {
-                    console.log(">>ERR", e)
+                    // console.log(">>ERR", e)
 
                 }
             }
             if (!this.isLoginOn()) {
-                console.log(">>>>>>RE login")
+                // console.log(">>>>>>RE login")
                 this.goToLinkedInFastMode(ac)
             }
         } catch (e) {
-            console.log(">>>error 889", e)
+            // console.log(">>>error 889", e)
         }
     }
 
@@ -971,7 +975,7 @@ export class BotService {
 
             return;
         } catch (e) {
-            console.log(">>>error", e)
+            // console.log(">>>error", e)
         }
     }
 
@@ -1116,7 +1120,7 @@ export class BotService {
                 linked_in_chat.chat_status = ChatStatus.REJECTED;
             }
             if (answer.content == '' || answer.content == lastMessage) {
-                console.log(">>>return here...")
+                // console.log(">>>return here...")
                 return false;
             }
             // send inquire message at the linkedin browser 
@@ -1141,7 +1145,7 @@ export class BotService {
             const user_id = linked_in_account.user_id;
             const timestamp = this.getTimestamp();
             const messages: MessageType[] = lastestChat;
-            console.log(">>>last chat", lastestChat)
+            // console.log(">>>last chat", lastestChat)
 
             const gpt_messages: GptMessageType[] = [];
             messages.forEach((m: MessageType) => {
@@ -1300,7 +1304,7 @@ export class BotService {
                 return;
             }
         } catch (e) {
-            console.log(">>>core message error", e)
+            // console.log(">>>core message error", e)
             return;
         }
     }
@@ -1358,9 +1362,9 @@ export class BotService {
                     await my_page.waitForSelector(filter_btn);
                     await my_page.click(filter_btn);
                     this.people_btn = true;
-                    console.log(">>>selected filter")
+                    // console.log(">>>selected filter")
                 } catch (e) {
-                    console.log(">>>selected filter no")
+                    // console.log(">>>selected filter no")
                 }
             }
 
@@ -1372,7 +1376,7 @@ export class BotService {
                 if (button) {
                     const text = await (await button.getProperty('textContent')).jsonValue()
                     if (this.beautySpace(text) != 'Message') {
-                        console.log(">>>>not connected prospect")
+                        // console.log(">>>>not connected prospect")
                         return false;
                     }
                     try {
@@ -1387,7 +1391,7 @@ export class BotService {
                             await this.delay(1500)
                         }
                     } catch (e) {
-                        console.log(">>>error on close message boxes")
+                        // console.log(">>>error on close message boxes")
                     }
 
                     // click message button
@@ -1412,18 +1416,18 @@ export class BotService {
                         await my_page.waitForSelector(close_btn_msgbox);
                         await my_page.click(close_btn_msgbox);
 
-                        console.log(">>message box closed")
+                        // console.log(">>message box closed")
                         return true;
                     } catch (e) {
                         // close message box for next
-                        console.log(">>error", e)
+                        // console.log(">>error", e)
                         await my_page.waitForTimeout(200);
                         const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
                         await my_page.waitForSelector(close_btn_msgbox);
                         await my_page.click(close_btn_msgbox);
 
                         await my_page.waitForTimeout(200);
-                        console.log(">>message box closed")
+                        // console.log(">>message box closed")
                         return false;
                     }
                 } else {
@@ -1433,7 +1437,7 @@ export class BotService {
                 return false;
             }
         } catch (e) {
-            console.log(">>err", e)
+            // console.log(">>err", e)
             return false;
         }
     }
@@ -1540,7 +1544,7 @@ export class BotService {
                 }
             }
         } catch (e) {
-            console.log(">>")
+            // console.log(">>")
         }
     }
 
@@ -1809,29 +1813,29 @@ export class BotService {
                             }
                         });
                         if (res.data.status == 'ready') {
-                            console.log(">>>res", res.data)
+                            // console.log(">>>res", res.data)
                             const idx = res.data.solution.objects[0] + 1;
-                            console.log(">>idx", idx)
+                            // console.log(">>idx", idx)
                             await contentFrame_5.click('#image' + idx + ' > a');
                         }
                         await page.waitForTimeout(4000);
                     }
 
                 } catch (e) {
-                    console.log(">>passed")
+                    // console.log(">>passed")
                 }
-                console.log(">>passed")
+                // console.log(">>passed")
 
             }
         } catch (e) {
-            console.log(">>errr", e)
+            // console.log(">>errr", e)
         }
     }
 
     // we don't use this manual puzzle to login
     async puzzleLinkedIn(login_data: LinkedinLoginDataType) {
         try {
-            console.log(">>>puzzle", login_data)
+            // console.log(">>>puzzle", login_data)
             const page = await this.cached_linked_browser.page;
             await page.waitForTimeout(2000);
             const frame_1 = await page.$("iframe[id='captcha-internal']");
@@ -1848,9 +1852,9 @@ export class BotService {
             const idx = login_data.puzzle;
             await contentFrame_5.click('#image' + idx + ' > a');
 
-            console.log(">>>>do actioin")
+            // console.log(">>>>do actioin")
             await page.waitForTimeout(10000);
-            console.log(">>>url do", page.url())
+            // console.log(">>>url do", page.url())
             if (page.url().includes('checkpoint/challenge/')) {
                 const data = {
                     id: login_data.id,
@@ -1898,7 +1902,7 @@ export class BotService {
 //             domain: 'www.linkedin.com'
 //         })
 //         await my_page.goto(`https://www.linkedin.com/`, { timeout: 0 });
-//         console.log(">>>opened new page")
+//         // console.log(">>>opened new page")
 
 //         const lkb = {
 //             id: linked_in_account_id,
@@ -1912,7 +1916,7 @@ export class BotService {
 //         return;
 //     }
 // } else {
-//     console.log(">>here sec")
+//     // console.log(">>here sec")
 
 // }
 
@@ -1953,7 +1957,7 @@ export class BotService {
 //         await page.type('#session_password', login_password);
 //         await page.click('button.sign-in-form__submit-btn--full-width');
 //         await page.waitForTimeout(5000); 
-//         console.log(">>>", page.url()) 
+//         // console.log(">>>", page.url()) 
 
 //         if (page.url().includes('checkpoint/challenge/')) {
 
@@ -1978,7 +1982,7 @@ export class BotService {
 
 //             const res = await axios.get(url)
 //             const id = res.data.split('|')[1];
-//             console.log(">>ID", id)
+//             // console.log(">>ID", id)
 
 //             setTimeout(async () => {
 //                 const url = 'https://2captcha.com/res.php?key=' + key + '&action=get&id=' + id;
@@ -1988,7 +1992,7 @@ export class BotService {
 
 //                 }
 //                 const v = code.substring(3);
-//                 console.log(">>v", v)   
+//                 // console.log(">>v", v)   
 //                 await page.evaluate((v) => {
 //                     const inputField = document.querySelector('input[name="captchaUserResponseToken"]');
 //                     if (inputField) {
@@ -2006,7 +2010,7 @@ export class BotService {
 
 //         }
 //     } catch (e) {
-//         console.log(">>errr", e)
+//         // console.log(">>errr", e)
 //     }
 // }
 
@@ -2014,7 +2018,7 @@ export class BotService {
 // manual solving puzzle
 // async puzzleLinkedIn(login_data: LinkedinLoginDataType) {
 //     try {
-//         console.log(">>>puzzle", login_data)
+//         // console.log(">>>puzzle", login_data)
 //         const cache_page_idx = this.cached_linked_browser.findIndex(item => item.id === login_data.id);
 //         const page = await this.cached_linked_browser[cache_page_idx].page;
 //         await page.waitForTimeout(2000);
@@ -2032,9 +2036,9 @@ export class BotService {
 //         const idx = login_data.puzzle;
 //         await contentFrame_5.click('#image' + idx + ' > a');
 
-//         console.log(">>>>do actioin")
+//         // console.log(">>>>do actioin")
 //         await page.waitForTimeout(10000);
-//         console.log(">>>url do", page.url())
+//         // console.log(">>>url do", page.url())
 //         if (page.url().includes('checkpoint/challenge/')) {
 //             const data = {
 //                 id: login_data.id,
@@ -2059,11 +2063,11 @@ export class BotService {
 //             cookiesSet.forEach((c: any) => {
 //                 if (c.name == 'JSESSIONID') {
 //                     session_id = c.value;
-//                     console.log(">>session_id", session_id)
+//                     // console.log(">>session_id", session_id)
 //                 }
 //                 if (c.name == 'li_at') {
 //                     li_at = c.value;
-//                     console.log(">>li_at", li_at)
+//                     // console.log(">>li_at", li_at)
 //                 }
 //             })
 //             await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
@@ -2084,7 +2088,7 @@ export class BotService {
 
 // const res = await axios.get(url)
 // const id = res.data.split('|')[1];
-// console.log(">>ID", id)
+// // console.log(">>ID", id)
 
 // await this.delay(40000);
 // var code = 'CAPCHA_NOT_READY';
@@ -2093,7 +2097,7 @@ export class BotService {
 //     const url_res = 'https://2captcha.com/res.php?key=' + key + '&action=get&id=' + id;
 //     const res_res = await axios.get(url_res)
 //     code = res_res.data;
-//     console.log(">>>code", code)
+//     // console.log(">>>code", code)
 //     await this.delay(10000);
 //     if (code != 'CAPCHA_NOT_READY') {
 //         break;
