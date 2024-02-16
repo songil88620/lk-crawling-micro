@@ -579,6 +579,7 @@ export class BotService {
 
     async internalLoginWithCookie(linked_in_account: LinkedInAccountType) {
         const li_at = linked_in_account.li_at;
+        console.log(">>>li", li_at)
         const browser = await puppeteer.launch(this.conf());
         const page = await browser.newPage();
         await page.setExtraHTTPHeaders({
@@ -592,7 +593,7 @@ export class BotService {
             domain: 'www.linkedin.com'
         })
         await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
-        // console.log(">>>opened new page")
+        console.log(">>>opened new page")
     }
 
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
@@ -663,7 +664,7 @@ export class BotService {
                 this.side_idx = this.side_idx + 1;
                 var sid = this.side_idx;
                 if (this.side_idx % 13 == 0) {
-                    // console.log(">>>rest a bit")
+                    console.log(">>>rest a bit")
                     await this.delay(15000)
                 }
                 if (this.side_idx % 30 == 0) {
@@ -683,7 +684,7 @@ export class BotService {
                 }
 
                 try {
-                    // console.log(">>sid, IDX: ", sid, this.side_idx)
+                    console.log(">>sid, IDX: ", sid, this.side_idx)
                     try {
                         // close message box if it is opened
                         var count = await my_page.$$eval('.msg-convo-wrapper', elements => elements.length);
@@ -915,7 +916,7 @@ export class BotService {
                         this.notool_msg = 0;
                     } else {
                         this.notool_msg = this.notool_msg + 1;
-                        if (this.notool_msg == 15) {
+                        if (this.notool_msg == 50) {
                             this.notool_msg = 0;
                             this.side_idx = 0;
                         }
@@ -970,6 +971,7 @@ export class BotService {
 
                 }
             } else {
+                console.log(">>hihi")
                 const res = await this.internalLoginWithCookie(linked_in_account);
             }
 
