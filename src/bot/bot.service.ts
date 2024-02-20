@@ -20,6 +20,7 @@ import { PromptDataService } from 'src/prompt_data/prompt_data.service';
 import { SocketService } from 'src/socket/socket.service';
 import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';
 import { Brackets } from 'typeorm';
+import { PromptMultiService } from 'src/prompt_data/prompt_multi.service';
 
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -60,7 +61,8 @@ export class BotService {
         @Inject(forwardRef(() => ProspectsService)) private prospectsService: ProspectsService,
         @Inject(forwardRef(() => ProspectProspectionCampaignService)) private ppcService: ProspectProspectionCampaignService,
         @Inject(forwardRef(() => LinkedInChatsService)) private chatService: LinkedInChatsService,
-        @Inject(forwardRef(() => PromptDataService)) private promptService: PromptDataService,
+        // @Inject(forwardRef(() => PromptDataService)) private promptService: PromptDataService,
+        @Inject(forwardRef(() => PromptMultiService)) private promptService: PromptMultiService,
         @Inject(forwardRef(() => SocketService)) private socketService: SocketService,
     ) {
 
@@ -771,11 +773,6 @@ export class BotService {
                             }
                         }
 
-                        // scroll up to get member profile link from the message box
-                        // await my_page.evaluate(() => document.querySelector('.msg-s-message-list').scrollBy({ top: -3000, behavior: 'smooth' }))
-                        // await my_page.waitForTimeout(200);
-                        // await my_page.evaluate(() => document.querySelector('.msg-s-message-list').scrollBy({ top: -3000, behavior: 'smooth' }))
-                        // await my_page.waitForTimeout(200);
                         await this.msgBoxScroll(my_page, 3)
 
                         // open profile to get member id 
@@ -842,12 +839,10 @@ export class BotService {
                                 }
                                 // human intervention case
                                 if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
-                                    console.log(">>>HUMAN................844")
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
                                     const msg_history = JSON.parse(linked_in_chat.chat_history)
                                     var msg_last_one = msg_history[msg_history.length - 1];
                                     var chats = new_message.messages;
-                                    console.log(">>>HUMAN................849", msg_last_one)
                                     if (msg_last_one.role == 'assistant') {
                                         msg_last_one.createdAt = this.getTimestamp();
                                         chats.push(msg_last_one);
@@ -896,12 +891,10 @@ export class BotService {
                                 }
 
                                 if (chat.requires_human_intervention && chat.follow_up_count != 10) {
-                                    console.log(">>>HUMAN................898")
                                     const msg_history = JSON.parse(chat.chat_history)
                                     var msg_last_one = msg_history[msg_history.length - 1];
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(member_id);
                                     if (msg_last_one.role == 'assistant') {
-                                        console.log(">>>HUMAN................903", msg_last_one.content)
                                         const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
                                         if (res) {
                                             chat.follow_up_count = 10;
@@ -935,8 +928,7 @@ export class BotService {
 
                     await my_page.waitForTimeout(1000);
                 } catch (e) {
-                    // console.log(">>ERR", e)
-
+                    // console.log(">>ERR", e) 
                 }
             }
             if (!this.isLoginOn()) {
@@ -968,10 +960,8 @@ export class BotService {
                     }
                     this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
                     const res = await this.internalLoginWithCookie(linked_in_account);
-
                 }
             } else {
-                console.log(">>hihi")
                 const res = await this.internalLoginWithCookie(linked_in_account);
             }
 
@@ -983,6 +973,8 @@ export class BotService {
 
     async sendFollowUpMessage(linked_in_chat: LinkedInChatType, linked_in_account: LinkedInAccountType, prospect: ProspectType) {
         try {
+            const user_id = linked_in_account.user_id;
+            const prompt_data = await this.promptService.findOne(user_id);
             var messages: MessageType[] = JSON.parse(linked_in_chat.chat_history);
             const lastMessage = messages[messages.length - 1].content;
             const first_msg = messages[0];
@@ -992,7 +984,13 @@ export class BotService {
                 createdAt: this.getTimestamp()
             }
             if (linked_in_chat.follow_up_count == 3) {
-                answer.content = "Puede que ahora no sea tu momento. Te dejo este mini-entrenamiento sobre cómo escalamos negocios de consultoría a 20k o más al mes utilizando inteligencia artificial y sistemas de automatización. Abrazo! Ver mini-entrenamiento aquí: https://bit.ly/minientrenamientoconsultorpro \n He pensado que podría ser de tu interés. \n Y si cambias de opinión y te gustaría que te ayudemos a escalar tu negocio, no dudes en ponerte en contacto conmigo. \nAbrazo!";
+                if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 != "") {
+                    answer.content = "Puede que ahora no sea tu momento. De momento te dejo este regalo.\n. Abrazo! Ver regalo aquí: " + prompt_data.q_11_2 + "\n He pensado que podría ser de tu interés. \n Y si cambias de opinión, no dudes en ponerte en contacto conmigo. \nAbrazo!";
+                } else if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 == "") {
+                    answer.content = "Puede que ahora no sea tu momento.\n Si cambias de opinión, no dudes en ponerte en contacto conmigo. \nAbrazo!";
+                } else {
+                    answer.content = "Puede que ahora no sea tu momento. De momento te dejo este regalo: " + prompt_data.q_11_1 + "\n. Abrazo! Ver regalo aquí: " + prompt_data.q_11_2 + "\n He pensado que podría ser de tu interés. \n Y si cambias de opinión, no dudes en ponerte en contacto conmigo. \nAbrazo!";
+                }
                 linked_in_chat.automatic_answer = true;
                 // send inquire message at the linkedin browser 
                 const send_success = await this.sendMessageAtLinkedIn(prospect, linked_in_account, answer.content)
@@ -1053,6 +1051,8 @@ export class BotService {
 
     async sendInquiringMessage(linked_in_chat: LinkedInChatType, linked_in_account: LinkedInAccountType, prospect: ProspectType) {
         try {
+            const user_id = linked_in_account.user_id;
+            const prompt_data = await this.promptService.findOne(user_id);
             var messages: MessageType[] = JSON.parse(linked_in_chat.chat_history);
             const lastMessage = messages[messages.length - 1].content;
             const first_msg = messages[0];
@@ -1064,15 +1064,21 @@ export class BotService {
             }
 
             if (this.isNowAfter(4, first_msg.createdAt)) {
-                answer.content = "Y si te digo que además podemos cerrar las ventas por ti también para que tu solo te dediques a atender a tus clientes… Y sabes que es lo más potente de todo… que podemos trabajar contigo a éxito… si tú no vendes, nosotros no cobramos (win-win total)… esto te ayudaría a escalar tu negocio?";
+                answer.content = prompt_data.q_10_1;
                 linked_in_chat.chat_status = ChatStatus.INQUIRING;
             }
             if (this.isNowAfter(28, first_msg.createdAt)) {
-                answer.content = "Me darías la oportunidad de explicarte cómo hacemos para agregar un mínimo de 20k/mes de facturación a nuestros clientes en una videollamada corta... conversamos? (No tienes nada que perder y más de 20k / mes para crecer)";
+                answer.content = prompt_data.q_10_2;
                 linked_in_chat.chat_status = ChatStatus.INQUIRING;
             }
             if (this.isNowAfter(52, first_msg.createdAt)) {
-                answer.content = "Puede que ahora no sea tu momento. Te dejo este mini-entrenamiento sobre cómo escalamos negocios de consultoría a 20k o más al mes utilizando inteligencia artificial y sistemas de automatización. Abrazo! Ver mini-entrenamiento aquí: https://bit.ly/minientrenamientoconsultorpro \n He pensado que podría ser de tu interés. \n Y si cambias de opinión y te gustaría que te ayudemos a escalar tu negocio, no dudes en ponerte en contacto conmigo. \nAbrazo!";
+                if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 != "") {
+                    answer.content = "Puede que ahora no sea tu momento. De momento te dejo este regalo.\n. Abrazo! Ver regalo aquí: " + prompt_data.q_11_2 + "\n He pensado que podría ser de tu interés. \n Y si cambias de opinión, no dudes en ponerte en contacto conmigo. \nAbrazo!";
+                } else if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 == "") {
+                    answer.content = "Puede que ahora no sea tu momento.\n Si cambias de opinión, no dudes en ponerte en contacto conmigo. \nAbrazo!";
+                } else {
+                    answer.content = "Puede que ahora no sea tu momento. De momento te dejo este regalo: " + prompt_data.q_11_1 + "\n. Abrazo! Ver regalo aquí: " + prompt_data.q_11_2 + "\n He pensado que podría ser de tu interés. \n Y si cambias de opinión, no dudes en ponerte en contacto conmigo. \nAbrazo!";
+                }
                 linked_in_chat.chat_status = ChatStatus.UNANSWERED
             }
             if (answer.content == '' || answer.content == lastMessage) {
@@ -1276,7 +1282,10 @@ export class BotService {
             var extendedLink = 'https://app.aippointing.com/schedule/extended?p=' + prospect.id;
             var extendedLinkPlaceholder = 'EXTENDED-CALENDAR-LINK';
             var rejectedLinkPlaceholder = 'REJECTED-LINK';
-            var rejectedLink = 'https://bit.ly/minientrenamientoconsultorpro';
+            // var rejectedLink = 'https://bit.ly/minientrenamientoconsultorpro';
+
+            const prompt_data = await this.promptService.findOne(user_id);
+            var rejectedLink = prompt_data.q_11_1;
 
             // if (isset($prospectionCampaign)) {
             link = link + '&c=' + ac.id;
@@ -1301,8 +1310,7 @@ export class BotService {
                 linked_in_chat.updated_at = answer.createdAt
                 await this.chatService.updateChatOne(linked_in_chat);
                 return;
-            } else {
-
+            } else { 
                 return;
             }
         } catch (e) {
@@ -1558,8 +1566,7 @@ export class BotService {
         const year = currentDate.getFullYear();
         const hours = padZero(currentDate.getHours());
         const minutes = padZero(currentDate.getMinutes());
-        return year + "-" + month + "-" + day + " " + hours + ":" + minutes;
-        return `${month}/${day}/${year.toString().slice(-2)} ${hours}:${minutes}`;
+        return year + "-" + month + "-" + day + " " + hours + ":" + minutes; 
     }
 
     isNowTime() {
@@ -1736,11 +1743,7 @@ export class BotService {
         } else {
             return false;
         }
-    }
-
-
-
-
+    }    
 
     // this is for testing login process to check bypass puzzle
     async loginTest() {

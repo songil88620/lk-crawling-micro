@@ -4,6 +4,7 @@ import { PromptDatumEntity } from './entities/prompt_datum.entity';
 import { BotModule } from 'src/bot/bot.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProspectsModule } from 'src/prospects/prospects.module';
+import { PromptMultiService } from './prompt_multi.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { ProspectsModule } from 'src/prospects/prospects.module';
     )
   ],
   controllers: [],
-  providers: [PromptDataService],
-  exports:[PromptDataService]
+  providers: [PromptDataService, PromptMultiService],
+  exports:[PromptDataService, PromptMultiService]
 })
 export class PromptDataModule {}
