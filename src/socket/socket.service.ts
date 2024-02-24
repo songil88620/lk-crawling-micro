@@ -15,16 +15,16 @@ var ip = require('ip');
 @Injectable()
 export class SocketService {
 
-    public socket = io('https://api.aippointing.com/')
-    private myIP = "";
-
+     
+    public socket = io(process.env.SOCKET_HOST)
+    private myIP = ""; 
     constructor(
         @Inject(forwardRef(() => BotService)) private botService: BotService,
     ) { }
 
     async onModuleInit() {
         this.connectSocket();
-        this.readEvent();
+        this.readEvent(); 
     }
 
     connectSocket() {
@@ -35,8 +35,7 @@ export class SocketService {
             });
 
         });
-        this.socket.on("disconnect", (reason) => {
-            console.log(">>>>disconnected", reason)
+        this.socket.on("disconnect", (reason) => { 
             setTimeout(() => {
                 this.connectSocket();
             }, 5000);
@@ -44,11 +43,8 @@ export class SocketService {
     }
 
     async readEvent() {
-        const my_ip = ip.address();
-        // const my_ip = '134.209.202.191'; 
-
-        this.socket.on('linkedin_login_request_micro_' + my_ip, (data: LinkedinLoginDataType) => {
-            console.log(">>>DETAIL", data)
+        const my_ip = ip.address();  
+        this.socket.on('linkedin_login_request_micro_' + my_ip, (data: LinkedinLoginDataType) => { 
             if (data.mode == 'login') {
                 this.botService.loginLinkedIn(data)
             }
@@ -64,8 +60,7 @@ export class SocketService {
         })
     }
 
-    async messageToUser(data: any) {
-        console.log(">>to user", data)
+    async messageToUser(data: any) { 
         this.socket.emit('msg_from_micro_sever', data)
     }
 

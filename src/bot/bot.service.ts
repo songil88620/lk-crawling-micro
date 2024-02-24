@@ -2,7 +2,7 @@ import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { LinkedInAccountsService } from 'src/linked_in_accounts/linked_in_accounts.service';
 import { LinkedInChatsService } from 'src/linked_in_chats/linked_in_chats.service';
-import { MailService } from 'src/mail/mail.service';
+
 import { ProspectProspectionCampaignService } from 'src/prospect_prospection_campaign/prospect_prospection_campaign.service';
 import { ProspectionCampaignsService } from 'src/prospection_campaigns/prospection_campaigns.service';
 import { ProspectsService } from 'src/prospects/prospects.service';
@@ -43,7 +43,7 @@ export class BotService {
     private state = false;
 
     // captcha api key for bypassing captcha.... 
-    private captcha_key = 'CAP-36E7BF9AEE1FCAE79456B4D6681DD2F4';
+    private captcha_key = process.env.CAP_KEY;
 
     public login_fail = 0;
     public prs_read_idx = 0;
@@ -55,13 +55,11 @@ export class BotService {
     public notool_msg = 0;
 
     constructor(
-        private mailService: MailService,
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
         @Inject(forwardRef(() => LinkedInAccountsService)) private linkedinAccountService: LinkedInAccountsService,
         @Inject(forwardRef(() => ProspectsService)) private prospectsService: ProspectsService,
         @Inject(forwardRef(() => ProspectProspectionCampaignService)) private ppcService: ProspectProspectionCampaignService,
         @Inject(forwardRef(() => LinkedInChatsService)) private chatService: LinkedInChatsService,
-        // @Inject(forwardRef(() => PromptDataService)) private promptService: PromptDataService,
         @Inject(forwardRef(() => PromptMultiService)) private promptService: PromptMultiService,
         @Inject(forwardRef(() => SocketService)) private socketService: SocketService,
     ) {
@@ -70,26 +68,21 @@ export class BotService {
 
     async onModuleInit() {
         this.myIP = ip.address()
-        // this.myIP = '146.190.25.18';
         const _now = new Date();
         const _h_now = _now.getHours();
-
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
         myCampaign && myCampaign.forEach((ac: any) => {
             this.start_time = Date.now();
             this.goToLinkedInFastMode(ac)
             // this.goToLinkedInTest(ac)
         })
-
     }
-
 
     // run bot every 30 mins
     @Cron(CronExpression.EVERY_30_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
         const _now = new Date();
         const _h_now = _now.getHours();
-        // console.log(">>>current time___", _h_now)
         if ((_h_now >= 8 && _h_now < 22 && this.login_fail <= 5)) {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
@@ -105,14 +98,12 @@ export class BotService {
             }
             this.cached_linked_browser.browser = null;
             this.cached_linked_browser.page = null;
-            // console.log(">>>rest time now")
             this.prs_read_idx = 0;
         }
     }
 
     @Cron(CronExpression.EVERY_10_SECONDS, { name: 'ch bot' })
     async runState() {
-
         if (this.cached_linked_browser.page) {
             const url = this.cached_linked_browser.page.url()
             if (url.includes('/feed/') || url.includes('/in/') || url.includes('/search/')) {
@@ -136,7 +127,6 @@ export class BotService {
         return {
             headless: 'new',
             args: [
-                // `--proxy-server=${proxy}`,
                 '--start-maximized',
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -1310,7 +1300,7 @@ export class BotService {
                 linked_in_chat.updated_at = answer.createdAt
                 await this.chatService.updateChatOne(linked_in_chat);
                 return;
-            } else { 
+            } else {
                 return;
             }
         } catch (e) {
@@ -1566,7 +1556,7 @@ export class BotService {
         const year = currentDate.getFullYear();
         const hours = padZero(currentDate.getHours());
         const minutes = padZero(currentDate.getMinutes());
-        return year + "-" + month + "-" + day + " " + hours + ":" + minutes; 
+        return year + "-" + month + "-" + day + " " + hours + ":" + minutes;
     }
 
     isNowTime() {
@@ -1743,7 +1733,7 @@ export class BotService {
         } else {
             return false;
         }
-    }    
+    }
 
     // this is for testing login process to check bypass puzzle
     async loginTest() {

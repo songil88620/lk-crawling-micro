@@ -1,5 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { MailModule } from 'src/mail/mail.module';
+import { Module, forwardRef } from '@nestjs/common'; 
 import { BotService } from './bot.service';
 import { ProspectionCampaignsModule } from 'src/prospection_campaigns/prospection_campaigns.module';
 import { LinkedInAccountsModule } from 'src/linked_in_accounts/linked_in_accounts.module';
@@ -10,8 +9,7 @@ import { PromptDataModule } from 'src/prompt_data/prompt_data.module';
 import { SocketModule } from 'src/socket/socket.module';
 
 @Module({
-  imports: [
-    MailModule,
+  imports: [ 
     forwardRef(() => ProspectionCampaignsModule),
     forwardRef(() => LinkedInAccountsModule),
     forwardRef(() => ProspectsModule),
