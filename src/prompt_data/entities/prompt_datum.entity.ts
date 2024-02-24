@@ -59,6 +59,9 @@ export class PromptDatumEntity {
     @Column({type:"text"})
     q_12_2: string;
 
+    @Column({type:"text"})
+    first_msg: string;
+
     @Column()
     lang: number; 
 
@@ -67,4 +70,5 @@ export class PromptDatumEntity {
 
     @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(20)", onUpdate: "CURRENT_TIMESTAMP(20)" })
     updated_at: Date;
+    
 }

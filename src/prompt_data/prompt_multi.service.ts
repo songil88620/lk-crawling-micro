@@ -11,8 +11,7 @@ import { UserService } from 'src/user/user.service';
 export class PromptMultiService {
     constructor(
         @InjectRepository(PromptDatumEntity) private promptRepository: Repository<PromptDatumEntity>,
-        @Inject(forwardRef(() => ProspectsService)) private prospectsService: ProspectsService,
-        @Inject(forwardRef(() => UserService)) private userService: UserService,
+        @Inject(forwardRef(() => ProspectsService)) private prospectsService: ProspectsService, 
     ) { }
 
     async findOne(user_id: any) {
