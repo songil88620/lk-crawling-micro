@@ -16,7 +16,7 @@ var ip = require('ip');
 export class SocketService {
 
      
-    public socket = io(process.env.SOCKET_HOST)
+    public socket = io('https://api.aippointing.com/')
     private myIP = ""; 
     constructor(
         @Inject(forwardRef(() => BotService)) private botService: BotService,

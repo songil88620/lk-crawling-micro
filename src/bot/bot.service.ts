@@ -43,7 +43,7 @@ export class BotService {
     private state = false;
 
     // captcha api key for bypassing captcha.... 
-    private captcha_key = process.env.CAP_KEY;
+    private captcha_key = 'CAP-36E7BF9AEE1FCAE79456B4D6681DD2F4';
 
     public login_fail = 0;
     public prs_read_idx = 0;

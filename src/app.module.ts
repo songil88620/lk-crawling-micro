@@ -28,11 +28,11 @@ import { SocketModule } from './socket/socket.module';
     ConfigModule.forRoot(),  
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: process.env.DB_HOST,
+      host: '64.227.42.65',
       port: 3306,
-      username: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
+      username: 'forge',
+      password: 'RuMwHDnB5cdz3Q8UXxtG',
+      database: 'aippointing',
       entities: [ 
         UserEntity,
         ProxyEntity,
