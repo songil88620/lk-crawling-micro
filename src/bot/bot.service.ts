@@ -169,7 +169,7 @@ export class BotService {
 
     async loginLinkedIn(login_data: LinkedinLoginDataType) {
         try {
-            // console.log(">>>login", login_data)
+            console.log(">>>login req...", login_data)
             const login_email = login_data.email;
             const login_password = login_data.password;
             const browser = await puppeteer.launch(this.conf());
@@ -184,7 +184,7 @@ export class BotService {
             await page.click('button.sign-in-form__submit-btn--full-width');
             await page.waitForTimeout(5000);
             this.msg_to_user(login_data.id, 'Processing...');
-            // console.log(">>Url1", page.url())
+            console.log(">>Url1", page.url())
             if (this.cached_linked_browser.browser != null) {
                 const browser_old = this.cached_linked_browser.browser;
                 if (browser_old != null) {
@@ -197,7 +197,7 @@ export class BotService {
                 browser: browser
             }
 
-            // console.log(">>>", page.url())
+            console.log(">>>", page.url())
             if (page.url().includes('/feed/')) {
                 const data = {
                     id: login_data.id,
@@ -212,7 +212,7 @@ export class BotService {
 
             if (page.url().includes('checkpoint/challenge/')) {
                 this.msg_to_user(login_data.id, 'Verification page loading...');
-                // console.log(">>check image")
+                console.log(">>check image")
                 // await page.waitForTimeout(5000);
                 var vcode = null;
                 try {
@@ -280,7 +280,7 @@ export class BotService {
                         // console.log(">>bypass")
                     }
                     await page.waitForTimeout(3000);
-                    // console.log(">>>page", page.url())
+                    console.log(">>>page", page.url())
                     if (page.url().includes('checkpoint/challenge/')) {
                         this.msg_to_user(login_data.id, 'Verification page loading...');
                         try {
@@ -300,7 +300,7 @@ export class BotService {
                         return;
                     }
                     await page.waitForTimeout(1000);
-                    // console.log(">>>page here", page.url())
+                    console.log(">>>page here", page.url())
                     if (page.url().includes('/feed/')) {
                         const data = {
                             id: login_data.id,
@@ -339,7 +339,7 @@ export class BotService {
                 }
             }
         } catch (e) {
-            // console.log(">>errr", e)
+            console.log(">>errr", e)
         }
     }
 
