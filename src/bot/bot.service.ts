@@ -368,6 +368,18 @@ export class BotService {
                 }
             }
             this.socketService.messageToUser(data)
+            const cookiesSet = await page.cookies();
+            var session_id = "";
+            var li_at = "";
+            cookiesSet.forEach((c: any) => {
+                if (c.name == 'JSESSIONID') {
+                    session_id = c.value;
+                }
+                if (c.name == 'li_at') {
+                    li_at = c.value;
+                }
+            })
+            await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
         } else {
             if (page.url().includes('checkpoint/challenge/')) {
                 var vcode = null;
