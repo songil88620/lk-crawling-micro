@@ -207,6 +207,18 @@ export class BotService {
                     }
                 }
                 this.socketService.messageToUser(data)
+                const cookiesSet = await page.cookies();
+                var session_id = "";
+                var li_at = "";
+                cookiesSet.forEach((c: any) => {
+                    if (c.name == 'JSESSIONID') {
+                        session_id = c.value;
+                    }
+                    if (c.name == 'li_at') {
+                        li_at = c.value;
+                    }
+                })
+                await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
                 return
             }
 
@@ -317,11 +329,9 @@ export class BotService {
                         cookiesSet.forEach((c: any) => {
                             if (c.name == 'JSESSIONID') {
                                 session_id = c.value;
-                                // console.log(">>session_id", session_id)
                             }
                             if (c.name == 'li_at') {
                                 li_at = c.value;
-                                // console.log(">>li_at", li_at)
                             }
                         })
                         await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
