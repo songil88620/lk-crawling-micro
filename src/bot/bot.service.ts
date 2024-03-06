@@ -220,9 +220,7 @@ export class BotService {
                 })
                 await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
                 return
-            }
-
-            if (page.url().includes('checkpoint/challenge/')) {
+            } else if (page.url().includes('checkpoint/challenge/')) {
                 this.msg_to_user(login_data.id, 'Verification page loading...');
                 console.log(">>check image")
                 // await page.waitForTimeout(5000);
@@ -347,6 +345,15 @@ export class BotService {
                         this.login_fail = 3;
                     }
                 }
+            } else {
+                const data = {
+                    id: login_data.id,
+                    msg: {
+                        type: 'login_failed',
+                        data: 'Wrong email or password.'
+                    }
+                }
+                this.socketService.messageToUser(data) 
             }
         } catch (e) {
             console.log(">>errr", e)
