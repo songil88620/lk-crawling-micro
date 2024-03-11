@@ -11,6 +11,7 @@ import { PromptDataModule } from 'src/prompt_data/prompt_data.module';
     TypeOrmModule.forFeature([UserEntity])
   ],
   controllers: [UserController],
-  providers: [UserService]
+  providers: [UserService],
+  exports: [UserService]
 })
 export class UserModule { }

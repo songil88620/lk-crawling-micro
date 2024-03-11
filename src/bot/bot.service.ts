@@ -21,6 +21,7 @@ import { SocketService } from 'src/socket/socket.service';
 import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';
 import { Brackets } from 'typeorm';
 import { PromptMultiService } from 'src/prompt_data/prompt_multi.service';
+import { UserService } from 'src/user/user.service';
 
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -54,6 +55,8 @@ export class BotService {
     public start_time = 0;
     public notool_msg = 0;
 
+    public lang = 0;
+
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
         @Inject(forwardRef(() => LinkedInAccountsService)) private linkedinAccountService: LinkedInAccountsService,
@@ -62,19 +65,21 @@ export class BotService {
         @Inject(forwardRef(() => LinkedInChatsService)) private chatService: LinkedInChatsService,
         @Inject(forwardRef(() => PromptMultiService)) private promptService: PromptMultiService,
         @Inject(forwardRef(() => SocketService)) private socketService: SocketService,
+        @Inject(forwardRef(() => UserService)) private userService: UserService,
     ) {
 
     }
 
     async onModuleInit() {
         this.myIP = ip.address()
+        // this.myIP = '111.1.1.1';
         const _now = new Date();
         const _h_now = _now.getHours();
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
         myCampaign && myCampaign.forEach((ac: any) => {
             this.start_time = Date.now();
             this.goToLinkedInFastMode(ac)
-            // this.goToLinkedInTest(ac)
+            // this.goToLinkedInFastModeTest(ac)
         })
     }
 
@@ -126,6 +131,7 @@ export class BotService {
     conf() {
         return {
             headless: 'new',
+            // headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
@@ -353,7 +359,7 @@ export class BotService {
                         data: 'Wrong email or password.'
                     }
                 }
-                this.socketService.messageToUser(data) 
+                this.socketService.messageToUser(data)
             }
         } catch (e) {
             console.log(">>errr", e)
@@ -617,15 +623,16 @@ export class BotService {
         console.log(">>>opened new page")
     }
 
-    // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
-    // long mode checks over 100 messages from the sidebar neither that has new message badge or not.
-    async goToLinkedInFastMode(ac: CampaignType) {
+    async goToLinkedInFastModeTest(ac: CampaignType) {
 
         const campaign_id = ac.id;
         const linked_in_account_id = ac.linked_in_account_id;
         try {
             // console.log(">>>lin", linked_in_account_id)
             const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id);
+            const user_id = linked_in_account.user_id;
+            const user = await this.userService.getUserById(user_id);
+            const lang = user.lang;
             var my_page: any = null;
             if (this.cached_linked_browser.browser != null) {
                 const page = await this.cached_linked_browser.page;
@@ -673,6 +680,18 @@ export class BotService {
             await my_page.waitForTimeout(500);
             // await this.sideListScroll(my_page, 1500);
 
+            const u_name = await my_page.$('.global-nav__nav .global-nav__primary-items li:nth-child(1) a span')
+            if (u_name) {
+                var n = await (await u_name.getProperty('textContent')).jsonValue()
+                const home = this.beautySpace(n);
+                if (home == 'Home') {
+                    this.lang = 0;
+                } else if (home == 'Inicio') {
+                    this.lang = 1;
+                } else {
+
+                }
+            }
             // scroll down to get the last 80 messages
             var time_out = false;
             var new_msg_count = 0;
@@ -686,6 +705,215 @@ export class BotService {
                 var sid = this.side_idx;
                 if (this.side_idx % 13 == 0) {
                     console.log(">>>rest a bit")
+                    await this.delay(15000)
+                }
+                if (this.side_idx % 30 == 0) {
+                    if (new_msg_count == 0) {
+                        await my_page.reload();
+                        await this.delay(5000)
+                    }
+                    this.side_idx = this.side_idx - 1;
+                    new_msg_count++;
+                    sid = new_msg_count;
+                    if (new_msg_count == 10) {
+                        new_msg_count = 0;
+                        this.side_idx = this.side_idx + 1;
+                        await my_page.reload();
+                        await this.delay(5000)
+                    }
+                }
+
+                try {
+                    console.log(">>sid, IDX: ", sid, this.side_idx)
+                    try {
+                        // close message box if it is opened
+                        var count = await my_page.$$eval('.msg-convo-wrapper', elements => elements.length);
+                        while (count > 0) {
+                            count--;
+                            await my_page.waitForTimeout(500);
+                            const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
+                            await my_page.waitForSelector(close_btn_msgbox);
+                            await my_page.click(close_btn_msgbox);
+                            await this.delay(500)
+                        }
+                    } catch (e) {
+                        // console.log(">>>error on close message boxes")
+                    }
+
+                    // click item from list 
+                    try {
+                        const item = '.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link:nth-child(' + sid + ')';
+                        await my_page.waitForSelector(item);
+                        await my_page.click(item);
+                    } catch (e) {
+                        var sc_count = Math.floor(this.side_idx / 10);
+                        while (sc_count > 0) {
+                            sc_count--;
+                            await this.sideListScroll(my_page, 1500);
+                        }
+                        this.side_idx = this.side_idx - 1;
+                        continue;
+                    }
+
+                    // read message from message box that has message
+                    await my_page.waitForTimeout(2000);
+                    const msgs = await my_page.$$('li.msg-s-message-list__event')
+                    var messages: MessageType[] = []
+                    var date = '';
+                    var time = '';
+                    var name = '';
+                    var my_name: any = '';
+                    var user_name: any = '';
+                    const u_name = await my_page.$('.msg-overlay-bubble-header .msg-overlay-bubble-header__title span')
+                    if (u_name) {
+                        var n = await (await u_name.getProperty('textContent')).jsonValue()
+                        user_name = this.beautySpace(n);
+                    }
+
+                    const first_name = user_name.split(" ")[0];
+                    const first_msg = ac.first_message.replace('{FirstName}', first_name);
+
+                    var member_id = null;
+                    try {
+                        var campaign_msg = false;
+                        for (const msg of msgs) {
+                            const date_ele = await msg.$('.msg-s-message-list__time-heading')
+                            if (date_ele) {
+                                date = await (await date_ele.getProperty('textContent')).jsonValue();
+                            }
+                            const time_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__timestamp')
+                            if (time_ele) {
+                                time = await (await time_ele.getProperty('textContent')).jsonValue()
+                            }
+                            const name_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__name')
+                            if (name_ele) {
+                                name = await (await name_ele.getProperty('textContent')).jsonValue()
+                            }
+                            const msg_body = await msg.$('.msg-s-event-listitem .msg-s-event__content .msg-s-event-listitem__body')
+                            const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
+                            const b_date = this.beautyDateEs(this.beautySpace(date), this.beautySpace(time));
+                            console.log(">>", b_date)
+                        }
+                        // console.log(">>member id", member_id)
+                    } catch (e) {
+                        // console.log("sth went wrong 777")
+                    }
+
+                    // check message state for next step    
+                    console.log(">>>", messages)
+
+                    // close message box for next
+                    try {
+                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(5)';
+                        await my_page.waitForSelector(close_btn_msgbox);
+                        await my_page.click(close_btn_msgbox);
+                    } catch (e) {
+                        const close_btn_msgbox = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:nth-child(4)';
+                        await my_page.waitForSelector(close_btn_msgbox);
+                        await my_page.click(close_btn_msgbox);
+                    }
+
+                    await my_page.waitForTimeout(1000);
+                } catch (e) {
+                    // console.log(">>ERR", e) 
+                }
+            }
+            if (!this.isLoginOn()) {
+                // console.log(">>>>>>RE login")
+                this.goToLinkedInFastMode(ac)
+            }
+        } catch (e) {
+            // console.log(">>>error 889", e)
+        }
+    }
+
+    // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
+    // long mode checks over 100 messages from the sidebar neither that has new message badge or not.
+    async goToLinkedInFastMode(ac: CampaignType) {
+
+        const campaign_id = ac.id;
+        const linked_in_account_id = ac.linked_in_account_id;
+        try {
+            // console.log(">>>lin", linked_in_account_id)
+            const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id);
+            // const user_id = linked_in_account.user_id;
+            // const user = await this.userService.getUserById(user_id);
+            // const lang = user.lang;
+
+            var my_page: any = null;
+            if (this.cached_linked_browser.browser != null) {
+                const page = await this.cached_linked_browser.page;
+                await page.waitForTimeout(5000);
+                await page.goto(`https://www.linkedin.com/feed/`, { timeout: 0 });
+                await page.waitForTimeout(5000);
+                if (page.url().includes('/feed/') || page.url().includes('/in/') || page.url().includes('/search/')) {
+                    my_page = page;
+                } else {
+                    const browser_old = this.cached_linked_browser.browser;
+                    if (browser_old != null) {
+                        await browser_old.close();
+                    }
+                    this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
+                    const res = await this.internalLogin(linked_in_account);
+                    if (res.success) {
+                        my_page = res.page
+                    } else {
+                        return;
+                    }
+                }
+            } else {
+                // console.log(">>>>inter login")
+                const res = await this.internalLogin(linked_in_account);
+                if (res.success) {
+                    // console.log(">>logged in")
+                    my_page = res.page
+                } else {
+                    return;
+                }
+            }
+
+            const u_name = await my_page.$('.global-nav__nav .global-nav__primary-items li:nth-child(1) a span')
+            if (u_name) {
+                var n = await (await u_name.getProperty('textContent')).jsonValue()
+                const home = this.beautySpace(n);
+                if (home == 'Home') {
+                    this.lang = 0;
+                } else if (home == 'Inicio') {
+                    this.lang = 1;
+                } else {
+
+                }
+            }
+
+            // await my_page.reload();
+            // my_page.waitForTimeout(2000);
+
+            // ---------- linkedin has already logged in and start to work from now ----------
+            // check the messages from the right sidebar and read new message one by one after click them. 
+            await my_page.setViewport({
+                width: 1920,
+                height: 880,
+                deviceScaleFactor: 1,
+            });
+
+            await my_page.mouse.move(1800, 750);
+            await my_page.waitForTimeout(500);
+            // await this.sideListScroll(my_page, 1500); 
+
+
+            // scroll down to get the last 80 messages
+            var time_out = false;
+            var new_msg_count = 0;
+            while (!time_out) {
+                if (this.isOver() || !this.isLoginOn()) {
+                    time_out = true
+                    // console.log(">>time out or logout")
+                    break;
+                }
+                this.side_idx = this.side_idx + 1;
+                var sid = this.side_idx;
+                if (this.side_idx % 13 == 0) {
+                    console.log(">>rest a bit to reduce the RAM load")
                     await this.delay(15000)
                 }
                 if (this.side_idx % 30 == 0) {
@@ -775,7 +1003,7 @@ export class BotService {
                             const msg_body = await msg.$('.msg-s-event-listitem .msg-s-event__content .msg-s-event-listitem__body')
                             const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
 
-                            const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time));
+                            const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
                             const _msg = msg_text.replace(/\+/g, '');
                             if (_msg == first_msg) {
                                 campaign_msg = true;
@@ -1492,42 +1720,32 @@ export class BotService {
         return str.trim().replace(/^\n+|\n+$/g, '');
     }
 
-    beautyDate(date_in: any, time_in: any) {
+    beautyDateEs(date_in: any, time_in: any) {
         try {
-            const weeks = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-
+            const weeks = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
             if (weeks.includes(date_in)) {
                 const dayMapping = {
-                    'Sunday': 0,
-                    'Monday': 1,
-                    'Tuesday': 2,
-                    'Wednesday': 3,
-                    'Thursday': 4,
-                    'Friday': 5,
-                    'Saturday': 6
+                    'domingo': 0,
+                    'lunes': 1,
+                    'martes': 2,
+                    'miércoles': 3,
+                    'jueves': 4,
+                    'viernes': 5,
+                    'sábado': 6
                 };
                 const currentDate = new Date();
                 const currentDay = currentDate.getDay();
                 const difference = (dayMapping[date_in] - currentDay - 7) % 7;
                 const targetDate = new Date(currentDate);
                 targetDate.setDate(currentDate.getDate() + difference);
-                // const date_res = `${(targetDate.getMonth() + 1).toString().padStart(2, '0')}/${targetDate.getDate().toString().padStart(2, '0')}/${targetDate.getFullYear().toString().slice(-2)}`;
                 const date_res = targetDate.getFullYear().toString() + "-" + (targetDate.getMonth() + 1).toString().padStart(2, '0') + "-" + targetDate.getDate().toString().padStart(2, '0');
 
                 const [time, period] = time_in.split(' ');
                 let [hours, minutes] = time.split(':');
                 hours = parseInt(hours, 10);
-                if (period === 'PM' && hours < 12) {
-                    hours += 12;
-                } else if (period === 'AM' && hours === 12) {
-                    hours = 0;
-                }
                 const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
-
                 const date = new Date(targetDate.getFullYear(), (targetDate.getMonth() + 1), targetDate.getDate(), hours, minutes);
                 const timestamp = date.getTime();
-
                 return {
                     date: date_res + " " + time_res,
                     stamp: timestamp
@@ -1535,38 +1753,29 @@ export class BotService {
 
             } else {
                 var d_in = date_in;
-                if (date_in == 'TODAY' || date_in == 'Today') {
+                if (date_in == 'HOY' || date_in == 'Hoy') {
                     const today = new Date();
-                    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
                     const month = monthNames[today.getMonth()];
                     const day = today.getDate();
                     d_in = `${month} ${day}`;
                 }
                 const monthNumber = {
-                    'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
-                    'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+                    'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04', 'may': '05', 'jun': '06',
+                    'jul': '07', 'ago': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12'
                 };
                 const currentDate = new Date();
                 const year = currentDate.getFullYear();
                 const parts = d_in.split(' ');
-                const month = monthNumber[parts[0]];
-                const day = parts[1];
-                // const date_res = `${month}/${day.padStart(2, '0')}/${year.toString().slice(-2)}`;
+                const month = monthNumber[parts[1]];
+                const day = parts[0];
                 const date_res = year.toString() + "-" + month + "-" + day.padStart(2, '0');
-
                 const [time, period] = time_in.split(' ');
                 let [hours, minutes] = time.split(':');
                 hours = parseInt(hours, 10);
-                if (period === 'PM' && hours < 12) {
-                    hours += 12;
-                } else if (period === 'AM' && hours === 12) {
-                    hours = 0;
-                }
                 const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
-
                 const date = new Date(year, month, day, hours, minutes);
                 const timestamp = date.getTime();
-
                 return {
                     date: date_res + " " + time_res,
                     stamp: timestamp
@@ -1574,6 +1783,153 @@ export class BotService {
             }
         } catch (e) {
             // console.log(">>")
+        }
+    }
+
+    beautyDate(date_in: any, time_in: any, lang: number) {
+        if (lang == 0) {
+            try {
+                const weeks = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                if (weeks.includes(date_in)) {
+                    const dayMapping = {
+                        'Sunday': 0,
+                        'Monday': 1,
+                        'Tuesday': 2,
+                        'Wednesday': 3,
+                        'Thursday': 4,
+                        'Friday': 5,
+                        'Saturday': 6
+                    };
+                    const currentDate = new Date();
+                    const currentDay = currentDate.getDay();
+                    const difference = (dayMapping[date_in] - currentDay - 7) % 7;
+                    const targetDate = new Date(currentDate);
+                    targetDate.setDate(currentDate.getDate() + difference);
+                    const date_res = targetDate.getFullYear().toString() + "-" + (targetDate.getMonth() + 1).toString().padStart(2, '0') + "-" + targetDate.getDate().toString().padStart(2, '0');
+
+                    const [time, period] = time_in.split(' ');
+                    let [hours, minutes] = time.split(':');
+                    hours = parseInt(hours, 10);
+                    if (period === 'PM' && hours < 12) {
+                        hours += 12;
+                    } else if (period === 'AM' && hours === 12) {
+                        hours = 0;
+                    }
+                    const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
+
+                    const date = new Date(targetDate.getFullYear(), (targetDate.getMonth() + 1), targetDate.getDate(), hours, minutes);
+                    const timestamp = date.getTime();
+                    return {
+                        date: date_res + " " + time_res,
+                        stamp: timestamp
+                    }
+
+                } else {
+                    var d_in = date_in;
+                    if (date_in == 'TODAY' || date_in == 'Today') {
+                        const today = new Date();
+                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                        const month = monthNames[today.getMonth()];
+                        const day = today.getDate();
+                        d_in = `${month} ${day}`;
+                    }
+                    const monthNumber = {
+                        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+                        'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+                    };
+                    const currentDate = new Date();
+                    const year = currentDate.getFullYear();
+                    const parts = d_in.split(' ');
+                    const month = monthNumber[parts[0]];
+                    const day = parts[1];
+                    const date_res = year.toString() + "-" + month + "-" + day.padStart(2, '0');
+                    const [time, period] = time_in.split(' ');
+                    let [hours, minutes] = time.split(':');
+                    hours = parseInt(hours, 10);
+                    if (period === 'PM' && hours < 12) {
+                        hours += 12;
+                    } else if (period === 'AM' && hours === 12) {
+                        hours = 0;
+                    }
+                    const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
+
+                    const date = new Date(year, month, day, hours, minutes);
+                    const timestamp = date.getTime();
+
+                    return {
+                        date: date_res + " " + time_res,
+                        stamp: timestamp
+                    }
+                }
+            } catch (e) {
+
+            }
+        } else if (lang == 1) {
+            try {
+                const weeks = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+                if (weeks.includes(date_in)) {
+                    const dayMapping = {
+                        'domingo': 0,
+                        'lunes': 1,
+                        'martes': 2,
+                        'miércoles': 3,
+                        'jueves': 4,
+                        'viernes': 5,
+                        'sábado': 6
+                    };
+                    const currentDate = new Date();
+                    const currentDay = currentDate.getDay();
+                    const difference = (dayMapping[date_in] - currentDay - 7) % 7;
+                    const targetDate = new Date(currentDate);
+                    targetDate.setDate(currentDate.getDate() + difference);
+                    const date_res = targetDate.getFullYear().toString() + "-" + (targetDate.getMonth() + 1).toString().padStart(2, '0') + "-" + targetDate.getDate().toString().padStart(2, '0');
+
+                    const [time, period] = time_in.split(' ');
+                    let [hours, minutes] = time.split(':');
+                    hours = parseInt(hours, 10);
+                    const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
+                    const date = new Date(targetDate.getFullYear(), (targetDate.getMonth() + 1), targetDate.getDate(), hours, minutes);
+                    const timestamp = date.getTime();
+                    return {
+                        date: date_res + " " + time_res,
+                        stamp: timestamp
+                    }
+
+                } else {
+                    var d_in = date_in;
+                    if (date_in == 'HOY' || date_in == 'Hoy') {
+                        const today = new Date();
+                        const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+                        const month = monthNames[today.getMonth()];
+                        const day = today.getDate();
+                        d_in = `${month} ${day}`;
+                    }
+                    const monthNumber = {
+                        'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04', 'may': '05', 'jun': '06',
+                        'jul': '07', 'ago': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12'
+                    };
+                    const currentDate = new Date();
+                    const year = currentDate.getFullYear();
+                    const parts = d_in.split(' ');
+                    const month = monthNumber[parts[1]];
+                    const day = parts[0];
+                    const date_res = year.toString() + "-" + month + "-" + day.padStart(2, '0');
+                    const [time, period] = time_in.split(' ');
+                    let [hours, minutes] = time.split(':');
+                    hours = parseInt(hours, 10);
+                    const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
+                    const date = new Date(year, month, day, hours, minutes);
+                    const timestamp = date.getTime();
+                    return {
+                        date: date_res + " " + time_res,
+                        stamp: timestamp
+                    }
+                }
+            } catch (e) {
+                // console.log(">>")
+            }
+        } else {
+
         }
     }
 

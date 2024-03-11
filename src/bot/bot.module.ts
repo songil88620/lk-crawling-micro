@@ -7,6 +7,7 @@ import { ProspectProspectionCampaignModule } from 'src/prospect_prospection_camp
 import { LinkedInChatsModule } from 'src/linked_in_chats/linked_in_chats.module';
 import { PromptDataModule } from 'src/prompt_data/prompt_data.module';
 import { SocketModule } from 'src/socket/socket.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [ 
@@ -16,7 +17,8 @@ import { SocketModule } from 'src/socket/socket.module';
     forwardRef(() => ProspectProspectionCampaignModule),
     forwardRef(() => LinkedInChatsModule),
     forwardRef(() => PromptDataModule),
-    forwardRef(() => SocketModule)
+    forwardRef(() => SocketModule),
+    forwardRef(() => UserModule)
   ],
   providers: [BotService],
   exports: [BotService,]
