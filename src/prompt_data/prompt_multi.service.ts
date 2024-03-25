@@ -177,7 +177,7 @@ export class PromptMultiService {
         if (followUpCount == 0) {
             prompt = prompt +
                 "###" +
-                "Ejemplo: Hola " + prospect.first_name + ", ando buscándote! recibiste la info que te envié?" +
+                "Ejemplo: Hola " + prospect.first_name + ", ando buscándote! recibiste mis mensajes?" +
                 "###" +
                 "Ejemplo: Perdona " + prospect.first_name + ", te llegaron mis mensajes anteriores?" +
                 "###" +
