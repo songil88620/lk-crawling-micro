@@ -1893,6 +1893,7 @@ export class BotService {
                     const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
                     const date = new Date(targetDate.getFullYear(), (targetDate.getMonth() + 1), targetDate.getDate(), hours, minutes);
                     const timestamp = date.getTime();
+                    console.log(">>out:",  date_res + " " + time_res)
                     return {
                         date: date_res + " " + time_res,
                         stamp: timestamp
@@ -1923,6 +1924,7 @@ export class BotService {
                     const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
                     const date = new Date(year, month, day, hours, minutes);
                     const timestamp = date.getTime();
+                    console.log(">>out:",  date_res + " " + time_res)
                     return {
                         date: date_res + " " + time_res,
                         stamp: timestamp
