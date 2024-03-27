@@ -1787,6 +1787,9 @@ export class BotService {
     }
 
     beautyDate(date_in: any, time_in: any, lang: number) {
+        console.log(">>date..........................", lang)
+        console.log(date_in);
+        console.log(time_in);
         if (lang == 0) {
             try {
                 const weeks = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
