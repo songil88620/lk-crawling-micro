@@ -71,16 +71,15 @@ export class BotService {
     }
 
     async onModuleInit() {
-        this.myIP = ip.address()
-        // this.myIP = '111.1.1.1';
+        this.myIP = ip.address(); 
         const _now = new Date();
         const _h_now = _now.getHours();
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
         myCampaign && myCampaign.forEach((ac: any) => {
             this.start_time = Date.now();
-            this.goToLinkedInFastMode(ac)
-            // this.goToLinkedInFastModeTest(ac)
+            this.goToLinkedInFastMode(ac) 
         })
+        // this.beautyDate('Hoy', '6:45', 1)
     }
 
     // run bot every 30 mins
@@ -1893,7 +1892,7 @@ export class BotService {
                     const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
                     const date = new Date(targetDate.getFullYear(), (targetDate.getMonth() + 1), targetDate.getDate(), hours, minutes);
                     const timestamp = date.getTime();
-                    console.log(">>out:",  date_res + " " + time_res)
+                    console.log(">>out:", date_res + " " + time_res)
                     return {
                         date: date_res + " " + time_res,
                         stamp: timestamp
@@ -1903,32 +1902,57 @@ export class BotService {
                     var d_in = date_in;
                     if (date_in == 'HOY' || date_in == 'Hoy') {
                         const today = new Date();
-                        const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+                        // const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                         const month = monthNames[today.getMonth()];
                         const day = today.getDate();
                         d_in = `${month} ${day}`;
-                    }
-                    const monthNumber = {
-                        'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04', 'may': '05', 'jun': '06',
-                        'jul': '07', 'ago': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12'
-                    };
-                    const currentDate = new Date();
-                    const year = currentDate.getFullYear();
-                    const parts = d_in.split(' ');
-                    const month = monthNumber[parts[1]];
-                    const day = parts[0];
-                    const date_res = year.toString() + "-" + month + "-" + day.padStart(2, '0');
-                    const [time, period] = time_in.split(' ');
-                    let [hours, minutes] = time.split(':');
-                    hours = parseInt(hours, 10);
-                    const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
-                    const date = new Date(year, month, day, hours, minutes);
-                    const timestamp = date.getTime();
-                    console.log(">>out:",  date_res + " " + time_res)
-                    return {
-                        date: date_res + " " + time_res,
-                        stamp: timestamp
-                    }
+
+                        const monthNumber = {
+                            'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+                            'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+                        };
+                        const currentDate = new Date();
+                        const year = currentDate.getFullYear();
+                        const parts = d_in.split(' ');
+                        const months = monthNumber[parts[0]];
+                        const days = parts[1];
+                        const date_res = year.toString() + "-" + months + "-" + days.padStart(2, '0');
+                        const [time, period] = time_in.split(' ');
+                        let [hours, minutes] = time.split(':');
+                        hours = parseInt(hours, 10);
+                        const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
+                        const date = new Date(year, months, days, hours, minutes);
+                        const timestamp = date.getTime();
+                        console.log(">>out:", date_res + " " + time_res)
+                        return {
+                            date: date_res + " " + time_res,
+                            stamp: timestamp
+                        }
+
+                    } else {
+                        const monthNumber = {
+                            'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04', 'may': '05', 'jun': '06',
+                            'jul': '07', 'ago': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12'
+                        };
+                        const currentDate = new Date();
+                        const year = currentDate.getFullYear();
+                        const parts = d_in.split(' ');
+                        const months = monthNumber[parts[1]];
+                        const days = parts[0];
+                        const date_res = year.toString() + "-" + months + "-" + days.padStart(2, '0');
+                        const [time, period] = time_in.split(' ');
+                        let [hours, minutes] = time.split(':');
+                        hours = parseInt(hours, 10);
+                        const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
+                        const date = new Date(year, months, days, hours, minutes);
+                        const timestamp = date.getTime();
+                        console.log(">>out:", date_res + " " + time_res)
+                        return {
+                            date: date_res + " " + time_res,
+                            stamp: timestamp
+                        }
+                    }   
                 }
             } catch (e) {
                 // console.log(">>")
