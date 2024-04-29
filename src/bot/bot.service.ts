@@ -2046,7 +2046,7 @@ export class BotService {
             }
             const res = await axios.post('https://api.openai.com/v1/chat/completions',
                 {
-                    'model': model,
+                    'model': 'gpt-3.5-turbo',
                     'messages': msg,
                     'temperature': temperature,
                     'max_tokens': 250,
