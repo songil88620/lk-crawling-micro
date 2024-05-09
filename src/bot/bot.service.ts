@@ -1063,7 +1063,10 @@ export class BotService {
                                 requires_human_intervention: false,
                                 follow_up_count: 0,
                                 updated_at: messages[0].createdAt,
-                                created_at: messages[0].createdAt
+                                created_at: messages[0].createdAt,
+                                hi_chats: '',
+                                hi_get: 0,
+                                err_msg: ''
                             }
                             await this.chatService.createNewChat(new_linked_in_chat);
                         }
@@ -1083,48 +1086,54 @@ export class BotService {
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
                                     await this.sendCoreMessage(linked_in_chat, prospect, new_message.messages, linked_in_account, ac)
                                 }
+
                                 // human intervention case
-                                // if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
-                                //     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
-                                //     var msg_history = JSON.parse(linked_in_chat.chat_history)
-                                //     var dif_len = msg_history.length - messages.length;
-                                //     msg_history.reverse();
-
-                                //     for (var msg_last_one of msg_history) {
-                                //         dif_len--;
-                                //         var chats = new_message.messages;
-                                //         if (msg_last_one.role == 'assistant') {
-                                //             msg_last_one.createdAt = this.getTimestamp();
-                                //             chats.push(msg_last_one);
-                                //             const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
-                                //             if (res) {
-                                //                 linked_in_chat.follow_up_count = 10;
-                                //             }
-                                //         }
-                                //         linked_in_chat.chat_history = JSON.stringify(chats);
-                                //         await this.chatService.updateChatOne(linked_in_chat);
-                                //         if (dif_len == 0) {
-                                //             break;
-                                //         }
-                                //     }
-                                // }
-
                                 if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
-                                    const msg_history = JSON.parse(linked_in_chat.chat_history)
-                                    var msg_last_one = msg_history[msg_history.length - 1];
-                                    var chats = new_message.messages;
-                                    if (msg_last_one.role == 'assistant') {
-                                        msg_last_one.createdAt = this.getTimestamp();
-                                        chats.push(msg_last_one);
-                                        const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
-                                        if (res) {
-                                            linked_in_chat.follow_up_count = 10;
-                                        }
+                                    var hi_chats: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
+                                    var db_chats: MessageType[] = JSON.parse(linked_in_chat.chat_history);
+                                    var tmp_hi: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
+                                    if (new_message.messages.length != db_chats.length) {
+                                        const hi_get = new_message.messages.length - db_chats.length;
+                                        linked_in_chat.hi_get = hi_get;
+                                        linked_in_chat.chat_history = JSON.stringify(new_message.messages);
+                                        this.chatService.updateChatOne(linked_in_chat);
                                     }
-                                    linked_in_chat.chat_history = JSON.stringify(chats);
-                                    await this.chatService.updateChatOne(linked_in_chat);
+
+                                    if (hi_chats.length > 0) {
+                                        for (var hc of hi_chats) {
+                                            const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content);
+                                            if (res) {
+                                                tmp_hi.shift();
+                                                db_chats.push(hc);
+                                                linked_in_chat.err_msg = '';
+                                                linked_in_chat.chat_history = JSON.stringify(db_chats);
+                                                linked_in_chat.hi_chats = JSON.stringify(tmp_hi);
+                                                this.chatService.updateChatOne(linked_in_chat);
+                                            } else {
+                                                linked_in_chat.err_msg = 'Error occured while sending message from linkedin account'
+                                                this.chatService.updateChatOne(linked_in_chat);
+                                            }
+                                        }
+                                    }                                     
                                 }
+
+                                // if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
+                                //     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
+                                //     const msg_history = JSON.parse(linked_in_chat.chat_history)
+                                //     var msg_last_one = msg_history[msg_history.length - 1];
+                                //     var chats = new_message.messages;
+                                //     if (msg_last_one.role == 'assistant') {
+                                //         msg_last_one.createdAt = this.getTimestamp();
+                                //         chats.push(msg_last_one);
+                                //         const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
+                                //         if (res) {
+                                //             linked_in_chat.follow_up_count = 10;
+                                //         }
+                                //     }
+                                //     linked_in_chat.chat_history = JSON.stringify(chats);
+                                //     await this.chatService.updateChatOne(linked_in_chat);
+                                // }
 
                             } catch (e) {
                                 // console.log(">>err occured while replying for new message")
@@ -1132,6 +1141,10 @@ export class BotService {
                         }
                         // follow, inquring, ... 
                         else {
+                            const new_message = {
+                                member_id,
+                                messages
+                            }
                             var chat = await this.chatService.getChatByMidCid(member_id, campaign_id);
                             try {
                                 if (chat.automatic_answer) {
@@ -1161,38 +1174,30 @@ export class BotService {
                                     }
                                 }
 
-                                // if (chat.requires_human_intervention && chat.follow_up_count != 10) {
-                                //     const msg_history = JSON.parse(chat.chat_history)
-                                //     var dif_len = msg_history.length - messages.length;
-                                //     msg_history.reverse();
-                                //     for (var msg_last_one of msg_history) {
-                                //         dif_len--;
-                                //         const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(member_id);
-                                //         if (msg_last_one.role == 'assistant') {
-                                //             const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
-                                //             if (res) {
-                                //                 chat.follow_up_count = 10;
-                                //                 await this.chatService.updateChatOne(chat)
-                                //             }
-                                //         }
-                                //         if (dif_len == 0) {
-                                //             break;
-                                //         }
-                                //     }
-                                // }
-
-                                if (chat.requires_human_intervention && chat.follow_up_count != 10) {
-                                    const msg_history = JSON.parse(chat.chat_history)
-                                    var msg_last_one = msg_history[msg_history.length - 1];
-                                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(member_id);
-                                    if (msg_last_one.role == 'assistant') {
-                                        const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
-                                        if (res) {
-                                            chat.follow_up_count = 10;
-                                            await this.chatService.updateChatOne(chat)
+                                // human intervention case
+                                if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
+                                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
+                                    var hi_chats: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
+                                    var db_chats: MessageType[] = JSON.parse(linked_in_chat.chat_history);
+                                    var tmp_hi: MessageType[] = JSON.parse(linked_in_chat.hi_chats); 
+ 
+                                    if (hi_chats.length > 0) {
+                                        for (var hc of hi_chats) {
+                                            const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content);
+                                            if (res) {
+                                                tmp_hi.shift();
+                                                db_chats.push(hc);
+                                                linked_in_chat.err_msg = '';
+                                                linked_in_chat.chat_history = JSON.stringify(db_chats);
+                                                linked_in_chat.hi_chats = JSON.stringify(tmp_hi);
+                                                this.chatService.updateChatOne(linked_in_chat);
+                                            } else {
+                                                linked_in_chat.err_msg = 'Error occured while sending message from linkedin account'
+                                                this.chatService.updateChatOne(linked_in_chat);
+                                            }
                                         }
-                                    }
-                                }
+                                    }                                     
+                                }                                
 
                             } catch (e) {
 

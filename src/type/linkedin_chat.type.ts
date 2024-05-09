@@ -13,5 +13,8 @@ export interface LinkedInChatType {
     first_message_urn: string,
     automatic_answer: boolean,
     requires_human_intervention: boolean,
-    follow_up_count: number
+    follow_up_count: number,
+    hi_chats: string,
+    hi_get: number,
+    err_msg: string,
 }

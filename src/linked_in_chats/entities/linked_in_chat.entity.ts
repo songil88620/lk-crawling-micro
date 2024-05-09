@@ -24,7 +24,7 @@ export class LinkedInChatEntity {
         enum: ChatStatus,
         default: ChatStatus.OPENING,
     })
-    chat_status: ChatStatus  
+    chat_status: ChatStatus
 
     @Column()
     linked_in_chat_urn: string;
@@ -39,11 +39,20 @@ export class LinkedInChatEntity {
     requires_human_intervention: boolean;
 
     @Column()
-    follow_up_count: number;  
+    follow_up_count: number;
 
     @Column()
     created_at: string;
 
     @Column()
     updated_at: string;
+
+    @Column({type:"longtext"})
+    hi_chats: string;
+
+    @Column()
+    hi_get: number;
+
+    @Column()
+    err_msg: string;
 }
