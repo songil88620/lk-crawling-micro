@@ -1095,8 +1095,10 @@ export class BotService {
                                     var tmp_hi: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
                                     if (new_message.messages.length != db_chats.length) {
                                         const hi_get = new_message.messages.length - db_chats.length;
-                                        linked_in_chat.hi_get = hi_get;
+                                        linked_in_chat.hi_get = Number(linked_in_chat.hi_get) + hi_get;
+                                        console.log(">>>intervention case:", hi_get, linked_in_chat.hi_get)
                                         linked_in_chat.chat_history = JSON.stringify(new_message.messages);
+                                        linked_in_chat.updated_at = this.getTimestamp();
                                         this.chatService.updateChatOne(linked_in_chat);
                                     }
 
@@ -1109,9 +1111,11 @@ export class BotService {
                                                 linked_in_chat.err_msg = '';
                                                 linked_in_chat.chat_history = JSON.stringify(db_chats);
                                                 linked_in_chat.hi_chats = JSON.stringify(tmp_hi);
+                                                linked_in_chat.updated_at = this.getTimestamp();
                                                 this.chatService.updateChatOne(linked_in_chat);
                                             } else {
                                                 linked_in_chat.err_msg = 'Error occured while sending message from linkedin account'
+                                                linked_in_chat.updated_at = this.getTimestamp();
                                                 this.chatService.updateChatOne(linked_in_chat);
                                             }
                                         }
@@ -1190,9 +1194,11 @@ export class BotService {
                                                 linked_in_chat.err_msg = '';
                                                 linked_in_chat.chat_history = JSON.stringify(db_chats);
                                                 linked_in_chat.hi_chats = JSON.stringify(tmp_hi);
+                                                linked_in_chat.updated_at = this.getTimestamp();
                                                 this.chatService.updateChatOne(linked_in_chat);
                                             } else {
-                                                linked_in_chat.err_msg = 'Error occured while sending message from linkedin account'
+                                                linked_in_chat.err_msg = 'Error occured while sending message from linkedin account';
+                                                linked_in_chat.updated_at = this.getTimestamp();
                                                 this.chatService.updateChatOne(linked_in_chat);
                                             }
                                         }
@@ -1836,10 +1842,7 @@ export class BotService {
         }
     }
 
-    beautyDate(date_in: any, time_in: any, lang: number) {
-        console.log(">>date..........................", lang)
-        console.log(date_in);
-        console.log(time_in);
+    beautyDate(date_in: any, time_in: any, lang: number) { 
         if (lang == 0) {
             try {
                 const weeks = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -1943,7 +1946,7 @@ export class BotService {
                     const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
                     const date = new Date(targetDate.getFullYear(), (targetDate.getMonth() + 1), targetDate.getDate(), hours, minutes);
                     const timestamp = date.getTime();
-                    console.log(">>out:", date_res + " " + time_res)
+                    //console.log(">>out:", date_res + " " + time_res)
                     return {
                         date: date_res + " " + time_res,
                         stamp: timestamp
@@ -1975,7 +1978,7 @@ export class BotService {
                         const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
                         const date = new Date(year, months, days, hours, minutes);
                         const timestamp = date.getTime();
-                        console.log(">>out:", date_res + " " + time_res)
+                        //console.log(">>out:", date_res + " " + time_res)
                         return {
                             date: date_res + " " + time_res,
                             stamp: timestamp
@@ -1998,7 +2001,7 @@ export class BotService {
                         const time_res = `${hours.toString().padStart(2, '0')}:${minutes}`;
                         const date = new Date(year, months, days, hours, minutes);
                         const timestamp = date.getTime();
-                        console.log(">>out:", date_res + " " + time_res)
+                        //console.log(">>out:", date_res + " " + time_res)
                         return {
                             date: date_res + " " + time_res,
                             stamp: timestamp
