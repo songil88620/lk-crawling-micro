@@ -1308,7 +1308,7 @@ export class BotService {
             }
 
             const timestamp = this.getTimestamp();
-            var answer_2 = await this.getChatGptAnswer(payload, 'gpt-3.5-turbo', 0.6, timestamp, linked_in_account.apikey);
+            var answer_2 = await this.getChatGptAnswer(payload, 'gpt-4o', 0.6, timestamp, linked_in_account.apikey);
 
             if (answer_2 == false) {
                 return false;
@@ -1488,7 +1488,7 @@ export class BotService {
                 }
             ];
 
-            const outOfContext: any = await this.getChatGptAnswer(systemPrompt, 'gpt-3.5-turbo', 0.3, timestamp, linked_in_account.apikey);
+            const outOfContext: any = await this.getChatGptAnswer(systemPrompt, 'gpt-4o', 0.3, timestamp, linked_in_account.apikey);
 
             if (outOfContext.content != undefined) {
                 if (outOfContext.content.trim() == 'OFF_TOPIC') {
@@ -1557,7 +1557,7 @@ export class BotService {
                 payloadTokens = this.getMessagesTokensCount(prompt);
             }
 
-            var answer = await this.getChatGptAnswer(prompt, 'gpt-3.5-turbo', 0.8, timestamp, linked_in_account.apikey);
+            var answer = await this.getChatGptAnswer(prompt, 'gpt-4o', 0.8, timestamp, linked_in_account.apikey);
             if (answer == false) {
                 return;
             }
@@ -1586,7 +1586,8 @@ export class BotService {
             const send_success = await this.sendMessageAtLinkedIn(prospect, linked_in_account, answer.content);
 
             if (send_success) {
-                if (answer.content.includes("https://bit.ly/minientrenamientoconsultorpro")) {
+                // if (answer.content.includes("https://bit.ly/minientrenamientoconsultorpro")) {
+                if (answer.content.includes(rejectedLink)) {
                     newChatStatus = ChatStatus.REJECTED;
                     linked_in_chat.automatic_answer = false;
                 }
@@ -2037,7 +2038,7 @@ export class BotService {
             }
             const res = await axios.post('https://api.openai.com/v1/chat/completions',
                 {
-                    'model': 'gpt-3.5-turbo',
+                    'model': 'gpt-4o',
                     'messages': msg,
                     'temperature': temperature,
                     'max_tokens': 250,
@@ -2129,7 +2130,7 @@ export class BotService {
                 }
             ];
             const timestamp = this.getTimestamp();
-            const isOnHold = await this.getChatGptAnswer(sysPrompt, 'gpt-3.5-turbo', 0.1, timestamp, apikey);
+            const isOnHold = await this.getChatGptAnswer(sysPrompt, 'gpt-4o', 0.1, timestamp, apikey);
             if (isOnHold.content != undefined) {
                 if (isOnHold.content.trim().toLowerCase() == 'true') {
                     return ChatStatus.ONHOLD;
