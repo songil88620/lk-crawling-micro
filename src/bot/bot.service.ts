@@ -1120,24 +1120,7 @@ export class BotService {
                                             }
                                         }
                                     }                                     
-                                }
-
-                                // if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
-                                //     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
-                                //     const msg_history = JSON.parse(linked_in_chat.chat_history)
-                                //     var msg_last_one = msg_history[msg_history.length - 1];
-                                //     var chats = new_message.messages;
-                                //     if (msg_last_one.role == 'assistant') {
-                                //         msg_last_one.createdAt = this.getTimestamp();
-                                //         chats.push(msg_last_one);
-                                //         const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, msg_last_one.content);
-                                //         if (res) {
-                                //             linked_in_chat.follow_up_count = 10;
-                                //         }
-                                //     }
-                                //     linked_in_chat.chat_history = JSON.stringify(chats);
-                                //     await this.chatService.updateChatOne(linked_in_chat);
-                                // }
+                                }  
 
                             } catch (e) {
                                 // console.log(">>err occured while replying for new message")
@@ -1325,7 +1308,7 @@ export class BotService {
             }
 
             const timestamp = this.getTimestamp();
-            var answer_2 = await this.getChatGptAnswer(payload, 'gpt-4', 0.6, timestamp, linked_in_account.apikey);
+            var answer_2 = await this.getChatGptAnswer(payload, 'gpt-3.5-turbo', 0.6, timestamp, linked_in_account.apikey);
 
             if (answer_2 == false) {
                 return false;
@@ -1505,7 +1488,7 @@ export class BotService {
                 }
             ];
 
-            const outOfContext: any = await this.getChatGptAnswer(systemPrompt, 'gpt-4', 0.3, timestamp, linked_in_account.apikey);
+            const outOfContext: any = await this.getChatGptAnswer(systemPrompt, 'gpt-3.5-turbo', 0.3, timestamp, linked_in_account.apikey);
 
             if (outOfContext.content != undefined) {
                 if (outOfContext.content.trim() == 'OFF_TOPIC') {
@@ -1574,7 +1557,7 @@ export class BotService {
                 payloadTokens = this.getMessagesTokensCount(prompt);
             }
 
-            var answer = await this.getChatGptAnswer(prompt, 'gpt-4', 0.8, timestamp, linked_in_account.apikey);
+            var answer = await this.getChatGptAnswer(prompt, 'gpt-3.5-turbo', 0.8, timestamp, linked_in_account.apikey);
             if (answer == false) {
                 return;
             }
@@ -2120,16 +2103,16 @@ export class BotService {
     getFollowUpStatus(lastestChat: MessageType[], linked_in_chat: LinkedInChatType) {
         const lastMessage = lastestChat[lastestChat.length - 1];
         const lastMsgCreatedAt = lastMessage.createdAt;
-        if (linked_in_chat.follow_up_count == 0 && this.isNowAfter(1, lastMsgCreatedAt)) {
+        if (linked_in_chat.follow_up_count == 0 && this.isNowAfter(1, lastMsgCreatedAt)) { //1 
             return true;
         }
-        if (linked_in_chat.follow_up_count == 1 && this.isNowAfter(25, lastMsgCreatedAt)) {
+        if (linked_in_chat.follow_up_count == 1 && this.isNowAfter(25, lastMsgCreatedAt)) { //25
             return true;
         }
-        if (linked_in_chat.follow_up_count == 2 && this.isNowAfter(49, lastMsgCreatedAt)) {
+        if (linked_in_chat.follow_up_count == 2 && this.isNowAfter(49, lastMsgCreatedAt)) { //49
             return true;
         }
-        if (linked_in_chat.follow_up_count == 3 && this.isNowAfter(73, lastMsgCreatedAt)) {
+        if (linked_in_chat.follow_up_count == 3 && this.isNowAfter(73, lastMsgCreatedAt)) { //73
             return true;
         }
         return false;
