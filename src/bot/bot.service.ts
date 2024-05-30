@@ -1056,7 +1056,7 @@ export class BotService {
                                 requires_human_intervention: false,
                                 follow_up_count: 0,
                                 updated_at: this.getTimestamp(),
-                                created_at: messages[0].createdAt,
+                                created_at: this.getTimestamp(),
                                 hi_chats: '',
                                 hi_get: 0,
                                 err_msg: ''
@@ -1342,15 +1342,15 @@ export class BotService {
                 createdAt: this.getTimestamp()
             }
 
-            if (this.isNowAfter(4, first_msg.createdAt)) {
+            if (this.isNowAfter(4, linked_in_chat.created_at)) {
                 answer.content = prompt_data.q_10_1;
                 linked_in_chat.chat_status = ChatStatus.INQUIRING;
             }
-            if (this.isNowAfter(28, first_msg.createdAt)) {
+            if (this.isNowAfter(28, linked_in_chat.created_at)) {
                 answer.content = prompt_data.q_10_2;
                 linked_in_chat.chat_status = ChatStatus.INQUIRING;
             }
-            if (this.isNowAfter(52, first_msg.createdAt)) { 
+            if (this.isNowAfter(52, linked_in_chat.created_at)) { 
                 if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 != "") {
                     answer.content = "Puede que ahora no sea tu momento. De momento te dejo este regalo.\n. Abrazo! Ver regalo aquí: " + prompt_data.q_11_2 + "\n He pensado que podría ser de tu interés. \n Y si cambias de opinión, no dudes en ponerte en contacto conmigo. \nAbrazo!";
                 } else if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 == "") {
@@ -1395,13 +1395,13 @@ export class BotService {
 
             linked_in_chat.chat_status = ChatStatus.NOANSWERED;
 
-            if (this.isNowAfter(148, first_msg.createdAt)) {
+            if (this.isNowAfter(148, linked_in_chat.created_at)) {
                 answer.content = 'Hola ' + prospect.first_name + ', tuviste algún momento para ver el mini entrenamiento o todavía no?';
             }
-            if (this.isNowAfter(316, first_msg.createdAt)) {
+            if (this.isNowAfter(316, linked_in_chat.created_at)) {
                 answer.content = prospect.first_name + ', no me comentaste si pudiste ver el mini entrenamiento. Me encantaría saber tu opinión acerca del mismo!';
             }
-            if (this.isNowAfter(484, first_msg.createdAt)) {
+            if (this.isNowAfter(484, linked_in_chat.created_at)) {
                 answer.content = "Entiendo que estarás muy ocupado, y no quiero molestarte. Espero que puedas ver el mini entrenamiento y que hablemos pronto " + prospect.first_name + "!";
                 linked_in_chat.automatic_answer = false;
                 linked_in_chat.chat_status = ChatStatus.REJECTED;
