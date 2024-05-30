@@ -832,12 +832,8 @@ export class BotService {
 
         const campaign_id = ac.id;
         const linked_in_account_id = ac.linked_in_account_id;
-        try {
-            // console.log(">>>lin", linked_in_account_id)
-            const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id);
-            // const user_id = linked_in_account.user_id;
-            // const user = await this.userService.getUserById(user_id);
-            // const lang = user.lang;
+        try { 
+            const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id); 
 
             var my_page: any = null;
             if (this.cached_linked_browser.browser != null) {
@@ -882,10 +878,7 @@ export class BotService {
                 } else {
 
                 }
-            }
-
-            // await my_page.reload();
-            // my_page.waitForTimeout(2000);
+            }  
 
             // ---------- linkedin has already logged in and start to work from now ----------
             // check the messages from the right sidebar and read new message one by one after click them. 
@@ -1062,7 +1055,7 @@ export class BotService {
                                 automatic_answer: true,
                                 requires_human_intervention: false,
                                 follow_up_count: 0,
-                                updated_at: messages[0].createdAt,
+                                updated_at: this.getTimestamp(),
                                 created_at: messages[0].createdAt,
                                 hi_chats: '',
                                 hi_get: 0,
@@ -1357,7 +1350,7 @@ export class BotService {
                 answer.content = prompt_data.q_10_2;
                 linked_in_chat.chat_status = ChatStatus.INQUIRING;
             }
-            if (this.isNowAfter(52, first_msg.createdAt)) {
+            if (this.isNowAfter(52, first_msg.createdAt)) { 
                 if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 != "") {
                     answer.content = "Puede que ahora no sea tu momento. De momento te dejo este regalo.\n. Abrazo! Ver regalo aquí: " + prompt_data.q_11_2 + "\n He pensado que podría ser de tu interés. \n Y si cambias de opinión, no dudes en ponerte en contacto conmigo. \nAbrazo!";
                 } else if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 == "") {
@@ -1457,7 +1450,7 @@ export class BotService {
                 linked_in_chat.automatic_answer = false;
                 linked_in_chat.chat_history = JSON.stringify(lastestChat);
                 linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
+                linked_in_chat.updated_at = this.getTimestamp();
                 await this.chatService.updateChatOne(linked_in_chat);
                 // $linkedInAccount->user->notify(new PossibleSpamDetection($prospectionCampaign, $prospect));
                 return
@@ -1473,7 +1466,7 @@ export class BotService {
                 linked_in_chat.automatic_answer = false;
                 linked_in_chat.chat_history = JSON.stringify(lastestChat);
                 linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
+                linked_in_chat.updated_at = this.getTimestamp();
                 await this.chatService.updateChatOne(linked_in_chat);
                 const reason = 'Insulto detectado en campaña ' + ac.name;
                 // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1496,7 +1489,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
+                    linked_in_chat.updated_at = this.getTimestamp();
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Salida de contexto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1508,7 +1501,7 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
+                    linked_in_chat.updated_at = this.getTimestamp();
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Petición de contacto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
@@ -1520,11 +1513,10 @@ export class BotService {
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
                     linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
+                    linked_in_chat.updated_at = this.getTimestamp();
                     await this.chatService.updateChatOne(linked_in_chat);
                     const reason = 'Reunión presencial o telefónica detectada en campaña ' + ac.name;
-                    // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
-                    // added or fixed...
+                    // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect)); 
                     return;
                 }
             }
@@ -1591,10 +1583,13 @@ export class BotService {
                     newChatStatus = ChatStatus.REJECTED;
                     linked_in_chat.automatic_answer = false;
                 }
+                if(answer.content.includes(link)){
+                    newChatStatus = ChatStatus.ONHOLD;
+                }
                 messages.push(answer);
                 linked_in_chat.chat_status = newChatStatus;
                 linked_in_chat.chat_history = JSON.stringify(messages);
-                linked_in_chat.updated_at = answer.createdAt
+                linked_in_chat.updated_at = this.getTimestamp()
                 await this.chatService.updateChatOne(linked_in_chat);
                 return;
             } else {
@@ -2103,17 +2098,17 @@ export class BotService {
 
     getFollowUpStatus(lastestChat: MessageType[], linked_in_chat: LinkedInChatType) {
         const lastMessage = lastestChat[lastestChat.length - 1];
-        const lastMsgCreatedAt = lastMessage.createdAt;
-        if (linked_in_chat.follow_up_count == 0 && this.isNowAfter(1, lastMsgCreatedAt)) { //1 
+        // const lastMsgCreatedAt = lastMessage.createdAt;
+        if (linked_in_chat.follow_up_count == 0 && this.isNowAfter(1, linked_in_chat.updated_at)) { //1 
             return true;
         }
-        if (linked_in_chat.follow_up_count == 1 && this.isNowAfter(25, lastMsgCreatedAt)) { //25
+        if (linked_in_chat.follow_up_count == 1 && this.isNowAfter(24, linked_in_chat.updated_at)) { //25
             return true;
         }
-        if (linked_in_chat.follow_up_count == 2 && this.isNowAfter(49, lastMsgCreatedAt)) { //49
+        if (linked_in_chat.follow_up_count == 2 && this.isNowAfter(24, linked_in_chat.updated_at)) { //49
             return true;
         }
-        if (linked_in_chat.follow_up_count == 3 && this.isNowAfter(73, lastMsgCreatedAt)) { //73
+        if (linked_in_chat.follow_up_count == 3 && this.isNowAfter(24, linked_in_chat.updated_at)) { //73
             return true;
         }
         return false;
