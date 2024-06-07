@@ -832,8 +832,8 @@ export class BotService {
 
         const campaign_id = ac.id;
         const linked_in_account_id = ac.linked_in_account_id;
-        try { 
-            const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id); 
+        try {
+            const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id);
 
             var my_page: any = null;
             if (this.cached_linked_browser.browser != null) {
@@ -878,7 +878,7 @@ export class BotService {
                 } else {
 
                 }
-            }  
+            }
 
             // ---------- linkedin has already logged in and start to work from now ----------
             // check the messages from the right sidebar and read new message one by one after click them. 
@@ -1081,9 +1081,9 @@ export class BotService {
                                 }
 
                                 // human intervention case
-                                if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
+                                var hi_chats: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
+                                if ((linked_in_chat != null && linked_in_chat.requires_human_intervention) || (hi_chats != null && hi_chats.length > 0)) {
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
-                                    var hi_chats: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
                                     var db_chats: MessageType[] = JSON.parse(linked_in_chat.chat_history);
                                     var tmp_hi: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
                                     if (new_message.messages.length != db_chats.length) {
@@ -1112,8 +1112,8 @@ export class BotService {
                                                 this.chatService.updateChatOne(linked_in_chat);
                                             }
                                         }
-                                    }                                     
-                                }  
+                                    }
+                                }
 
                             } catch (e) {
                                 // console.log(">>err occured while replying for new message")
@@ -1155,12 +1155,18 @@ export class BotService {
                                 }
 
                                 // human intervention case
-                                if (linked_in_chat != null && linked_in_chat.requires_human_intervention) {
-                                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
-                                    var hi_chats: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
+                                var hi_chats: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
+                                if ((linked_in_chat != null && linked_in_chat.requires_human_intervention) || (hi_chats != null && hi_chats.length > 0)) {
+                                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id); 
                                     var db_chats: MessageType[] = JSON.parse(linked_in_chat.chat_history);
-                                    var tmp_hi: MessageType[] = JSON.parse(linked_in_chat.hi_chats); 
- 
+                                    var tmp_hi: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
+
+                                    if (new_message.messages.length != db_chats.length) {
+                                        linked_in_chat.chat_history = JSON.stringify(new_message.messages);
+                                        linked_in_chat.updated_at = this.getTimestamp();
+                                        this.chatService.updateChatOne(linked_in_chat);
+                                    }
+
                                     if (hi_chats.length > 0) {
                                         for (var hc of hi_chats) {
                                             const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content);
@@ -1178,8 +1184,8 @@ export class BotService {
                                                 this.chatService.updateChatOne(linked_in_chat);
                                             }
                                         }
-                                    }                                     
-                                }                                
+                                    }
+                                }
 
                             } catch (e) {
 
@@ -1350,7 +1356,7 @@ export class BotService {
                 answer.content = prompt_data.q_10_2;
                 linked_in_chat.chat_status = ChatStatus.INQUIRING;
             }
-            if (this.isNowAfter(52, linked_in_chat.created_at)) { 
+            if (this.isNowAfter(52, linked_in_chat.created_at)) {
                 if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 != "") {
                     answer.content = "Puede que ahora no sea tu momento. De momento te dejo este regalo.\n. Abrazo! Ver regalo aquí: " + prompt_data.q_11_2 + "\n He pensado que podría ser de tu interés. \n Y si cambias de opinión, no dudes en ponerte en contacto conmigo. \nAbrazo!";
                 } else if (prompt_data.q_11_1 == "" && prompt_data.q_11_2 == "") {
@@ -1583,7 +1589,7 @@ export class BotService {
                     newChatStatus = ChatStatus.REJECTED;
                     linked_in_chat.automatic_answer = false;
                 }
-                if(answer.content.includes(link)){
+                if (answer.content.includes(link)) {
                     newChatStatus = ChatStatus.ONHOLD;
                 }
                 messages.push(answer);
@@ -1821,7 +1827,7 @@ export class BotService {
         }
     }
 
-    beautyDate(date_in: any, time_in: any, lang: number) { 
+    beautyDate(date_in: any, time_in: any, lang: number) {
         if (lang == 0) {
             try {
                 const weeks = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
