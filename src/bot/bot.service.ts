@@ -72,6 +72,7 @@ export class BotService {
 
     async onModuleInit() {
         this.myIP = ip.address();
+        //this.myIP = '188.166.82.117'
         const _now = new Date();
         const _h_now = _now.getHours();
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
@@ -87,7 +88,7 @@ export class BotService {
     async runCampaign() {
         const _now = new Date();
         const _h_now = _now.getHours();
-        if ((_h_now >= 8 && _h_now < 22 && this.login_fail <= 5)) {
+        if ((_h_now >= 8 && _h_now < 22 && this.login_fail <= 5) ) {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
             myCampaign.forEach((ac: any) => {
@@ -129,8 +130,8 @@ export class BotService {
 
     conf() {
         return {
-            headless: 'new',
-            // headless: false,
+            //headless: 'new',
+            headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
@@ -722,8 +723,7 @@ export class BotService {
                     }
                 }
 
-                try {
-                    console.log(">>sid, IDX: ", sid, this.side_idx)
+                try { 
                     try {
                         // close message box if it is opened
                         var count = await my_page.$$eval('.msg-convo-wrapper', elements => elements.length);
@@ -822,7 +822,7 @@ export class BotService {
                 this.goToLinkedInFastMode(ac)
             }
         } catch (e) {
-            // console.log(">>>error 889", e)
+           console.log(">>>error 889", e)
         }
     }
 
@@ -1034,6 +1034,8 @@ export class BotService {
 
                     // check message state for next step   
 
+                 
+
                     if (messages.length > 0 && first_msg == messages[0].content) {
                         // open message
                         if (messages.length == 1 || (messages.length == 2 && messages[1].role == 'user')) {
@@ -1088,16 +1090,15 @@ export class BotService {
                                     var tmp_hi: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
                                     if (new_message.messages.length != db_chats.length) {
                                         const hi_get = new_message.messages.length - db_chats.length;
-                                        linked_in_chat.hi_get = Number(linked_in_chat.hi_get) + hi_get;
-                                        console.log(">>>intervention case:", hi_get, linked_in_chat.hi_get)
+                                        linked_in_chat.hi_get = Number(linked_in_chat.hi_get) + hi_get; 
                                         linked_in_chat.chat_history = JSON.stringify(new_message.messages);
                                         linked_in_chat.updated_at = this.getTimestamp();
                                         this.chatService.updateChatOne(linked_in_chat);
                                     }
 
                                     if (hi_chats.length > 0) {
-                                        for (var hc of hi_chats) {
-                                            const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content);
+                                        for (var hc of hi_chats) { 
+                                            const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content); 
                                             if (res) {
                                                 tmp_hi.shift();
                                                 db_chats.push(hc);
@@ -1154,41 +1155,43 @@ export class BotService {
                                     }
                                 }
 
+                               
                                 // human intervention case
-                                var hi_chats: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
-                                if ((linked_in_chat != null && linked_in_chat.requires_human_intervention) || (hi_chats != null && hi_chats.length > 0)) {
+                              
+                                var hi_chats: MessageType[] = JSON.parse(chat.hi_chats); 
+                                if ((chat != null && chat.requires_human_intervention) || (hi_chats != null && hi_chats.length > 0)) {
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id); 
-                                    var db_chats: MessageType[] = JSON.parse(linked_in_chat.chat_history);
-                                    var tmp_hi: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
+                                    var db_chats: MessageType[] = JSON.parse(chat.chat_history);
+                                    var tmp_hi: MessageType[] = JSON.parse(chat.hi_chats);
 
                                     if (new_message.messages.length != db_chats.length) {
-                                        linked_in_chat.chat_history = JSON.stringify(new_message.messages);
-                                        linked_in_chat.updated_at = this.getTimestamp();
-                                        this.chatService.updateChatOne(linked_in_chat);
+                                        chat.chat_history = JSON.stringify(new_message.messages);
+                                        chat.updated_at = this.getTimestamp();
+                                        this.chatService.updateChatOne(chat);
                                     }
 
                                     if (hi_chats.length > 0) {
-                                        for (var hc of hi_chats) {
+                                        for (var hc of hi_chats) { 
                                             const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content);
                                             if (res) {
                                                 tmp_hi.shift();
                                                 db_chats.push(hc);
-                                                linked_in_chat.err_msg = '';
-                                                linked_in_chat.chat_history = JSON.stringify(db_chats);
-                                                linked_in_chat.hi_chats = JSON.stringify(tmp_hi);
-                                                linked_in_chat.updated_at = this.getTimestamp();
-                                                this.chatService.updateChatOne(linked_in_chat);
+                                                chat.err_msg = '';
+                                                chat.chat_history = JSON.stringify(db_chats);
+                                                chat.hi_chats = JSON.stringify(tmp_hi);
+                                                chat.updated_at = this.getTimestamp();
+                                                this.chatService.updateChatOne(chat);
                                             } else {
-                                                linked_in_chat.err_msg = 'Error occured while sending message from linkedin account';
-                                                linked_in_chat.updated_at = this.getTimestamp();
-                                                this.chatService.updateChatOne(linked_in_chat);
+                                                chat.err_msg = 'Error occured while sending message from linkedin account';
+                                                chat.updated_at = this.getTimestamp();
+                                                this.chatService.updateChatOne(chat);
                                             }
                                         }
                                     }
                                 }
 
                             } catch (e) {
-
+                                console.log("...", e)
                             }
                         }
                         this.notool_msg = 0;
