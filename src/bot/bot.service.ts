@@ -130,8 +130,8 @@ export class BotService {
 
     conf() {
         return {
-            //headless: 'new',
-            headless: false,
+            headless: 'new',
+            // headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
