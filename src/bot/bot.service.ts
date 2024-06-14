@@ -1077,7 +1077,10 @@ export class BotService {
                                 }
 
                                 // human intervention case
-                                var hi_chats: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
+                                var hi_chats: MessageType[] = [];
+                                if(linked_in_chat.hi_chats != null && linked_in_chat.hi_chats != ''){
+                                    hi_chats = JSON.parse(linked_in_chat.hi_chats);
+                                }
                                 if ((linked_in_chat != null && linked_in_chat.requires_human_intervention) || (hi_chats != null && hi_chats.length > 0)) {
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
                                     var db_chats: MessageType[] = JSON.parse(linked_in_chat.chat_history);
@@ -1093,6 +1096,7 @@ export class BotService {
                                     if (hi_chats.length > 0) {
                                         for (var hc of hi_chats) { 
                                             const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content); 
+                                            console.log(">>send hi chat...", hc.content)
                                             if (res) {
                                                 tmp_hi.shift();
                                                 db_chats.push(hc);
@@ -1150,9 +1154,11 @@ export class BotService {
                                 }
 
                                
-                                // human intervention case
-                              
-                                var hi_chats: MessageType[] = JSON.parse(chat.hi_chats); 
+                                // human intervention case  
+                                var hi_chats: MessageType[] = [];
+                                if(chat.hi_chats != null && chat.hi_chats != ''){
+                                    hi_chats = JSON.parse(chat.hi_chats);
+                                }
                                 if ((chat != null && chat.requires_human_intervention) || (hi_chats != null && hi_chats.length > 0)) {
                                     const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id); 
                                     var db_chats: MessageType[] = JSON.parse(chat.chat_history);
@@ -1167,6 +1173,7 @@ export class BotService {
                                     if (hi_chats.length > 0) {
                                         for (var hc of hi_chats) { 
                                             const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content);
+                                            console.log(">>send hi chat...", hc.content)
                                             if (res) {
                                                 tmp_hi.shift();
                                                 db_chats.push(hc);
