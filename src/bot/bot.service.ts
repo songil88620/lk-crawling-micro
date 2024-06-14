@@ -72,7 +72,7 @@ export class BotService {
 
     async onModuleInit() {
         this.myIP = ip.address();
-        //this.myIP = '188.166.82.117'
+        // this.myIP = '206.189.0.193'
         const _now = new Date();
         const _h_now = _now.getHours();
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
@@ -131,7 +131,7 @@ export class BotService {
     conf() {
         return {
             headless: 'new',
-            // headless: false,
+            //headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
@@ -189,8 +189,7 @@ export class BotService {
             await page.type('#session_password', login_password);
             await page.click('button.sign-in-form__submit-btn--full-width');
             await page.waitForTimeout(5000);
-            this.msg_to_user(login_data.id, 'Processing...');
-            console.log(">>Url1", page.url())
+            this.msg_to_user(login_data.id, 'Processing...'); 
             if (this.cached_linked_browser.browser != null) {
                 const browser_old = this.cached_linked_browser.browser;
                 if (browser_old != null) {
@@ -202,8 +201,7 @@ export class BotService {
                 page: page,
                 browser: browser
             }
-
-            console.log(">>>", page.url())
+ 
             if (page.url().includes('/feed/')) {
                 const data = {
                     id: login_data.id,
@@ -228,7 +226,6 @@ export class BotService {
                 return
             } else if (page.url().includes('checkpoint/challenge/')) {
                 this.msg_to_user(login_data.id, 'Verification page loading...');
-                console.log(">>check image")
                 // await page.waitForTimeout(5000);
                 var vcode = null;
                 try {
@@ -246,7 +243,6 @@ export class BotService {
                     this.socketService.messageToUser(data)
                     this.msg_to_user(login_data.id, 'Requiring verification code...');
                 } else {
-                    // console.log(">>Url2", page.url())
                     this.msg_to_user(login_data.id, 'Trying to solve the image puzzle...');
                     const frame_1 = await page.$("iframe[id='captcha-internal']");
                     const contentFrame_1 = await frame_1.contentFrame();
@@ -296,7 +292,6 @@ export class BotService {
                         // console.log(">>bypass")
                     }
                     await page.waitForTimeout(3000);
-                    console.log(">>>page", page.url())
                     if (page.url().includes('checkpoint/challenge/')) {
                         this.msg_to_user(login_data.id, 'Verification page loading...');
                         try {
@@ -316,7 +311,6 @@ export class BotService {
                         return;
                     }
                     await page.waitForTimeout(1000);
-                    console.log(">>>page here", page.url())
                     if (page.url().includes('/feed/')) {
                         const data = {
                             id: login_data.id,
@@ -605,8 +599,7 @@ export class BotService {
     }
 
     async internalLoginWithCookie(linked_in_account: LinkedInAccountType) {
-        const li_at = linked_in_account.li_at;
-        console.log(">>>li", li_at)
+        const li_at = linked_in_account.li_at; 
         const browser = await puppeteer.launch(this.conf());
         const page = await browser.newPage();
         await page.setExtraHTTPHeaders({
@@ -974,7 +967,7 @@ export class BotService {
                     }
 
                     const first_name = user_name.split(" ")[0];
-                    const first_msg = ac.first_message.replace('{FirstName}', first_name);
+                    const first_msg = ac.first_message.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")  
 
                     var member_id = null;
                     try {
@@ -996,7 +989,8 @@ export class BotService {
                             const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
 
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
-                            const _msg = msg_text.replace(/\+/g, '');
+                            const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
+                           
                             if (_msg == first_msg) {
                                 campaign_msg = true;
                             }
@@ -1034,7 +1028,7 @@ export class BotService {
 
                     // check message state for next step   
 
-                 
+                    console.log(">>messages", messages)
 
                     if (messages.length > 0 && first_msg == messages[0].content) {
                         // open message
