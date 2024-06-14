@@ -1124,6 +1124,7 @@ export class BotService {
                                 member_id,
                                 messages
                             }
+                            console.log(">>>member_id", member_id, campaign_id)
                             var chat = await this.chatService.getChatByMidCid(member_id, campaign_id);
                             try {
                                 if (chat.automatic_answer) {
