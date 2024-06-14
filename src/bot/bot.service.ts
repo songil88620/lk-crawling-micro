@@ -88,7 +88,7 @@ export class BotService {
     async runCampaign() {
         const _now = new Date();
         const _h_now = _now.getHours();
-        if ((_h_now >= 8 && _h_now < 22 && this.login_fail <= 5) ) {
+        if ((_h_now >= 8 && _h_now < 22 && this.login_fail <= 5) || true ) {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
             myCampaign.forEach((ac: any) => {
