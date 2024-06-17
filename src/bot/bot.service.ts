@@ -51,7 +51,7 @@ export class BotService {
     public prs_total_len = 0;
     public people_btn = false;
 
-    public side_idx = 0;
+    public side_idx = 55;
     public start_time = 0;
     public notool_msg = 0;
 
@@ -728,7 +728,7 @@ export class BotService {
                 }
 
                 try {
-                    console.log(">>sid, IDX: ", sid, this.side_idx)
+                    console.log(">>sid, IDX: ", sid, this.side_idx, my_page.url())
                     try {
                         // close message box if it is opened
                         var count = await my_page.$$eval('.msg-convo-wrapper', elements => elements.length);
@@ -750,6 +750,7 @@ export class BotService {
                         await my_page.waitForSelector(item);
                         await my_page.click(item);
                     } catch (e) {
+                        console.log("???", e)
                         var sc_count = Math.floor(this.side_idx / 10);
                         while (sc_count > 0) {
                             sc_count--;
@@ -1562,6 +1563,7 @@ export class BotService {
     }
 
     async sideListScroll(my_page: any, amount: number) {
+        console.log(">>side scrolling...")
         await my_page.mouse.move(1800, 750);
         await my_page.waitForTimeout(200);
         await my_page.mouse.wheel({ deltaY: amount });
