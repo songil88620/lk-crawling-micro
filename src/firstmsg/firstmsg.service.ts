@@ -1,13 +1,10 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import { UserService } from 'src/user/user.service';
+import { In, Repository } from 'typeorm'; 
 import { FirstmsgEntity } from './firstmsg.entity';
 import { ProspectionCampaignsService } from 'src/prospection_campaigns/prospection_campaigns.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-const { convert } = require('html-to-text');
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+ 
 
 @Injectable()
 export class FirstmsgService {
