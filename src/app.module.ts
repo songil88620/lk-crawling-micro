@@ -22,6 +22,8 @@ import { PromptDatumEntity } from './prompt_data/entities/prompt_datum.entity';
 import { LinkedInChatEntity } from './linked_in_chats/entities/linked_in_chat.entity';
 import { LinkedInAccountEntity } from './linked_in_accounts/entities/linked_in_account.entity';
 import { SocketModule } from './socket/socket.module'; 
+import { FirstmsgEntity } from './firstmsg/firstmsg.entity';
+import { FirstmsgModule } from './firstmsg/firstmsg.module';
  
 @Module({
   imports: [ 
@@ -42,6 +44,7 @@ import { SocketModule } from './socket/socket.module';
         PromptDatumEntity,
         LinkedInAccountEntity,
         LinkedInChatEntity, 
+        FirstmsgEntity
       ],
       synchronize: false
     }),  
@@ -56,6 +59,7 @@ import { SocketModule } from './socket/socket.module';
     LinkedInAccountsModule,
     ProspectProspectionCampaignModule, 
     SocketModule, 
+    FirstmsgModule
   ],
   controllers: [AppController], 
 })

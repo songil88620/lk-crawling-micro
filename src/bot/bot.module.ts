@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common'; 
+import { Module, forwardRef } from '@nestjs/common';
 import { BotService } from './bot.service';
 import { ProspectionCampaignsModule } from 'src/prospection_campaigns/prospection_campaigns.module';
 import { LinkedInAccountsModule } from 'src/linked_in_accounts/linked_in_accounts.module';
@@ -8,9 +8,10 @@ import { LinkedInChatsModule } from 'src/linked_in_chats/linked_in_chats.module'
 import { PromptDataModule } from 'src/prompt_data/prompt_data.module';
 import { SocketModule } from 'src/socket/socket.module';
 import { UserModule } from 'src/user/user.module';
+import { FirstmsgModule } from 'src/firstmsg/firstmsg.module';
 
 @Module({
-  imports: [ 
+  imports: [
     forwardRef(() => ProspectionCampaignsModule),
     forwardRef(() => LinkedInAccountsModule),
     forwardRef(() => ProspectsModule),
@@ -18,7 +19,8 @@ import { UserModule } from 'src/user/user.module';
     forwardRef(() => LinkedInChatsModule),
     forwardRef(() => PromptDataModule),
     forwardRef(() => SocketModule),
-    forwardRef(() => UserModule)
+    forwardRef(() => UserModule),
+    forwardRef(() => FirstmsgModule)
   ],
   providers: [BotService],
   exports: [BotService,]

@@ -22,6 +22,8 @@ import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';
 import { Brackets } from 'typeorm';
 import { PromptMultiService } from 'src/prompt_data/prompt_multi.service';
 import { UserService } from 'src/user/user.service';
+import { FirstmsgService } from 'src/firstmsg/firstmsg.service';
+import { first } from 'rxjs';
 
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -66,6 +68,7 @@ export class BotService {
         @Inject(forwardRef(() => PromptMultiService)) private promptService: PromptMultiService,
         @Inject(forwardRef(() => SocketService)) private socketService: SocketService,
         @Inject(forwardRef(() => UserService)) private userService: UserService,
+        @Inject(forwardRef(() => FirstmsgService)) private firstmsgService: FirstmsgService,
     ) {
 
     }
@@ -134,7 +137,7 @@ export class BotService {
     conf() {
         return {
             headless: 'new',
-           // headless: false,
+            // headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
@@ -192,7 +195,7 @@ export class BotService {
             await page.type('#session_password', login_password);
             await page.click('button.sign-in-form__submit-btn--full-width');
             await page.waitForTimeout(5000);
-            this.msg_to_user(login_data.id, 'Processing...'); 
+            this.msg_to_user(login_data.id, 'Processing...');
             if (this.cached_linked_browser.browser != null) {
                 const browser_old = this.cached_linked_browser.browser;
                 if (browser_old != null) {
@@ -204,7 +207,7 @@ export class BotService {
                 page: page,
                 browser: browser
             }
- 
+
             if (page.url().includes('/feed/')) {
                 const data = {
                     id: login_data.id,
@@ -508,18 +511,18 @@ export class BotService {
         // await page.authenticate({ username, password });
         await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
         await page.waitForTimeout(2000);
-        try{
+        try {
             await page.type('#session_key', login_email);
             await page.type('#session_password', login_password);
             await page.click('button.sign-in-form__submit-btn--full-width');
-        }catch(e){
+        } catch (e) {
             await page.goto(`https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin`, { timeout: 0 });
             await page.waitForTimeout(2000);
             await page.type('#username', login_email);
             await page.type('#password', login_password);
             await page.click('button.from__button--floating');
         }
-        
+
         await page.waitForTimeout(5000);
 
         if (this.cached_linked_browser.browser != null) {
@@ -611,7 +614,7 @@ export class BotService {
     }
 
     async internalLoginWithCookie(linked_in_account: LinkedInAccountType) {
-        const li_at = linked_in_account.li_at; 
+        const li_at = linked_in_account.li_at;
         const browser = await puppeteer.launch(this.conf());
         const page = await browser.newPage();
         await page.setExtraHTTPHeaders({
@@ -626,7 +629,7 @@ export class BotService {
         })
         await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
         console.log(">>>opened new page")
-    }  
+    }
 
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
     // long mode checks over 100 messages from the sidebar neither that has new message badge or not.
@@ -756,9 +759,9 @@ export class BotService {
                             sc_count--;
                             await this.sideListScroll(my_page, 1500);
                         }
-                        this.side_idx = this.side_idx - 1; 
+                        this.side_idx = this.side_idx - 1;
                         continue;
-                    } 
+                    }
 
                     // read message from message box that has message
                     await my_page.waitForTimeout(2000);
@@ -777,7 +780,15 @@ export class BotService {
                     }
 
                     const first_name = user_name.split(" ")[0];
-                    const first_msg = ac.first_message.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")  
+
+                    const f_msgs = await this.firstmsgService.get_first_msg(ac.id)
+                    var first_msgs = [];
+                    f_msgs.forEach((f: any) => {
+                        const fm = f.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
+                        first_msgs.push(fm)
+                    })
+
+                    // const first_msg = ac.first_message.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
 
                     var member_id = null;
                     try {
@@ -800,8 +811,9 @@ export class BotService {
 
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
                             const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
-                           
-                            if (_msg == first_msg) {
+
+                            // if (_msg == first_msg) {
+                            if (first_msgs.includes(_msg)) {
                                 campaign_msg = true;
                             }
                             if (campaign_msg) {
@@ -840,14 +852,15 @@ export class BotService {
 
                     console.log(">>messages", messages)
 
-                    if (messages.length > 0 && first_msg == messages[0].content) {
-                        console.log(">>platform message", first_msg, messages[0].content)
+                    // if (messages.length > 0 && first_msg == messages[0].content) {
+                    if (messages.length > 0 && first_msgs.includes(messages[0].content)) {
+                        console.log(">>platform message", messages[0].content)
                         // open message
                         if (messages.length == 1 || (messages.length == 2 && messages[1].role == 'user')) {
                             const nc: MessageType[] = [
                                 {
                                     role: 'assistant',
-                                    content: first_msg,
+                                    content: messages[0].content,
                                     createdAt: messages[0].createdAt
                                 }
                             ]
@@ -889,7 +902,7 @@ export class BotService {
 
                                 // human intervention case
                                 var hi_chats: MessageType[] = [];
-                                if(linked_in_chat.hi_chats != null && linked_in_chat.hi_chats != ''){
+                                if (linked_in_chat.hi_chats != null && linked_in_chat.hi_chats != '') {
                                     hi_chats = JSON.parse(linked_in_chat.hi_chats);
                                 }
                                 if ((linked_in_chat != null && linked_in_chat.requires_human_intervention) || (hi_chats != null && hi_chats.length > 0)) {
@@ -898,15 +911,15 @@ export class BotService {
                                     var tmp_hi: MessageType[] = JSON.parse(linked_in_chat.hi_chats);
                                     if (new_message.messages.length != db_chats.length) {
                                         const hi_get = new_message.messages.length - db_chats.length;
-                                        linked_in_chat.hi_get = Number(linked_in_chat.hi_get) + hi_get; 
+                                        linked_in_chat.hi_get = Number(linked_in_chat.hi_get) + hi_get;
                                         linked_in_chat.chat_history = JSON.stringify(new_message.messages);
                                         linked_in_chat.updated_at = this.getTimestamp();
                                         this.chatService.updateChatOne(linked_in_chat);
                                     }
 
                                     if (hi_chats.length > 0) {
-                                        for (var hc of hi_chats) { 
-                                            const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content); 
+                                        for (var hc of hi_chats) {
+                                            const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content);
                                             console.log(">>send hi chat...", hc.content)
                                             if (res) {
                                                 tmp_hi.shift();
@@ -965,14 +978,14 @@ export class BotService {
                                     }
                                 }
 
-                               
+
                                 // human intervention case  
                                 var hi_chats: MessageType[] = [];
-                                if(chat.hi_chats != null && chat.hi_chats != ''){
+                                if (chat.hi_chats != null && chat.hi_chats != '') {
                                     hi_chats = JSON.parse(chat.hi_chats);
                                 }
                                 if ((chat != null && chat.requires_human_intervention) || (hi_chats != null && hi_chats.length > 0)) {
-                                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id); 
+                                    const prospect: ProspectType = await this.prospectsService.findProspectByMemberId(new_message.member_id);
                                     var db_chats: MessageType[] = JSON.parse(chat.chat_history);
                                     var tmp_hi: MessageType[] = JSON.parse(chat.hi_chats);
 
@@ -983,7 +996,7 @@ export class BotService {
                                     }
 
                                     if (hi_chats.length > 0) {
-                                        for (var hc of hi_chats) { 
+                                        for (var hc of hi_chats) {
                                             const res = await this.sendMessageAtLinkedIn(prospect, linked_in_account, hc.content);
                                             console.log(">>send hi chat...", hc.content)
                                             if (res) {
@@ -1029,7 +1042,7 @@ export class BotService {
 
                     await my_page.waitForTimeout(1000);
                 } catch (e) {
-                   console.log(">>ERR", e) 
+                    console.log(">>ERR", e)
                 }
             }
             if (!this.isLoginOn()) {
@@ -1436,15 +1449,15 @@ export class BotService {
             await my_page.waitForTimeout(1000);
             console.log(">>send...")
             // click send message button 
-            try{
+            try {
                 await my_page.click('button.msg-form__send-button');
-            }catch(e){
+            } catch (e) {
                 await my_page.click('button.msg-form__send-btn');
             }
 
             return true;
         } catch (e) {
-            console.log("<>>>err...",e)
+            console.log("<>>>err...", e)
             return false;
         }
     }
