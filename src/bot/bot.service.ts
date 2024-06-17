@@ -76,6 +76,7 @@ export class BotService {
         // this.myIP = '104.248.88.76'
         const _now = new Date();
         const _h_now = _now.getHours();
+        console.log(">>>h_now", _h_now)
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
         myCampaign && myCampaign.forEach((ac: any) => {
             this.start_time = Date.now();
