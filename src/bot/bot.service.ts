@@ -73,7 +73,7 @@ export class BotService {
     async onModuleInit() {
         this.myIP = ip.address();
         //this.myIP = '206.189.0.193'  
-        this.myIP = '104.248.88.76'
+        //this.myIP = '104.248.88.76'
         const _now = new Date();
         const _h_now = _now.getHours();
         console.log(">>>h_now", _h_now)
@@ -133,8 +133,8 @@ export class BotService {
 
     conf() {
         return {
-           // headless: 'new',
-            headless: false,
+            headless: 'new',
+           // headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
