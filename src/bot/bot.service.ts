@@ -788,7 +788,7 @@ export class BotService {
                         const fm = f.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
                         first_msgs.push(fm)
                     })
-                    console.log(">>>f_msgs", first_msgs)
+                   
                     // const first_msg = ac.first_message.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
 
                     var member_id = null;
@@ -812,8 +812,8 @@ export class BotService {
 
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
                             const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
-                            
-                            console.log(">>_msg", _msg)
+
+                           
                             // if (_msg == first_msg) {
                             if (first_msgs.includes(_msg)) {
                                 campaign_msg = true;
@@ -856,7 +856,7 @@ export class BotService {
 
                     // if (messages.length > 0 && first_msg == messages[0].content) {
                     if (messages.length > 0 && first_msgs.includes(messages[0].content)) {
-                        console.log(">>platform message", messages[0].content)
+                        
                         // open message
                         if (messages.length == 1 || (messages.length == 2 && messages[1].role == 'user')) {
                             const nc: MessageType[] = [
