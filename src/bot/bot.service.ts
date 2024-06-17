@@ -51,7 +51,7 @@ export class BotService {
     public prs_total_len = 0;
     public people_btn = false;
 
-    public side_idx = 55;
+    public side_idx = 115;
     public start_time = 0;
     public notool_msg = 0;
 
@@ -751,7 +751,7 @@ export class BotService {
                         await my_page.click(item);
                     } catch (e) {
                         console.log("???", e)
-                        var sc_count = Math.floor(this.side_idx / 10);
+                        var sc_count = Math.floor(this.side_idx / 10) + 5;
                         while (sc_count > 0) {
                             sc_count--;
                             await this.sideListScroll(my_page, 1500);
