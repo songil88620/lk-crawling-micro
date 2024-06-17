@@ -782,6 +782,7 @@ export class BotService {
                     const first_name = user_name.split(" ")[0];
 
                     const f_msgs = await this.firstmsgService.get_first_msg(ac.id)
+                    console.log(">>>f_msgs", f_msgs)
                     var first_msgs = [];
                     f_msgs.forEach((f: any) => {
                         const fm = f.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
