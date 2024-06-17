@@ -755,7 +755,7 @@ export class BotService {
                             sc_count--;
                             await this.sideListScroll(my_page, 1500);
                         }
-                        // this.side_idx = this.side_idx - 1; 
+                        this.side_idx = this.side_idx - 1; 
                         continue;
                     } 
 
