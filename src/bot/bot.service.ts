@@ -1009,7 +1009,7 @@ export class BotService {
                         this.notool_msg = 0;
                     } else {
                         this.notool_msg = this.notool_msg + 1;
-                        if (this.notool_msg == 50) {
+                        if (this.notool_msg == 250) {
                             this.notool_msg = 0;
                             this.side_idx = 0;
                         }
