@@ -1019,7 +1019,7 @@ export class BotService {
 
                     await my_page.waitForTimeout(1000);
                 } catch (e) {
-                    // console.log(">>ERR", e) 
+                   console.log(">>ERR", e) 
                 }
             }
             if (!this.isLoginOn()) {
@@ -1027,7 +1027,7 @@ export class BotService {
                 this.goToLinkedInFastMode(ac)
             }
         } catch (e) {
-            // console.log(">>>error 889", e)
+            console.log(">>>error 889", e)
         }
     }
 
