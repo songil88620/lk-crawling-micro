@@ -72,8 +72,8 @@ export class BotService {
 
     async onModuleInit() {
         this.myIP = ip.address();
-       // this.myIP = '206.189.0.193'  
-        // this.myIP = '104.248.88.76'
+        //this.myIP = '206.189.0.193'  
+        this.myIP = '104.248.88.76'
         const _now = new Date();
         const _h_now = _now.getHours();
         console.log(">>>h_now", _h_now)
@@ -133,8 +133,8 @@ export class BotService {
 
     conf() {
         return {
-            headless: 'new',
-           // headless: false,
+           // headless: 'new',
+            headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
@@ -508,9 +508,18 @@ export class BotService {
         // await page.authenticate({ username, password });
         await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
         await page.waitForTimeout(2000);
-        await page.type('#session_key', login_email);
-        await page.type('#session_password', login_password);
-        await page.click('button.sign-in-form__submit-btn--full-width');
+        try{
+            await page.type('#session_key', login_email);
+            await page.type('#session_password', login_password);
+            await page.click('button.sign-in-form__submit-btn--full-width');
+        }catch(e){
+            await page.goto(`https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin`, { timeout: 0 });
+            await page.waitForTimeout(2000);
+            await page.type('#username', login_email);
+            await page.type('#password', login_password);
+            await page.click('button.from__button--floating');
+        }
+        
         await page.waitForTimeout(5000);
 
         if (this.cached_linked_browser.browser != null) {
