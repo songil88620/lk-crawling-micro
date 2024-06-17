@@ -53,7 +53,7 @@ export class BotService {
     public prs_total_len = 0;
     public people_btn = false;
 
-    public side_idx = 115;
+    public side_idx = 122;
     public start_time = 0;
     public notool_msg = 0;
 
@@ -782,7 +782,7 @@ export class BotService {
                     const first_name = user_name.split(" ")[0];
 
                     const f_msgs = await this.firstmsgService.get_first_msg(ac.id)
-                    
+
                     var first_msgs = [];
                     f_msgs.forEach((f: any) => {
                         const fm = f.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
@@ -812,7 +812,8 @@ export class BotService {
 
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
                             const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
- 
+                            
+                            console.log(">>_msg", _msg)
                             // if (_msg == first_msg) {
                             if (first_msgs.includes(_msg)) {
                                 campaign_msg = true;
