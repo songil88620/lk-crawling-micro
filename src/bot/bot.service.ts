@@ -53,7 +53,7 @@ export class BotService {
     public prs_total_len = 0;
     public people_btn = false;
 
-    public side_idx = 0;
+    public side_idx = 220;
     public start_time = 0;
     public notool_msg = 0;
 
@@ -75,8 +75,8 @@ export class BotService {
 
     async onModuleInit() {
         this.myIP = ip.address();
-        //this.myIP = '206.189.0.193'  
-        //this.myIP = '104.248.88.76'
+        // this.myIP = '206.189.0.193'  
+        // this.myIP = '104.248.88.76'
         const _now = new Date();
         const _h_now = _now.getHours();
         console.log(">>>h_now", _h_now)
@@ -89,7 +89,7 @@ export class BotService {
     }
 
     // run bot every 30 mins
-    @Cron(CronExpression.EVERY_30_MINUTES, { name: 'campaign bot' })
+    @Cron(CronExpression.EVERY_10_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
         const _now = new Date();
         const _h_now = _now.getHours();
@@ -98,8 +98,11 @@ export class BotService {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
             myCampaign.forEach((ac: any) => {
-                this.start_time = Date.now();
+                
+                console.log(",,,timer", this.isLoginOn(), this.isOver())
                 if (this.isOver() || !this.isLoginOn()) {
+                    console.log(">>>>restart again")
+                    this.start_time = Date.now();
                     this.goToLinkedInFastMode(ac)
                 }
             })
@@ -139,7 +142,7 @@ export class BotService {
     conf() {
         return {
             headless: 'new',
-           // headless: false,
+            //headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
@@ -749,13 +752,12 @@ export class BotService {
                         // console.log(">>>error on close message boxes")
                     }
 
-                    // click item from list 
+                    // click item from list  
                     try {
                         const item = '.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link:nth-child(' + sid + ')';
                         await my_page.waitForSelector(item);
                         await my_page.click(item);
-                    } catch (e) {
-                        console.log("???", e)
+                    } catch (e) { 
                         var sc_count = Math.floor(this.side_idx / 10);
                         while (sc_count > 0) {
                             sc_count--;
@@ -860,8 +862,9 @@ export class BotService {
                     if (messages.length > 0 && first_msgs.includes(messages[0].content)) {
 
                         var linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(member_id, campaign_id);
+                        
 
-                        if (!linked_in_chat) {
+                        if (linked_in_chat == null) {
                             console.log(">>open message")
                             // open message
 
@@ -870,7 +873,7 @@ export class BotService {
                                 if (m.role == 'user') {
                                     st = true;
                                 }
-                            }) 
+                            })
                             const status = st ? ChatStatus.INPROGRESS : ChatStatus.OPENING
                             const new_linked_in_chat: LinkedInChatType = {
                                 id: 0,
