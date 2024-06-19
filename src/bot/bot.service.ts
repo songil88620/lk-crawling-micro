@@ -94,7 +94,7 @@ export class BotService {
         const _now = new Date();
         const _h_now = _now.getHours();
         console.log(">>>h_now", _h_now)
-        if ((_h_now >= 6 && _h_now < 22 && this.login_fail <= 5) || true) {
+        if ((_h_now >= 6 && _h_now < 22 && this.login_fail <= 5)) {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
             myCampaign.forEach((ac: any) => {
