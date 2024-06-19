@@ -14,16 +14,13 @@ export class ProxyEntity {
     userid: string;
 
     @Column()
-    ip: string;
+    droplet_id: string;
 
     @Column()
     country: string;
 
     @Column()
-    country_ip: string;
-
-    @Column()
-    status: string;
+    country_ip: string;  
 
     @Column()
     date_start: string;
@@ -34,9 +31,13 @@ export class ProxyEntity {
     @Column()
     used: number; 
 
-    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(20)" })
-    created_at: Date;
+    @Column()
+    order: boolean;
 
-    @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(20)", onUpdate: "CURRENT_TIMESTAMP(20)" })
-    updated_at: Date;
+    @Column()
+    tool_end: number; 
+
+    @Column()
+    run: boolean; 
+    
 }

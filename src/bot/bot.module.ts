@@ -9,6 +9,7 @@ import { PromptDataModule } from 'src/prompt_data/prompt_data.module';
 import { SocketModule } from 'src/socket/socket.module';
 import { UserModule } from 'src/user/user.module';
 import { FirstmsgModule } from 'src/firstmsg/firstmsg.module';
+import { ProxiesModule } from 'src/proxies/proxies.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { FirstmsgModule } from 'src/firstmsg/firstmsg.module';
     forwardRef(() => PromptDataModule),
     forwardRef(() => SocketModule),
     forwardRef(() => UserModule),
-    forwardRef(() => FirstmsgModule)
+    forwardRef(() => FirstmsgModule),
+    forwardRef(() => ProxiesModule)
   ],
   providers: [BotService],
   exports: [BotService,]

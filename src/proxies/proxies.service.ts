@@ -1,26 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { CreateProxyDto } from './dto/create-proxy.dto';
-import { UpdateProxyDto } from './dto/update-proxy.dto';
+import { Injectable } from '@nestjs/common'; 
+import { ProxyEntity } from './entities/proxy.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class ProxiesService {
-  create(createProxyDto: CreateProxyDto) {
-    return 'This action adds a new proxy';
+
+  constructor(
+    @InjectRepository(ProxyEntity) private model: Repository<ProxyEntity>,
+
+  ) { }
+
+  async update(proxy: string, mode: boolean, time: number) {
+    if (!mode) {
+      await this.model.update({ proxy }, { tool_end: time, order: true, run: false })
+    }
   }
 
-  findAll() {
-    return `This action returns all proxies`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} proxy`;
-  }
-
-  update(id: number, updateProxyDto: UpdateProxyDto) {
-    return `This action updates a #${id} proxy`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} proxy`;
-  }
 }

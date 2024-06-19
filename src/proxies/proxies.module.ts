@@ -4,6 +4,7 @@ import { ProxiesController } from './proxies.controller';
 
 @Module({
   controllers: [ProxiesController],
-  providers: [ProxiesService]
+  providers: [ProxiesService],
+  exports: [ProxiesService]
 })
-export class ProxiesModule {}
+export class ProxiesModule { }

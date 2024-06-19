@@ -24,6 +24,7 @@ import { PromptMultiService } from 'src/prompt_data/prompt_multi.service';
 import { UserService } from 'src/user/user.service';
 import { FirstmsgService } from 'src/firstmsg/firstmsg.service';
 import { first } from 'rxjs';
+import { ProxiesService } from 'src/proxies/proxies.service';
 
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -69,6 +70,7 @@ export class BotService {
         @Inject(forwardRef(() => SocketService)) private socketService: SocketService,
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => FirstmsgService)) private firstmsgService: FirstmsgService,
+        @Inject(forwardRef(() => ProxiesService)) private proxiesService: ProxiesService,
     ) {
 
     }
@@ -98,7 +100,6 @@ export class BotService {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
             myCampaign.forEach((ac: any) => {
-                
                 console.log(",,,timer", this.isLoginOn(), this.isOver())
                 if (this.isOver() || !this.isLoginOn()) {
                     console.log(">>>>restart again")
@@ -115,6 +116,11 @@ export class BotService {
             this.cached_linked_browser.browser = null;
             this.cached_linked_browser.page = null;
             this.prs_read_idx = 0;
+        }
+
+        if (!(_h_now >= 6 && _h_now < 22)) {
+            const ts = Date.now();
+            this.proxiesService.update(this.myIP, false, ts)
         }
     }
 
@@ -757,7 +763,7 @@ export class BotService {
                         const item = '.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link:nth-child(' + sid + ')';
                         await my_page.waitForSelector(item);
                         await my_page.click(item);
-                    } catch (e) { 
+                    } catch (e) {
                         var sc_count = Math.floor(this.side_idx / 10);
                         while (sc_count > 0) {
                             sc_count--;
@@ -862,7 +868,7 @@ export class BotService {
                     if (messages.length > 0 && first_msgs.includes(messages[0].content)) {
 
                         var linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(member_id, campaign_id);
-                        
+
 
                         if (linked_in_chat == null) {
                             console.log(">>open message")
