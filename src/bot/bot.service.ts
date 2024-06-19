@@ -53,7 +53,7 @@ export class BotService {
     public prs_total_len = 0;
     public people_btn = false;
 
-    public side_idx = 220;
+    public side_idx = 0;
     public start_time = 0;
     public notool_msg = 0;
 
