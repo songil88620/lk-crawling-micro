@@ -54,5 +54,8 @@ export class LinkedInChatEntity {
     hi_get: number;
 
     @Column()
+    follow_up_state: number;
+
+    @Column()
     err_msg: string;
 }

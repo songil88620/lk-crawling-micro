@@ -894,7 +894,8 @@ export class BotService {
                                 created_at: this.getTimestamp(),
                                 hi_chats: '',
                                 hi_get: 0,
-                                err_msg: ''
+                                err_msg: '',
+                                follow_up_state:0
                             }
                             await this.chatService.createNewChat(new_linked_in_chat);
 
@@ -1130,9 +1131,11 @@ export class BotService {
             if (newChatStatus == ChatStatus.ONHOLD || linked_in_chat.chat_status == ChatStatus.ONHOLD) {
                 payload[0].content = await this.promptService.generateFollowUpSchedulePrompt(prospect, linked_in_chat.follow_up_count, linked_in_account.user_id);
                 newChatStatus = ChatStatus.ONHOLD;
+                linked_in_chat.follow_up_state = 3;
             } else {
                 payload[0].content = await this.promptService.generateFollowUpPrompt(prospect, linked_in_chat.follow_up_count, linked_in_account.user_id);
                 newChatStatus = ChatStatus.FOLLOWUP;
+                linked_in_chat.follow_up_state = 2;
             }
 
             const timestamp = this.getTimestamp();
