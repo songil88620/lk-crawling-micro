@@ -39,16 +39,16 @@ export class PromptMultiService {
     async generateCorePrompt(prospect: ProspectType, ac:CampaignType, promptMode: string = 'speech', user_id: number) {
         const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } }); 
        
-        var link = 'https://app.aippointing.com/schedule?p=' + prospect.id;
+        //var link = 'https://app.aippointing.com/schedule?p=' + prospect.id;
         var linkPlaceholder = 'CALENDAR-LINK';
-        var extendedLink = 'https://app.aippointing.com/schedule/extended?p=' + prospect.id;
+        //var extendedLink = 'https://app.aippointing.com/schedule/extended?p=' + prospect.id;
 
         var extendedLinkPlaceholder = 'EXTENDED-CALENDAR-LINK';
         var rejectedLinkPlaceholder = 'REJECTED-LINK';   
 
         if (typeof ac !== undefined) {
-            link = link + '&c=' + ac.id;
-            extendedLink = extendedLink + '&c=' + ac.id;
+            //link = link + '&c=' + ac.id;
+            //extendedLink = extendedLink + '&c=' + ac.id;
         }
 
         var pro_q = '';
@@ -273,23 +273,7 @@ export class PromptMultiService {
         prompt = prompt + endToken;
 
         return prompt;
-    }
-
-    // m
-    async generateOnHoldStateDetectionPrompt(message: string, user_id: number) {
-        const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } });
-        var prompt =
-            "Necesito que identifiques estas situaciones en el mensaje que te voy a adjuntar" +
-            "Estos son algunos de los casos en los que podemos considerar que estamos esperando una reunión:" +
-            "Situación: El mensaje contiene un enlace a " + prompt_data.q_3 +
-            "Situación: El mensaje le pide al usuario que agende una cita" +
-            "Situación: El mensaje dice que espera ver pronto al usuario en la reunión" +
-            "Sólo debes contestar TRUE o FALSE." +
-            "Mensaje: " + message + "\n" +
-            "Respuesta:";
-
-        return prompt;
-    }
+    } 
 
     // m
     async filterContextPrompt(message, user_id) {

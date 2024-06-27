@@ -32,16 +32,16 @@ export class PromptDataService {
 
   // $promptMode is used to swap between creative and adjusted to context options in Chat Demo
   async generateCorePrompt(prospect: ProspectType, prospectionCampaign: CampaignType = null, promptMode: string = 'speech', user_id: number) {
-    var link = 'https://app.aippointing.com/schedule?p=' + prospect.id;
+    //var link = 'https://app.aippointing.com/schedule?p=' + prospect.id;
     var linkPlaceholder = 'CALENDAR-LINK';
-    var extendedLink = 'https://app.aippointing.com/schedule/extended?p=' + prospect.id;
+    //var extendedLink = 'https://app.aippointing.com/schedule/extended?p=' + prospect.id;
 
     var extendedLinkPlaceholder = 'EXTENDED-CALENDAR-LINK';
     var rejectedLinkPlaceholder = 'REJECTED-LINK';
 
     if (typeof prospectionCampaign !== undefined) {
-      link = link + '&c=' + prospectionCampaign.id;
-      extendedLink = extendedLink + '&c=' + prospectionCampaign.id;
+      //link = link + '&c=' + prospectionCampaign.id;
+      //extendedLink = extendedLink + '&c=' + prospectionCampaign.id;
     }
 
     var endToken = "\n\n###\n\n";
@@ -233,21 +233,7 @@ export class PromptDataService {
     prompt = prompt + endToken;
 
     return prompt;
-  }
-
-  async generateOnHoldStateDetectionPrompt(message: string, user_id: number) {
-    var prompt =
-      "Necesito que identifiques estas situaciones en el mensaje que te voy a adjuntar" +
-      "Estos son algunos de los casos en los que podemos considerar que estamos esperando una reunión:" +
-      "Situación: El mensaje contiene un enlace a aippointing.com" +
-      "Situación: El mensaje le pide al usuario que agende una cita" +
-      "Situación: El mensaje dice que espera ver pronto al usuario en la reunión" +
-      "Sólo debes contestar TRUE o FALSE." +
-      "Mensaje: " + message + "\n" +
-      "Respuesta:";
-
-    return prompt;
-  }
+  } 
 
   async filterContextPrompt(message, user_id) {
     var prompt =

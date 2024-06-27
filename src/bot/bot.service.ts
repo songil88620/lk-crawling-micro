@@ -831,8 +831,6 @@ export class BotService {
                             if (campaign_msg) {
                                 const msg_data: MessageType = {
                                     createdAt: b_date['date'],
-                                    //stamp: b_date['stamp'],
-                                    //name: this.beautySpace(name),
                                     role: this.beautySpace(name) == user_name ? 'user' : 'assistant',
                                     content: _msg
                                 }
@@ -912,7 +910,6 @@ export class BotService {
                                     if (linked_in_chat.hi_chats != null && linked_in_chat.hi_chats != '') {
                                         hi_chats = JSON.parse(linked_in_chat.hi_chats);
                                     }
-
 
                                     // normal case
                                     if (linked_in_chat != null &&
@@ -1002,7 +999,7 @@ export class BotService {
                                                 const require_follow_up = this.getFollowUpStatus(lastestChat, linked_in_chat);
                                                 if (require_follow_up && linked_in_chat.follow_up_count < 4) {
                                                     // console.log(">>>send follow up message")
-                                                    const res = await this.sendFollowUpMessage(linked_in_chat, linked_in_account, prospect)
+                                                    const res = await this.sendFollowUpMessage(linked_in_chat, linked_in_account, prospect, campaign_id)
                                                 }
                                             }
                                         }
@@ -1081,38 +1078,8 @@ export class BotService {
         }
     }
 
-    async goToLinkedInTest(ac: CampaignType) {
-        const campaign_id = ac.id;
-        const linked_in_account_id = ac.linked_in_account_id;
-        try {
-            const linked_in_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(linked_in_account_id);
-            var my_page: any = null;
-            if (this.cached_linked_browser.browser != null) {
-                const page = await this.cached_linked_browser.page;
-                await page.waitForTimeout(5000);
-                await page.goto(`https://www.linkedin.com/feed/`, { timeout: 0 });
-                await page.waitForTimeout(5000);
-                if (page.url().includes('/feed/') || page.url().includes('/in/') || page.url().includes('/search/')) {
-                    my_page = page;
-                } else {
-                    const browser_old = this.cached_linked_browser.browser;
-                    if (browser_old != null) {
-                        await browser_old.close();
-                    }
-                    this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
-                    const res = await this.internalLoginWithCookie(linked_in_account);
-                }
-            } else {
-                const res = await this.internalLoginWithCookie(linked_in_account);
-            }
 
-            return;
-        } catch (e) {
-            // console.log(">>>error", e)
-        }
-    }
-
-    async sendFollowUpMessage(linked_in_chat: LinkedInChatType, linked_in_account: LinkedInAccountType, prospect: ProspectType) {
+    async sendFollowUpMessage(linked_in_chat: LinkedInChatType, linked_in_account: LinkedInAccountType, prospect: ProspectType, ac_id: number) {
         try {
             const user_id = linked_in_account.user_id;
             const prompt_data = await this.promptService.findOne(user_id);
@@ -1153,7 +1120,13 @@ export class BotService {
                     content: ''
                 }
             ]
-            var newChatStatus: any = await this.detectOnHoldStatus(linked_in_chat, linked_in_account.user_id, linked_in_account.apikey);
+
+            var link = 'https://app.aippointing.com/schedule?p=' + prospect.id;
+            var extendedLink = 'https://app.aippointing.com/schedule/extended?p=' + prospect.id;
+            link = link + '&c=' + ac_id;
+            extendedLink = extendedLink + '&c=' + ac_id;
+
+            var newChatStatus: any = await this.detectOnHoldStatus(messages, link, extendedLink);
             if (newChatStatus == ChatStatus.ONHOLD || linked_in_chat.chat_status == ChatStatus.ONHOLD) {
                 payload[0].content = await this.promptService.generateFollowUpSchedulePrompt(prospect, linked_in_chat.follow_up_count, linked_in_account.user_id);
                 newChatStatus = ChatStatus.ONHOLD;
@@ -1440,12 +1413,11 @@ export class BotService {
             const send_success = await this.sendMessageAtLinkedIn(prospect, linked_in_account, answer.content);
 
             if (send_success) {
-                // if (answer.content.includes("https://bit.ly/minientrenamientoconsultorpro")) {
                 if (answer.content.includes(rejectedLink)) {
                     newChatStatus = ChatStatus.REJECTED;
                     linked_in_chat.automatic_answer = false;
                 }
-                if (answer.content.includes(link)) {
+                if (answer.content.includes(link) || answer.content.includes(extendedLink)) {
                     newChatStatus = ChatStatus.ONHOLD;
                 }
                 messages.push(answer);
@@ -1983,25 +1955,14 @@ export class BotService {
         return false;
     }
 
-    async detectOnHoldStatus(linked_in_chat: LinkedInChatType, user_id: number, apikey: string) {
-        var messages: MessageType[] = JSON.parse(linked_in_chat.chat_history);
-        const lastMessage = messages[messages.length - 1].content;
-        if (linked_in_chat.chat_history != ChatStatus.ONHOLD && linked_in_chat.chat_status != ChatStatus.FOLLOWUP) {
-            const sysPrompt = [
-                {
-                    role: 'system',
-                    content: await this.promptService.generateOnHoldStateDetectionPrompt(lastMessage, user_id)
-                }
-            ];
-            const timestamp = this.getTimestamp();
-            const isOnHold = await this.getChatGptAnswer(sysPrompt, 'gpt-4o', 0.1, timestamp, apikey);
-            if (isOnHold.content != undefined) {
-                if (isOnHold.content.trim().toLowerCase() == 'true') {
-                    return ChatStatus.ONHOLD;
-                }
+    async detectOnHoldStatus(messages: MessageType[], calendar_link: string, ext_calendar_link: string) {
+        var newChatStatus = ''
+        messages.forEach((m: MessageType) => {
+            if (m.content.includes(calendar_link) || m.content.includes(ext_calendar_link)) {
+                newChatStatus = ChatStatus.ONHOLD
             }
-        }
-        return '';
+        })
+        return newChatStatus;
     }
 
     isNowAfter(hour: number, times: string) {
