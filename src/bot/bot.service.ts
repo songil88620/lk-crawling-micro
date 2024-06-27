@@ -673,10 +673,8 @@ export class BotService {
                     }
                 }
             } else {
-                // console.log(">>>>inter login")
                 const res = await this.internalLogin(linked_in_account);
                 if (res.success) {
-                    // console.log(">>logged in")
                     my_page = res.page
                 } else {
                     return;
@@ -735,8 +733,6 @@ export class BotService {
                     if (new_msg_count == 10) {
                         new_msg_count = 0;
                         this.side_idx = this.side_idx + 1;
-                        //await my_page.reload();
-                        //await this.delay(5000)
                     }
                     continue;
                 }
@@ -790,6 +786,7 @@ export class BotService {
                     }
 
                     const first_name = user_name.split(" ")[0];
+                    const last_name = user_name.split(" ")[1];
 
                     const f_msgs = await this.firstmsgService.get_first_msg(ac.id)
 
@@ -823,8 +820,6 @@ export class BotService {
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
                             const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
 
-
-                            // if (_msg == first_msg) {
                             if (first_msgs.includes(_msg)) {
                                 campaign_msg = true;
                             }
@@ -858,20 +853,22 @@ export class BotService {
                         // console.log("sth went wrong 777")
                     }
 
-                    // check message state for next step   
+                    const profile_url = my_page.url();
+                    // check prospect data, if not exist the tool create a prospect for the next usage.
+                    await this.prospectsService.checkProspect(member_id, first_name, last_name, profile_url);
 
-                    console.log(">>messages", messages)
+                    // check message state for next step   
+                    console.log(">>messages")
 
                     // if (messages.length > 0 && first_msg == messages[0].content) {
                     if (messages.length > 0 && first_msgs.includes(messages[0].content)) {
 
                         var linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(member_id, campaign_id);
 
-
                         if (linked_in_chat == null) {
                             console.log(">>open message")
                             // open message
-
+                            
                             var st = false;
                             messages.forEach((m) => {
                                 if (m.role == 'user') {
@@ -895,7 +892,7 @@ export class BotService {
                                 hi_chats: '',
                                 hi_get: 0,
                                 err_msg: '',
-                                follow_up_state:0
+                                follow_up_state: 0
                             }
                             await this.chatService.createNewChat(new_linked_in_chat);
 
