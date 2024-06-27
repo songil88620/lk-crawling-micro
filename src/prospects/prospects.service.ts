@@ -14,6 +14,31 @@ export class ProspectsService {
     @Inject(forwardRef(() => ProspectProspectionCampaignService)) private ppcService: ProspectProspectionCampaignService,
   ) { }
 
+  async checkProspect(member_id: string, first_name: string, last_name: string, url: string) {
+    try {
+      const ps = await this.prospectsRepository.findOne({ where: { linked_in_member_id: member_id } })
+      console.log(">>>ps", ps)
+      if (ps == null) {
+        const new_ps = {
+          linked_in_member_id: member_id,
+          linked_in_email: '',
+          first_name: first_name,
+          last_name: last_name,
+          linked_in_profile_url: url,
+          linked_in_headline: '',
+          linked_in_current_company: '',
+          linked_in_user_urn: '',
+          created_at: this.getTimestamp(),
+          updated_at: this.getTimestamp()
+        }
+        const c = this.prospectsRepository.create(new_ps);
+        await this.prospectsRepository.save(c);
+      }
+    } catch (e) {
+      console.log(">>check...", e)
+    }
+  }
+
   // this provides linkein member details including linked_in_member_id, first_name and last_name
   async findProspectById(id: number) {
     return await this.prospectsRepository.findOne({ where: { id: id } });
@@ -43,6 +68,17 @@ export class ProspectsService {
 
   async removeProspect(id: number) {
     await this.prospectsRepository.update({ id }, { used: true })
+  }
+
+  getTimestamp() {
+    const currentDate = new Date();
+    const padZero = (num) => (num < 10 ? `0${num}` : num);
+    const month = padZero(currentDate.getMonth() + 1);
+    const day = padZero(currentDate.getDate());
+    const year = currentDate.getFullYear();
+    const hours = padZero(currentDate.getHours());
+    const minutes = padZero(currentDate.getMinutes());
+    return year + "-" + month + "-" + day + " " + hours + ":" + minutes;
   }
 
 }
