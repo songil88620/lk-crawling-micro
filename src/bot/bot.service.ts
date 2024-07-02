@@ -201,10 +201,22 @@ export class BotService {
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
             });
             await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
-            await page.waitForTimeout(2000);
-            await page.type('#session_key', login_email);
-            await page.type('#session_password', login_password);
-            await page.click('button.sign-in-form__submit-btn--full-width');
+            await page.waitForTimeout(2000); 
+
+            try {
+                await page.type('#session_key', login_email);
+                await page.type('#session_password', login_password);
+                await page.click('button.sign-in-form__submit-btn--full-width');
+            } catch (e) {
+                await page.goto(`https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin`, { timeout: 0 });
+                await page.waitForTimeout(2000);
+                await page.type('#username', login_email);
+                await page.type('#password', login_password);
+                await page.click('button.from__button--floating');
+            } 
+
+            console.log(">>>external login req...")
+
             await page.waitForTimeout(5000);
             this.msg_to_user(login_data.id, 'Processing...');
             if (this.cached_linked_browser.browser != null) {
@@ -1332,6 +1344,7 @@ export class BotService {
                 }
 
                 if (outOfContext.content.trim() == 'CONTACT') {
+                     
                     linked_in_chat.requires_human_intervention = true;
                     linked_in_chat.automatic_answer = false;
                     linked_in_chat.chat_history = JSON.stringify(lastestChat);
@@ -1341,6 +1354,10 @@ export class BotService {
                     const reason = 'Petición de contacto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
                     return;
+
+                    const gen_contact_prompt = await this.promptService.generateContactPrompt(prospect, ac, 'creative', user_id);
+                    
+
                 }
 
                 if (outOfContext.content.trim() == 'NO_CALENDAR') {

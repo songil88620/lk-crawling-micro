@@ -11,7 +11,7 @@ import { UserService } from 'src/user/user.service';
 export class PromptMultiService {
     constructor(
         @InjectRepository(PromptDatumEntity) private promptRepository: Repository<PromptDatumEntity>,
-        @Inject(forwardRef(() => ProspectsService)) private prospectsService: ProspectsService, 
+        @Inject(forwardRef(() => ProspectsService)) private prospectsService: ProspectsService,
     ) { }
 
     async findOne(user_id: any) {
@@ -19,7 +19,7 @@ export class PromptMultiService {
     }
 
     async generateInquiringPrompt(prospect: ProspectType, user_id: number) {
-        const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } }); 
+        const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } });
         var prompt = '';
         var role = 'Quiero que actúes como un prospectador profesional. ';
         var prospectObjectiveHeader = 'El prospecto con el que hablas ahora mismo es ' + this.getProspectDescription(prospect) + ' y tu objetivo es generar empatía y engagement con el prospecto. ';
@@ -34,17 +34,22 @@ export class PromptMultiService {
         return prompt;
     }
 
+    async generateContactPrompt(prospect: ProspectType, ac: CampaignType, promptMode: string = 'speech', user_id: number) {
+        const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } });
+
+    }
+
 
     // $promptMode is used to swap between creative and adjusted to context options in Chat Demo  // m
-    async generateCorePrompt(prospect: ProspectType, ac:CampaignType, promptMode: string = 'speech', user_id: number) {
-        const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } }); 
-       
+    async generateCorePrompt(prospect: ProspectType, ac: CampaignType, promptMode: string = 'speech', user_id: number) {
+        const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } });
+
         //var link = 'https://app.aippointing.com/schedule?p=' + prospect.id;
         var linkPlaceholder = 'CALENDAR-LINK';
         //var extendedLink = 'https://app.aippointing.com/schedule/extended?p=' + prospect.id;
 
         var extendedLinkPlaceholder = 'EXTENDED-CALENDAR-LINK';
-        var rejectedLinkPlaceholder = 'REJECTED-LINK';   
+        var rejectedLinkPlaceholder = 'REJECTED-LINK';
 
         if (typeof ac !== undefined) {
             //link = link + '&c=' + ac.id;
@@ -158,7 +163,7 @@ export class PromptMultiService {
 
     // m
     async generateFollowUpPrompt(prospect: ProspectType, followUpCount: number = null, user_id: number) {
-        
+
         var prompt = "Necesito que generes un mensaje corto para " + prospect.first_name + " lo más parecido a estos ejemplos:\n";
         var endToken = "\n\n###\n\n";
         if (followUpCount == null) {
@@ -218,7 +223,7 @@ export class PromptMultiService {
 
     // m
     async generateFollowUpSchedulePrompt(prospect: ProspectType, followUpCount: number = null, user_id: number) {
-         
+
         var prompt = "Necesito que generes un mensaje corto para " + prospect.first_name + " lo más parecido a estos ejemplos:\n";
         var endToken = "\n\n###\n\n";
         if (followUpCount == null) {
@@ -273,7 +278,7 @@ export class PromptMultiService {
         prompt = prompt + endToken;
 
         return prompt;
-    } 
+    }
 
     // m
     async filterContextPrompt(message, user_id) {
