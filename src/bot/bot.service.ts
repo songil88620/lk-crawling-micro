@@ -1273,6 +1273,7 @@ export class BotService {
     async sendCoreMessage(linked_in_chat: LinkedInChatType, prospect: ProspectType, lastestChat: MessageType[], linked_in_account: LinkedInAccountType, ac: CampaignType) {
         try {
             const user_id = linked_in_account.user_id;
+            const user_email = linked_in_account.email;
             const timestamp = this.getTimestamp();
             const messages: MessageType[] = lastestChat;
             // console.log(">>>last chat", lastestChat)
@@ -1392,9 +1393,9 @@ export class BotService {
             //const gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac, 'creative', user_id);
             var gen_core_prompt = '';
             if (is_contact) {
-              gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac,'contact', user_id);
+              gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac,'contact', user_id, user_email);
             } else {
-              gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac,'creative', user_id);
+              gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac,'creative', user_id, user_email);
             }
 
             const sysPrompt: GptMessageType = {

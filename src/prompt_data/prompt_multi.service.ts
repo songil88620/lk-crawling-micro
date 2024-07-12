@@ -18,7 +18,7 @@ export class PromptMultiService {
         return await this.promptRepository.findOne({ where: { account_id: user_id } });
     }  
     
-    async generateCorePrompt(prospect: ProspectType, ac: CampaignType, promptMode: string = 'speech', user_id: number) {
+    async generateCorePrompt(prospect: ProspectType, ac: CampaignType, promptMode: string = 'speech', user_id: number, user_email:string) {
         const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } });
 
         //var link = 'https://app.aippointing.com/schedule?p=' + prospect.id;
@@ -110,11 +110,11 @@ export class PromptMultiService {
                 "\n\n##\n\n" +
                 "Situación: Si un cliente potencial te pide que le envíes tu correo electrónico personal, envía esto:" +
                 "Mensaje: Mil gracias por tu respuesta " + prospect.first_name + "!" +
-                "Puedes usar el siguiente email para contactarme. -) abcd_test@gmail.com" +
+                "Puedes usar el siguiente email para contactarme. -) " + user_email +
                 "\n\n##\n\n" +
                 "Situación: Si un cliente potencial te pide que le envíes tu teléfono personal, envía esto:" +
                 "Mensaje: Mil gracias por tu respuesta " + prospect.first_name + "!" +
-                "Prefiero que nos comuniquemos por email. -) abcd_test@gmail.com" +
+                "Prefiero que nos comuniquemos por email. -) " + user_email +
                 "\n\n##\n\n" +
                 "Situación: Si un cliente potencial te pide que contactes a otra persona, envía esto:" +
                 "Mensaje: Mil gracias por tu respuesta " + prospect.first_name + "!" +
