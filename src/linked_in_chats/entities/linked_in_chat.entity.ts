@@ -58,4 +58,7 @@ export class LinkedInChatEntity {
 
     @Column()
     err_msg: string;
+
+    @Column()
+    contact_count: number;
 }

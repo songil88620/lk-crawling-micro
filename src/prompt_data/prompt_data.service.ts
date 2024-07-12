@@ -12,23 +12,7 @@ export class PromptDataService {
     @InjectRepository(PromptDatumEntity)
     private promptRepository: Repository<PromptDatumEntity>,
     @Inject(forwardRef(() => ProspectsService)) private prospectsService: ProspectsService,
-  ) { }
-
-  async generateInquiringPrompt(prospect: ProspectType, user_id: number) {
-    var prompt = '';
-    var role = 'Quiero que actúes como un prospectador profesional. ';
-    var prospectObjectiveHeader = 'El prospecto con el que hablas ahora mismo es ' + this.getProspectDescription(prospect) + ' y tu objetivo es generar empatía y engagement con el prospecto. ';
-    var messageRestriction = 'Sólo debes contestar al prospecto con un único mensaje y este debe ser lo más breve posible. No te despidas ni digas "Saludos" u otra muletilla al final del mensaje.';
-    var service = 'El servicio que ofertas es conseguirle al cliente unas 50-60 reuniones con prospectos cualificados al mes y sólo pagará si obtiene beneficios.';
-    var style = 'Tu respuesta debe ser una extensión de tu último mensaje y no debe tener información redundante. No hagas asunciones sobre el prospecto. Es OBLIGATORIO que empieces el mensaje con conectores como "Y si te digo que" o "Me darías la oportunidad de".';
-    var inquiring = 'Deberás guiarte tomando estos mensajes de referencia:';
-    var reference_one = "\n\n##\n\nMensaje: Y si te digo que además podemos cerrar las ventas por ti también para que tu solo te dediques a atender a tus clientes… Y sabes que es lo más potente de todo… que podemos trabajar contigo a éxito… si tú no vendes, nosotros no cobramos (win-win total)… esto te ayudaría a escalar tu negocio?";
-    var reference_two = "\n\n##\n\nMensaje: Me darías la oportunidad de explicarte cómo hacemos para agregar un mínimo de 20k/mes de facturación a nuestros clientes en una videollamada corta… conversamos? (No tienes nada que perder y más de 20k / mes para crecer)\n\n##\n\n ";
-    var endToken = "\n\n###\n\n";
-    prompt = role + prospectObjectiveHeader + messageRestriction + service + style + inquiring + reference_one + reference_two + endToken;
-    return prompt;
-  }
-
+  ) { }  
 
   // $promptMode is used to swap between creative and adjusted to context options in Chat Demo
   async generateCorePrompt(prospect: ProspectType, prospectionCampaign: CampaignType = null, promptMode: string = 'speech', user_id: number) {

@@ -17,5 +17,6 @@ export interface LinkedInChatType {
     hi_chats: string,
     hi_get: number,
     err_msg: string,
-    follow_up_state: number
+    follow_up_state: number,
+    contact_count?: number
 }

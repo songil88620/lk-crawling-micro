@@ -16,31 +16,8 @@ export class PromptMultiService {
 
     async findOne(user_id: any) {
         return await this.promptRepository.findOne({ where: { account_id: user_id } });
-    }
-
-    async generateInquiringPrompt(prospect: ProspectType, user_id: number) {
-        const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } });
-        var prompt = '';
-        var role = 'Quiero que actúes como un prospectador profesional. ';
-        var prospectObjectiveHeader = 'El prospecto con el que hablas ahora mismo es ' + this.getProspectDescription(prospect) + ' y tu objetivo es generar empatía y engagement con el prospecto. ';
-        var messageRestriction = 'Sólo debes contestar al prospecto con un único mensaje y este debe ser lo más breve posible. No te despidas ni digas "Saludos" u otra muletilla al final del mensaje.';
-        var service = prompt_data.q_7;
-        var style = 'Tu respuesta debe ser una extensión de tu último mensaje y no debe tener información redundante. No hagas asunciones sobre el prospecto. Es OBLIGATORIO que empieces el mensaje con conectores como "Y si te digo que" o "Me darías la oportunidad de".';
-        var inquiring = 'Deberás guiarte tomando estos mensajes de referencia:';
-        var reference_one = "\n\n##\n\nMensaje: " + prompt_data.q_10_1 + "\n\n##\n\n";
-        var reference_two = "\n\n##\n\nMensaje:" + prompt_data.q_10_2 + " \n\n##\n\n";
-        var endToken = "\n\n###\n\n";
-        prompt = role + prospectObjectiveHeader + messageRestriction + service + style + inquiring + reference_one + reference_two + endToken;
-        return prompt;
-    }
-
-    async generateContactPrompt(prospect: ProspectType, ac: CampaignType, promptMode: string = 'speech', user_id: number) {
-        const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } });
-
-    }
-
-
-    // $promptMode is used to swap between creative and adjusted to context options in Chat Demo  // m
+    }  
+    
     async generateCorePrompt(prospect: ProspectType, ac: CampaignType, promptMode: string = 'speech', user_id: number) {
         const prompt_data = await this.promptRepository.findOne({ where: { account_id: user_id } });
 
@@ -119,6 +96,32 @@ export class PromptMultiService {
 
             return prompt;
         }
+
+        if (promptMode == 'contact') {
+            prompt = "Situación: Si un cliente potencial te pide que le envíes información por correo electrónico, envía esto:" +
+                "Mensaje: Mil gracias por tu respuesta " + prospect.first_name + "!" +
+                "Qué te parece si mejor nos vemos en una llamada rápida y te lo presento? ;-)" +
+                "Creo que sería lo mejor para ambos. Te dejo el link por aquí: " + linkPlaceholder +
+                "\n\n##\n\n" +
+                "Situación: Si un cliente potencial te pide que le envíes información por teléfono, envía esto:" +
+                "Mensaje: Mil gracias por tu respuesta " + prospect.first_name + "!" +
+                "Qué te parece si mejor nos vemos en una llamada rápida y te lo presento? ;-)" +
+                "Creo que sería lo mejor para ambos. Te dejo el link por aquí: " + linkPlaceholder +
+                "\n\n##\n\n" +
+                "Situación: Si un cliente potencial te pide que le envíes tu correo electrónico personal, envía esto:" +
+                "Mensaje: Mil gracias por tu respuesta " + prospect.first_name + "!" +
+                "Puedes usar el siguiente email para contactarme. -) abcd_test@gmail.com" +
+                "\n\n##\n\n" +
+                "Situación: Si un cliente potencial te pide que le envíes tu teléfono personal, envía esto:" +
+                "Mensaje: Mil gracias por tu respuesta " + prospect.first_name + "!" +
+                "Prefiero que nos comuniquemos por email. -) abcd_test@gmail.com" +
+                "\n\n##\n\n" +
+                "Situación: Si un cliente potencial te pide que contactes a otra persona, envía esto:" +
+                "Mensaje: Mil gracias por tu respuesta " + prospect.first_name + "!" +
+                "Podrías facilitarme su contacto (email o teléfono)?";
+            return prompt + endToken;
+        }
+
         prompt = "Quiero que actúes como un prospectador profesional." +
             "Debes contestar en el idioma del prospecto." +
             // "Trabajas en una empresa española ubicada en Madrid que se dedica a escalar negocios de consultoría mediante técnicas de automatización e inteligencia artificial en países hispanohablantes." +
@@ -166,59 +169,49 @@ export class PromptMultiService {
 
         var prompt = "Necesito que generes un mensaje corto para " + prospect.first_name + " lo más parecido a estos ejemplos:\n";
         var endToken = "\n\n###\n\n";
-        if (followUpCount == null) {
-            prompt = prompt +
-                "###" +
-                "Ejemplo: Hola " + prospect.first_name + ", te llamó la atención nuestra propuesta? conectamos?" +
-                "###" +
-                "Ejemplo: Ey " + prospect.first_name + ", sigues conmigo?" +
-                "###" +
-                "Ejemplo: Buenas " + prospect.first_name + ", qué tal? te interesarían nuestros  servicios?" +
-                "###";
-            prompt = prompt + endToken;
-            return prompt;
-        }
-
+         
         if (followUpCount == 0) {
             prompt = prompt +
                 "###" +
-                "Ejemplo: Hola " + prospect.first_name + ", ando buscándote! recibiste mis mensajes?" +
+                "Ejemplo: Buenas " + prospect.first_name + ", qué tal?\n Has tenido tiempo de leer mi mensaje?" +
                 "###" +
-                "Ejemplo: Perdona " + prospect.first_name + ", te llegaron mis mensajes anteriores?" +
+                "Ejemplo: Hola " + prospect.first_name + ", cómo estás?\n Solo quería saber si pudiste revisar mi mensaje anterior" +
                 "###" +
-                "Ejemplo: Hola" + prospect.first_name + ", qué tal? pudiste ver mis mensajes?" +
+                "Ejemplo: Buenas " + prospect.first_name + ", cómo va todo?\n Pudiste leer mi mensaje?" +
                 "###";
             prompt = prompt + endToken;
+            return prompt;  
+        } 
+
+        if (followUpCount == 1) {
+            prompt =
+                "###" +
+                "Ejemplo: Hola " + prospect.first_name + ", sigues activo por aquí?" +
+                "###" +
+                "Ejemplo: Hola " + prospect.first_name + ", te llegaron mis mensajes? \n Cualquier duda, estoy a tu disposición!!" +
+                "###" +
+                "Ejemplo Hey: " + prospect.first_name + ", sigues interesado en lo que hablamos?\n Me gustaría saber tu opinión" +
+                "###"    
+            prompt = prompt + endToken;
             return prompt;
-        }
+        } 
 
         if (followUpCount == 2) {
             prompt = prompt +
+                "Genera un mensaje que sea lo más parecido a estos ejemplos y añade un emoji que refleje dudas al final del mensaje:" +
                 "###" +
-                "Ejemplo: " + prospect.first_name + ", sé que andas hasta arriba, pero me concederías 5 minutos para contarte más?" +
+                "Ejemplo: Buenas " + prospect.first_name + ", antes de rendirme quería asegurarme que has recibido mis mensajes sin problemas... es así?" +
                 "###" +
-                "Ejemplo: Hola " + prospect.first_name + ", me dejarías 5 minutos de tu tiempo para charlar sobre nuestra propuesta?" +
+                "Ejemplo: Buenas " + prospect.first_name + ", puedo ayudarte con algo para avanzar en nuestra conversación?" +
                 "###" +
-                "Ejemplo: " + prospect.first_name + ", pudiste revisar lo que hablamos? Nos subimos a un call rápido?" +
-                "###";
-
+                "Ejemplo: Hola " + prospect.first_name + ", solo quería asegurarme de que todo está bien y que recibiste mis mensajes" +
+                "###";   
             prompt = prompt + endToken;
             return prompt;
         }
+         
 
-        prompt =
-            "Genera un mensaje corto con algún emoji, sin perder el respeto, y que sea lo más parecido a estos ejemplos(puedes añadir emojis si lo ves necesario):" +
-            "###" +
-            "Ejemplo: " + prospect.first_name + " andas desaparecido! Seguimos en contacto?" +
-            "###" +
-            "Ejemplo: " + prospect.first_name + ", sigues por ahí todavía?" +
-            "###" +
-            "Ejemplo: " + prospect.first_name + " no te me pierdas! Todo bien?" +
-            "###"
-
-
-        prompt = prompt + endToken;
-        return prompt;
+         
     }
 
     // m
@@ -226,58 +219,45 @@ export class PromptMultiService {
 
         var prompt = "Necesito que generes un mensaje corto para " + prospect.first_name + " lo más parecido a estos ejemplos:\n";
         var endToken = "\n\n###\n\n";
-        if (followUpCount == null) {
-            prompt = prompt +
-                "###" +
-                "Ejemplo: Hola " + prospect.first_name + " he visto que no has agendado la reunión, ha habido algún problema?" +
-                "###" +
-                "Ejemplo: Buenas " + prospect.first_name + ", veo que nuestra reunión sigue en el limbo… Necesitas algo más por nuestra parte?" +
-                "###" +
-                "Ejemplo: " + prospect.first_name + ", no quisiera ser impertinente, pero no veo nuestro meeting en mi agenda.Me echas una mano confirmándola ? " +
-                "###";
-            prompt = prompt + endToken;
-            return prompt;
-        }
-
         if (followUpCount == 0) {
             prompt = prompt +
                 "###" +
-                "Ejemplo: " + prospect.first_name + ", cómo va todo? Confirmamos reunión esta semana?" +
+                "Ejemplo: Muy buenas " + prospect.first_name + ", cómo vas?\n De casualidad has tenido tiempo de revisar agenda?" +
                 "###" +
-                "Ejemplo: " + prospect.first_name + ", disculpa que insista. No quisiera que se te pase nuestra reunión… va todo bien?" +
+                "Ejemplo: Muy buenas " + prospect.first_name + ", cómo vas?\n Finalmente has tenido tiempo de echarle un ojo a la agenda?" +
                 "###" +
-                "Ejemplo: Hola" + prospect.first_name + ", cómo te encuentras? Me preguntaba si pudiste agendarte para conversar?" +
+                "Ejemplo: Buenas " + prospect.first_name + ", de casualidad has revisado la agenda?\n Quedo atento!" +
                 "###";
             prompt = prompt + endToken;
-            return prompt;
+            return prompt;   
         }
 
         if (followUpCount == 1) {
             prompt = prompt +
                 "###" +
-                "Ejemplo: Todo bien " + prospect.first_name + "? Tienes alguna duda que pueda resolverte antes de la reunión?" +
+                "Ejemplo: Buenas " + prospect.first_name + "\n Me preguntaba si has tenido algún inconveniente para encontrar un horario que te venga bien... sigo atento!" +
                 "###" +
-                "Ejemplo: Buenas " + prospect.first_name + ", alguna duda antes de agendar nuestro meeting?" +
+                "Ejemplo: Me preguntaba si has tenido algún inconveniente para encontrar un horario que te venga bien... sigo súper atento" +
                 "###" +
-                "Ejemplo: " + prospect.first_name + ", sé que agendar reuniones a veces da pereza… pero puedes estar a una llamada de cambiar tu negocio!" +
+                "Ejemplo: Buenas " + prospect.first_name + ", he visto que aún no has podido agendarte.... puedo ayudarte con ello?" +
                 "###";
             prompt = prompt + endToken;
-            return prompt;
+            return prompt;   
+        } 
+
+        if (followUpCount == 2) {
+            prompt =
+                "###" +
+                "Ejemplo: Muy buenas" + prospect.first_name + ", pudiste encontrar un horario en la agenda que te venga bien?" +
+                "###" +
+                "Ejemplo: Hola " + prospect.first_name + ", he visto que no has agendado la reunión, ha habido algún problema?" +
+                "###" +
+                "Ejemplo: Buenas " + prospect.first_name + ", no me aparece tu reunión en el calendario, tienes alguna duda?" +
+                "###";
+
+            prompt = prompt + endToken;
+            return prompt;  
         }
-
-        prompt =
-            "Genera un mensaje corto con algún emoji, sin perder el respeto, y que sea lo más parecido a estos ejemplos(puedes añadir emojis si lo ves necesario):" +
-            "###" +
-            "Ejemplo: " + prospect.first_name + " andas desaparecido! Seguimos en contacto?" +
-            "###" +
-            "Ejemplo: " + prospect.first_name + ", sigues por ahí todavía?" +
-            "###" +
-            "Ejemplo: " + prospect.first_name + " no te me pierdas! Todo bien?" +
-            "###"
-
-        prompt = prompt + endToken;
-
-        return prompt;
     }
 
     // m
@@ -293,8 +273,12 @@ export class PromptMultiService {
             "#El mensaje nos dice que no hay hueco en el calendario o que este no funciona." +
             "#El mensaje nos pide que mandemos un link." +
             "#El mensaje puede constar sólo de emojis." +
-            "- CONTACT: El mensaje nos pide que contactemos con otra persona." +
-            "- NO_CALENDAR: El mensaje nos pide una reunión presencial o telefónica." +
+            "- CONTACT:" +
+            "#El mensaje nos pide que contactemos con otra persona." +
+            "#El mensaje nos pide que le contactemos por email." +
+            "#El mensaje nos pide que le contactemos por teléfono." +
+            "- NO_CALENDAR: el mensaje nos pide una reunión presencial." +
+
             "###" +
 
             "Mensaje: Te quiero" +

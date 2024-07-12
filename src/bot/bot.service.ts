@@ -15,8 +15,7 @@ import axios from 'axios';
 import { get_encoding, encoding_for_model } from "tiktoken";
 import { MessageType } from 'src/type/message.type';
 import { GptMessageType } from 'src/type/gptmessage.type';
-import { CampaignType } from 'src/type/campaign.type';
-import { PromptDataService } from 'src/prompt_data/prompt_data.service';
+import { CampaignType } from 'src/type/campaign.type'; 
 import { SocketService } from 'src/socket/socket.service';
 import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';
 import { Brackets } from 'typeorm';
@@ -76,12 +75,9 @@ export class BotService {
     }
 
     async onModuleInit() {
-        this.myIP = ip.address();
-        // this.myIP = '206.189.0.193'  
-        // this.myIP = '104.248.88.76'
+        this.myIP = ip.address(); 
         const _now = new Date();
-        const _h_now = _now.getHours();
-        console.log(">>>h_now", _h_now)
+        const _h_now = _now.getHours(); 
         const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
         myCampaign && myCampaign.forEach((ac: any) => {
             this.start_time = Date.now();
@@ -96,7 +92,7 @@ export class BotService {
         const _now = new Date();
         const _h_now = _now.getHours();
         console.log(">>>h_now", _h_now)
-        if ((_h_now >= 6 && _h_now < 22 && this.login_fail <= 5)) {
+        if ((_h_now >= 6 && _h_now < 22 && this.login_fail <= 5) ) {
             this.people_btn = false;
             const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
             myCampaign.forEach((ac: any) => {
@@ -148,7 +144,7 @@ export class BotService {
     conf() {
         return {
             headless: 'new',
-            //headless: false,
+            // headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
@@ -1327,7 +1323,8 @@ export class BotService {
                     content: sys_content
                 }
             ];
-
+            
+            var is_contact = false;
             const outOfContext: any = await this.getChatGptAnswer(systemPrompt, 'gpt-4o', 0.3, timestamp, linked_in_account.apikey);
 
             if (outOfContext.content != undefined) {
@@ -1345,19 +1342,29 @@ export class BotService {
 
                 if (outOfContext.content.trim() == 'CONTACT') {
                      
-                    linked_in_chat.requires_human_intervention = true;
-                    linked_in_chat.automatic_answer = false;
-                    linked_in_chat.chat_history = JSON.stringify(lastestChat);
-                    linked_in_chat.chat_status = ChatStatus.INPROGRESS;
-                    linked_in_chat.updated_at = this.getTimestamp();
-                    await this.chatService.updateChatOne(linked_in_chat);
-                    const reason = 'Petición de contacto detectada en campaña ' + ac.name;
+                    // linked_in_chat.requires_human_intervention = true;
+                    // linked_in_chat.automatic_answer = false;
+                    // linked_in_chat.chat_history = JSON.stringify(lastestChat);
+                    // linked_in_chat.chat_status = ChatStatus.INPROGRESS;
+                    // linked_in_chat.updated_at = this.getTimestamp();
+                    // await this.chatService.updateChatOne(linked_in_chat);
+                    // const reason = 'Petición de contacto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
-                    return;
-
-                    const gen_contact_prompt = await this.promptService.generateContactPrompt(prospect, ac, 'creative', user_id);
+                    //return; 
                     
-
+                    is_contact = true;
+                    if (linked_in_chat.contact_count != 0) {
+                        linked_in_chat.requires_human_intervention = true;
+                        linked_in_chat.automatic_answer = false;
+                        linked_in_chat.chat_history = JSON.stringify(lastestChat);
+                        linked_in_chat.chat_status = ChatStatus.INPROGRESS;
+                        linked_in_chat.contact_count = 2;
+                        linked_in_chat.updated_at = lastestChat[lastestChat.length - 1].createdAt;
+                        await this.chatService.updateChatOne(linked_in_chat);
+                        return true;
+                    } else {
+                        linked_in_chat.contact_count = 1;
+                    }
                 }
 
                 if (outOfContext.content.trim() == 'NO_CALENDAR') {
@@ -1382,7 +1389,13 @@ export class BotService {
                 linked_in_chat.follow_up_count = 0;
             }
 
-            const gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac, 'creative', user_id);
+            //const gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac, 'creative', user_id);
+            var gen_core_prompt = '';
+            if (is_contact) {
+              gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac,'contact', user_id);
+            } else {
+              gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac,'creative', user_id);
+            }
 
             const sysPrompt: GptMessageType = {
                 role: 'system',
