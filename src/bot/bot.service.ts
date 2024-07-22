@@ -47,6 +47,7 @@ export class BotService {
 
     // captcha api key for bypassing captcha.... 
     private captcha_key = 'CAP-36E7BF9AEE1FCAE79456B4D6681DD2F4';
+    private daily_max = 100;
 
     public login_fail = 0;
     public prs_read_idx = 0;
@@ -293,6 +294,10 @@ export class BotService {
                                 return imgElement ? imgElement['src'] : null;
                             });
                             const img = src.substring(23);
+                            if(this.daily_max < 0){
+                                return
+                            }
+                            this.daily_max--;
                             const res = await axios.post('https://api.capsolver.com/createTask', {
                                 "clientKey": this.captcha_key,
                                 "task": {
@@ -451,6 +456,10 @@ export class BotService {
                                 return imgElement ? imgElement['src'] : null;
                             });
                             const img = src.substring(23);
+                            if(this.daily_max < 0){
+                                return
+                            }
+                            this.daily_max--;
                             const res = await axios.post('https://api.capsolver.com/createTask', {
                                 "clientKey": this.captcha_key,
                                 "task": {
@@ -601,6 +610,10 @@ export class BotService {
                         return imgElement ? imgElement['src'] : null;
                     });
                     const img = src.substring(23);
+                    if(this.daily_max < 0){
+                        return
+                    }
+                    this.daily_max--;
                     const res = await axios.post('https://api.capsolver.com/createTask', {
                         "clientKey": this.captcha_key,
                         "task": {
@@ -2104,6 +2117,10 @@ export class BotService {
                             return imgElement ? imgElement['src'] : null;
                         });
                         const img = src.substring(23);
+                        if(this.daily_max < 0){
+                            return
+                        }
+                        this.daily_max--;
                         const res = await axios.post('https://api.capsolver.com/createTask', {
                             "clientKey": this.captcha_key,
                             "task": {
