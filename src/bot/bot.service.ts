@@ -24,6 +24,7 @@ import { UserService } from 'src/user/user.service';
 import { FirstmsgService } from 'src/firstmsg/firstmsg.service';
 import { first } from 'rxjs';
 import { ProxiesService } from 'src/proxies/proxies.service';
+import { SystemService } from 'src/system/system.service';
 
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -46,7 +47,7 @@ export class BotService {
     private state = false;
 
     // captcha api key for bypassing captcha.... 
-    private captcha_key = 'CAP-36E7BF9AEE1FCAE79456B4D6681DD2F4';
+    private captcha_key = '';
     private daily_max = 100;
 
     public login_fail = 0;
@@ -71,11 +72,16 @@ export class BotService {
         @Inject(forwardRef(() => UserService)) private userService: UserService,
         @Inject(forwardRef(() => FirstmsgService)) private firstmsgService: FirstmsgService,
         @Inject(forwardRef(() => ProxiesService)) private proxiesService: ProxiesService,
+        @Inject(forwardRef(() => SystemService)) private systemService: SystemService,
     ) {
 
     }
 
     async onModuleInit() {
+
+        const sk = await this.systemService.findByKey('capkey');
+        this.captcha_key = sk.value;
+
         this.myIP = ip.address(); 
         const _now = new Date();
         const _h_now = _now.getHours(); 

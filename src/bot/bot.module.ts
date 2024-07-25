@@ -10,6 +10,7 @@ import { SocketModule } from 'src/socket/socket.module';
 import { UserModule } from 'src/user/user.module';
 import { FirstmsgModule } from 'src/firstmsg/firstmsg.module';
 import { ProxiesModule } from 'src/proxies/proxies.module';
+import { SystemModule } from 'src/system/system.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { ProxiesModule } from 'src/proxies/proxies.module';
     forwardRef(() => SocketModule),
     forwardRef(() => UserModule),
     forwardRef(() => FirstmsgModule),
-    forwardRef(() => ProxiesModule)
+    forwardRef(() => ProxiesModule),
+    forwardRef(() => SystemModule)
   ],
   providers: [BotService],
   exports: [BotService,]
