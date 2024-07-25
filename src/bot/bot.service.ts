@@ -781,7 +781,7 @@ export class BotService {
                         await my_page.waitForSelector(item);
                         await my_page.click(item);
                     } catch (e) {
-                        console.log(">>here 784")
+                        console.log(">>here 784", e)
                         var sc_count = Math.floor(this.side_idx / 10);
                         while (sc_count > 0) {
                             sc_count--;
