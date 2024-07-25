@@ -781,6 +781,7 @@ export class BotService {
                         await my_page.waitForSelector(item);
                         await my_page.click(item);
                     } catch (e) {
+                        console.log(">>here 784")
                         var sc_count = Math.floor(this.side_idx / 10);
                         while (sc_count > 0) {
                             sc_count--;
@@ -789,6 +790,8 @@ export class BotService {
                         this.side_idx = this.side_idx - 1;
                         continue;
                     }
+
+                    console.log(">>stopped")
 
                     // read message from message box that has message
                     await my_page.waitForTimeout(2000);
