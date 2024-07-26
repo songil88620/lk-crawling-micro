@@ -1,0 +1,23 @@
+export type Leadgen = {
+    id: number,
+    name: string;
+    linked_in_account_id: string;
+    template: number;
+    autocancel: boolean;
+    inv_message: string;
+    f1_message: string;
+    f1_block: boolean,
+    f1_delay: number,
+    f2_message: string;
+    f2_block: boolean,
+    f2_delay: number,
+    f3_message: string;
+    f3_block: boolean,
+    f3_delay: number,
+    status: string;
+    keyword: string,
+    relation: string,
+    proxy: string,
+    user_id: number,
+    setting: string
+}

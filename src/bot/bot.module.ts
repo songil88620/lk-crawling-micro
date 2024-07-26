@@ -11,6 +11,8 @@ import { UserModule } from 'src/user/user.module';
 import { FirstmsgModule } from 'src/firstmsg/firstmsg.module';
 import { ProxiesModule } from 'src/proxies/proxies.module';
 import { SystemModule } from 'src/system/system.module';
+import { LeadgenModule } from 'src/leadgen/leadgen.module';
+import { LeadgendataModule } from 'src/leadgendata/leadgendata.module';
 
 @Module({
   imports: [
@@ -24,7 +26,9 @@ import { SystemModule } from 'src/system/system.module';
     forwardRef(() => UserModule),
     forwardRef(() => FirstmsgModule),
     forwardRef(() => ProxiesModule),
-    forwardRef(() => SystemModule)
+    forwardRef(() => SystemModule),
+    forwardRef(() => LeadgenModule),
+    forwardRef(() => LeadgendataModule)
   ],
   providers: [BotService],
   exports: [BotService,]

@@ -26,6 +26,10 @@ import { FirstmsgEntity } from './firstmsg/firstmsg.entity';
 import { FirstmsgModule } from './firstmsg/firstmsg.module';
 import { SystemEntity } from './system/system.entity';
 import { SystemModule } from './system/system.module';
+import { LeadgenEntity } from './leadgen/leadgen.entity';
+import { LeadgendataEntity } from './leadgendata/leadgendata.entity';
+import { LeadgenModule } from './leadgen/leadgen.module';
+import { LeadgendataModule } from './leadgendata/leadgendata.module';
  
 @Module({
   imports: [ 
@@ -47,7 +51,9 @@ import { SystemModule } from './system/system.module';
         LinkedInAccountEntity,
         LinkedInChatEntity, 
         FirstmsgEntity,
-        SystemEntity
+        SystemEntity,
+        LeadgenEntity,
+        LeadgendataEntity
       ],
       synchronize: false
     }),  
@@ -63,7 +69,9 @@ import { SystemModule } from './system/system.module';
     ProspectProspectionCampaignModule, 
     SocketModule, 
     FirstmsgModule,
-    SystemModule
+    SystemModule,
+    LeadgenModule,
+    LeadgendataModule
   ],
   controllers: [AppController], 
 })

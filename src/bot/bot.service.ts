@@ -15,7 +15,7 @@ import axios from 'axios';
 import { get_encoding, encoding_for_model } from "tiktoken";
 import { MessageType } from 'src/type/message.type';
 import { GptMessageType } from 'src/type/gptmessage.type';
-import { CampaignType } from 'src/type/campaign.type'; 
+import { CampaignType } from 'src/type/campaign.type';
 import { SocketService } from 'src/socket/socket.service';
 import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';
 import { Brackets } from 'typeorm';
@@ -25,6 +25,10 @@ import { FirstmsgService } from 'src/firstmsg/firstmsg.service';
 import { first } from 'rxjs';
 import { ProxiesService } from 'src/proxies/proxies.service';
 import { SystemService } from 'src/system/system.service';
+import { LeadgenService } from 'src/leadgen/leadgen.service';
+import { LeadgendataService } from 'src/leadgendata/leadgendata.service';
+import { Leadgen } from 'src/type/leadgen.type';
+import { Leadgendata } from 'src/type/leadgendata.type';
 
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -43,7 +47,7 @@ interface LinkedInBrowser {
 export class BotService {
 
     private cached_linked_browser: LinkedInBrowser = { id: null, page: null, browser: null };
-    private myIP = "";
+    private my_ip = "";
     private state = false;
 
     // captcha api key for bypassing captcha.... 
@@ -61,6 +65,13 @@ export class BotService {
 
     public lang = 0;
 
+    private invite_count = 0;
+    private current_page = 1;
+    private more_invitation = true;
+    private connection_count = 0;
+    private more_connection = true;
+    private withdraw_state = true;
+
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
         @Inject(forwardRef(() => LinkedInAccountsService)) private linkedinAccountService: LinkedInAccountsService,
@@ -73,6 +84,8 @@ export class BotService {
         @Inject(forwardRef(() => FirstmsgService)) private firstmsgService: FirstmsgService,
         @Inject(forwardRef(() => ProxiesService)) private proxiesService: ProxiesService,
         @Inject(forwardRef(() => SystemService)) private systemService: SystemService,
+        @Inject(forwardRef(() => LeadgenService)) private leadgenService: LeadgenService,
+        @Inject(forwardRef(() => LeadgendataService)) private leadgendataService: LeadgendataService,
     ) {
 
     }
@@ -81,11 +94,10 @@ export class BotService {
 
         const sk = await this.systemService.findByKey('capkey');
         this.captcha_key = sk.value;
-
-        this.myIP = ip.address(); 
+        this.my_ip = ip.address();
         const _now = new Date();
-        const _h_now = _now.getHours(); 
-        const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
+        const _h_now = _now.getHours();
+        const myCampaign = await this.prospectCampaignService.findMyCampaign(this.my_ip);
         myCampaign && myCampaign.forEach((ac: any) => {
             this.start_time = Date.now();
             this.goToLinkedInFastMode(ac)
@@ -98,18 +110,33 @@ export class BotService {
     async runCampaign() {
         const _now = new Date();
         const _h_now = _now.getHours();
-        console.log(">>>h_now", _h_now)
-        if ((_h_now >= 6 && _h_now < 22 && this.login_fail <= 5) ) {
-            this.people_btn = false;
-            const myCampaign = await this.prospectCampaignService.findMyCampaign(this.myIP);
-            myCampaign.forEach((ac: any) => {
-                console.log(",,,timer", this.isLoginOn(), this.isOver())
-                if (this.isOver() || !this.isLoginOn()) {
-                    console.log(">>>>restart again")
-                    this.start_time = Date.now();
-                    this.goToLinkedInFastMode(ac)
+        const _m_now = _now.getMinutes();
+        if ((_h_now >= 6 && _h_now < 22 && this.login_fail <= 5)) {
+
+            // 6:00~7:00 send invitation
+            // 7:00~21:30 normal working
+            // 21:30~22:00 withdraw invitation checking
+
+            if (_h_now < 7 && this.invite_count < 100 && this.more_invitation == true) {
+                const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
+                if (leadgen.status == 'active' && !this.isLoginOn()) {
+                    this.goToInvitationSendingMode(leadgen)
                 }
-            })
+            } else if (_h_now == 21 && _m_now > 25 && this.withdraw_state == true) {
+                const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
+                if (leadgen.status == 'active' && !this.isLoginOn()) {
+                    this.goToPendingWithdrawMode(leadgen)
+                }
+            } else {
+                this.people_btn = false;
+                const myCampaign = await this.prospectCampaignService.findMyCampaign(this.my_ip);
+                myCampaign.forEach((ac: any) => {
+                    if (this.isOver() || !this.isLoginOn()) {
+                        this.start_time = Date.now();
+                        this.goToLinkedInFastMode(ac)
+                    }
+                })
+            }
         } else {
             this.login_fail = 0;
             const br = this.cached_linked_browser.browser;
@@ -123,7 +150,7 @@ export class BotService {
 
         if (!(_h_now >= 6 && _h_now < 22)) {
             const ts = Date.now();
-            this.proxiesService.update(this.myIP, false, ts)
+            this.proxiesService.update(this.my_ip, false, ts)
         }
     }
 
@@ -142,7 +169,7 @@ export class BotService {
         const data = {
             id: this.cached_linked_browser.id,
             state: this.state,
-            ip: this.myIP,
+            ip: this.my_ip,
             stamp: Math.floor(Date.now() / 1000)
         }
         this.socketService.loginstateToMother(data)
@@ -204,7 +231,7 @@ export class BotService {
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
             });
             await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
-            await page.waitForTimeout(2000); 
+            await page.waitForTimeout(2000);
 
             try {
                 await page.type('#session_key', login_email);
@@ -216,7 +243,7 @@ export class BotService {
                 await page.type('#username', login_email);
                 await page.type('#password', login_password);
                 await page.click('button.from__button--floating');
-            } 
+            }
 
             console.log(">>>external login req...")
 
@@ -300,7 +327,7 @@ export class BotService {
                                 return imgElement ? imgElement['src'] : null;
                             });
                             const img = src.substring(23);
-                            if(this.daily_max < 0){
+                            if (this.daily_max < 0) {
                                 return
                             }
                             this.daily_max--;
@@ -462,7 +489,7 @@ export class BotService {
                                 return imgElement ? imgElement['src'] : null;
                             });
                             const img = src.substring(23);
-                            if(this.daily_max < 0){
+                            if (this.daily_max < 0) {
                                 return
                             }
                             this.daily_max--;
@@ -530,6 +557,118 @@ export class BotService {
             return {
                 id: linked_in_account_id,
                 login: false
+            }
+        }
+    }
+
+    async internalLoginWithPw(email: string, pw: string) {
+        const login_email = email;
+        const login_password = pw;
+        const browser = await puppeteer.launch(this.conf());
+        const page = await browser.newPage();
+        await page.setExtraHTTPHeaders({
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+        });
+        // await page.authenticate({ username, password });
+        await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
+        await page.waitForTimeout(2000);
+        try {
+            await page.type('#session_key', login_email);
+            await page.type('#session_password', login_password);
+            await page.click('button.sign-in-form__submit-btn--full-width');
+        } catch (e) {
+            await page.goto(`https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin`, { timeout: 0 });
+            await page.waitForTimeout(2000);
+            await page.type('#username', login_email);
+            await page.type('#password', login_password);
+            await page.click('button.from__button--floating');
+        }
+
+        await page.waitForTimeout(5000);
+
+        if (this.cached_linked_browser.browser != null) {
+            const browser_old = this.cached_linked_browser.browser;
+            if (browser_old != null) {
+                await browser_old.close();
+            }
+        }
+        this.cached_linked_browser = {
+            id: 1,
+            page: page,
+            browser: browser
+        }
+
+        await page.waitForTimeout(5000);
+        if (page.url().includes('/feed/')) {
+            // login success 
+            const cookiesSet = await page.cookies();
+            var session_id = "";
+            var li_at = "";
+            cookiesSet.forEach((c: any) => {
+                if (c.name == 'JSESSIONID') {
+                    session_id = c.value;
+                    // console.log(">>session_id", session_id)
+                }
+                if (c.name == 'li_at') {
+                    li_at = c.value;
+                    // console.log(">>li_at", li_at)
+                }
+            })
+            return { page: page, success: true }
+        } else {
+            // console.log(">>p..page.url()", page.url())
+            await page.waitForTimeout(45000);
+            const frame_1 = await page.$("iframe[id='captcha-internal']");
+            const contentFrame_1 = await frame_1.contentFrame();
+            const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
+            const contentFrame_2 = await frame_2.contentFrame();
+            const frame_3 = await contentFrame_2.$("iframe[title='Verification challenge']");
+            const contentFrame_3 = await frame_3.contentFrame();
+            const frame_4 = await contentFrame_3.$("iframe[id='fc-iframe-wrap']");
+            const contentFrame_4 = await frame_4.contentFrame();
+            const frame_5 = await contentFrame_4.$("iframe[id='CaptchaFrame']");
+            const contentFrame_5 = await frame_5.contentFrame();
+            const acceptBtn = await contentFrame_5.$(`#home button`);
+            await acceptBtn.click();
+            // console.log(">> clicked...")
+            //auto bypass for puzzle
+            await page.waitForTimeout(4000);
+            const loops = [1, 1, 1, 1, 1, 1, 1];
+            try {
+                for (var l of loops) {
+                    await contentFrame_5.$(`#game_children_text`);
+                    const src = await contentFrame_5.evaluate(() => {
+                        const imgElement = document.querySelector('#game_challengeItem_image');
+                        return imgElement ? imgElement['src'] : null;
+                    });
+                    const img = src.substring(23);
+                    const res = await axios.post('https://api.capsolver.com/createTask', {
+                        "clientKey": this.captcha_key,
+                        "task": {
+                            "type": "FunCaptchaClassification",
+                            "websiteURL": "https://www.linkedin.com",
+                            "images": [
+                                img
+                            ],
+                            "question": "rotated"
+                        }
+                    });
+                    if (res.data.status == 'ready') {
+                        const idx = res.data.solution.objects[0] + 1;
+                        await contentFrame_5.click('#image' + idx + ' > a');
+                    }
+                    await page.waitForTimeout(4000);
+                }
+            } catch (e) {
+                // console.log(">>bypass")
+            }
+            await page.waitForTimeout(3000);
+            if (page.url().includes('/feed/')) {
+                this.login_fail = 0;
+                return { page: page, success: true }
+            } else {
+                this.login_fail = this.login_fail + 1;
+                return { page: null, success: false }
             }
         }
     }
@@ -616,7 +755,7 @@ export class BotService {
                         return imgElement ? imgElement['src'] : null;
                     });
                     const img = src.substring(23);
-                    if(this.daily_max < 0){
+                    if (this.daily_max < 0) {
                         return
                     }
                     this.daily_max--;
@@ -667,6 +806,551 @@ export class BotService {
         })
         await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
         console.log(">>>opened new page")
+    }
+
+    // linkedin invitation and follow up message mode
+    async goToInvitationSendingMode(leadgen: Leadgen) {
+        const lk_id = Number(leadgen.linked_in_account_id);
+        const lk_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(lk_id);
+        const user_id = lk_account.user_id;
+        const lg_id = leadgen.id;
+        const mail = lk_account.email;
+        const pw = lk_account.password;
+
+        var inv_message = leadgen.inv_message;
+        const f1_message = leadgen.f1_message;
+        var first_message = f1_message;
+        var f2_message = '';
+        var f3_message = '';
+        const f1_block = leadgen.f1_block;
+        const f2_block = leadgen.f2_block;
+        const f3_block = leadgen.f3_block;
+        const f1_delay = leadgen.f1_delay;
+        const f2_delay = leadgen.f2_delay;
+        const f3_dalay = leadgen.f3_delay;
+
+        if (f1_block == false) {
+            f2_message = leadgen.f2_message;
+            first_message = f2_message;
+            if (f2_block == false) {
+                f3_message = leadgen.f3_message
+                first_message = f3_message
+            }
+        }
+
+        var mode = 'people'; //companies 
+        const setting: any = JSON.parse(leadgen.setting)
+
+        try {
+
+            var my_page: any = null;
+            if (this.cached_linked_browser.browser != null) {
+                const page = await this.cached_linked_browser.page;
+                await page.waitForTimeout(5000);
+                await page.goto(`https://www.linkedin.com/feed/`, { timeout: 0 });
+                await page.waitForTimeout(5000);
+                if (page.url().includes('/feed/') || page.url().includes('/in/') || page.url().includes('/search/')) {
+                    my_page = page;
+                } else {
+                    const browser_old = this.cached_linked_browser.browser;
+                    if (browser_old != null) {
+                        await browser_old.close();
+                    }
+                    this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
+                    const res = await this.internalLoginWithPw(mail, pw);
+                    if (res.success) {
+                        my_page = res.page
+                    } else {
+                        return;
+                    }
+                }
+            } else {
+                const res = await this.internalLoginWithPw(mail, pw);
+                if (res.success) {
+                    my_page = res.page
+                } else {
+                    return;
+                }
+            }
+
+            // linkedin account language check
+            const u_name = await my_page.$('.global-nav__nav .global-nav__primary-items li:nth-child(1) a span')
+            if (u_name) {
+                var n = await (await u_name.getProperty('textContent')).jsonValue()
+                const home = this.beautySpace(n);
+                if (home == 'Home') {
+                    this.lang = 0;
+                } else if (home == 'Inicio') {
+                    this.lang = 1;
+                } else {
+
+                }
+            }
+
+            await my_page.setViewport({
+                width: 1920,
+                height: 880,
+                deviceScaleFactor: 1,
+            });
+
+            // const first_search_url = 'https://www.linkedin.com/search/results/people/?keywords=software engineer&network=["F","S","O"]&origin=FACETED_SEARCH';
+            var first_search_url = this.parseSearchUrl(setting, mode, 1)
+
+            await my_page.goto(first_search_url, { timeout: 0 });
+            await my_page.waitForTimeout(5000);
+
+            // sending invitation loop
+            while (this.invite_count < 100 && this.more_invitation && this.isLoginOn) {
+                var sid = 0;
+                while (sid < 10) {
+                    sid++;
+                    try {
+                        const list_item = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ')';
+
+                        const is_more_item = await my_page.$(list_item) !== null
+                        if (!is_more_item) {
+                            this.more_invitation = false;
+                            continue;
+                        }
+
+                        await my_page.waitForSelector(list_item);
+                        const has_btn = await my_page.evaluate((selector) => {
+                            const div = document.querySelector(selector);
+                            if (div) {
+                                return div.querySelector('.artdeco-button') !== null;
+                            }
+                            return false;
+                        }, list_item);
+
+                        if (has_btn) {
+                            console.log("has btn")
+
+                            // get detail of the member start
+                            const avatar_tag = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .presence-entity__image'
+                            const imageUrl = await my_page.$eval(`${avatar_tag}`, (img: any) => img.src);
+
+                            const profile_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') div';
+                            const member_urn = await my_page.$eval(profile_sect, (el: any) => {
+                                return el.getAttribute("data-chameleon-result-urn")
+                            });
+                            const member_id = member_urn.split(":")[3]
+
+                            const subtitle_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .entity-result__primary-subtitle'
+                            const st = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerHTML)
+                            const subtitle = this.beautySpace(st).slice(7, -7)
+
+                            const name_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .app-aware-link span span:nth-child(1)'
+                            const nm = await my_page.$eval(`${name_sect}`, (element: any) => element.innerHTML)
+                            const full_name = this.beautySpace(nm).slice(7, -7)
+                            // get detail of the member end
+
+
+                            // message, connect, follow button
+                            const action_btn = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .artdeco-button';
+                            await my_page.waitForSelector(action_btn);
+
+                            // Message/Enviar mensaje, Connect/Conectar, 
+                            const button_name = await my_page.evaluate((selector) => {
+                                const button = document.querySelector(selector);
+                                return button ? button.textContent.trim() : null;
+                            }, action_btn);
+
+                            if (button_name == 'Connect' || button_name == 'Conectar') {
+                                // click connect button of the list item
+                                await my_page.click(action_btn);
+                                await my_page.waitForTimeout(500);
+
+                                // check if add_note button exist or not and if there is modal, need to close it
+                                const addnote = '.artdeco-modal .artdeco-modal__actionbar .artdeco-button:nth-child(1)';
+                                const is_addnote = await my_page.$(addnote) !== null
+
+                                if (!is_addnote) {
+                                    const clos_btn = '.upsell-modal .artdeco-modal__dismiss';
+                                    await my_page.waitForSelector(clos_btn);
+                                    await my_page.click(clos_btn);
+                                    continue;
+                                }
+
+                                // click addnote button of the modal
+                                // const addnote = '.artdeco-modal .artdeco-modal__actionbar .artdeco-button:nth-child(1)';
+                                await my_page.waitForSelector(addnote);
+                                await my_page.click(addnote);
+
+                                const inv_msg_box = '.artdeco-modal #custom-message';
+                                const is_msgbox = await my_page.$(inv_msg_box) !== null
+
+                                if (!is_msgbox) {
+                                    const clos_btn = '.upsell-modal .artdeco-modal__dismiss';
+                                    await my_page.waitForSelector(clos_btn);
+                                    await my_page.click(clos_btn);
+                                    await my_page.waitForTimeout(500);
+
+                                    // if there is no message box, need to open modal again and click 'send without a note'
+                                    await my_page.click(action_btn);
+                                    await my_page.waitForTimeout(500);
+                                    const send_without_note = '.artdeco-modal .artdeco-modal__actionbar .artdeco-button:nth-child(2)';
+                                    await my_page.waitForSelector(send_without_note);
+                                    await my_page.click(send_without_note);
+
+                                    const leadgendata: Leadgendata = {
+                                        member_id,
+                                        name: full_name,
+                                        avatar: imageUrl,
+                                        data: JSON.stringify({ subtitle }),
+                                        status: 'pending',
+                                        f_stage: 0,
+                                        updated_at: this.getTimestamp(),
+                                        user_id,
+                                        lg_id
+                                    }
+                                    await this.leadgendataService.create_new(leadgendata);
+                                    this.invite_count++;
+                                    continue;
+                                }
+
+                                // type invitation message on note                                
+                                await my_page.waitForTimeout(1000);
+                                const message_box = await my_page.waitForSelector(inv_msg_box);
+                                if (message_box) {
+                                    await my_page.focus(inv_msg_box)
+                                }
+                                await my_page.keyboard.type(inv_message, { delay: 5 });
+                                await my_page.waitForTimeout(1000);
+
+                                const sendconnect = '.artdeco-modal .artdeco-modal__actionbar .artdeco-button:nth-child(2)';
+                                await my_page.waitForSelector(sendconnect);
+                                await my_page.click(sendconnect);
+
+                                const leadgendata: Leadgendata = {
+                                    member_id,
+                                    name: full_name,
+                                    avatar: imageUrl,
+                                    data: JSON.stringify({ subtitle }),
+                                    status: 'pending',
+                                    f_stage: 0,
+                                    updated_at: this.getTimestamp(),
+                                    user_id,
+                                    lg_id
+                                }
+                                await this.leadgendataService.create_new(leadgendata);
+                                this.invite_count++;
+                                console.log(">>invit", this.invite_count)
+                            }
+                        }
+                    } catch (e) {
+                        console.log("...err", e)
+                    }
+                }
+                this.current_page++;
+                const next_page_url = this.parseSearchUrl(setting, mode, this.current_page);
+                await my_page.goto(next_page_url, { timeout: 0 });
+                await my_page.waitForTimeout(2000);
+                sid = 0;
+                console.log(">>>page number", this.current_page);
+            }
+            console.log(">>cant send more...")
+
+            // checking connection state loop
+            const connection_url = 'https://www.linkedin.com/mynetwork/invite-connect/connections/';
+            await my_page.goto(connection_url, { timeout: 0 });
+            await my_page.waitForTimeout(10000);
+
+            while (this.more_connection && this.isLoginOn) {
+                this.connection_count++;
+                try {
+                    if (my_page.url() != connection_url) {
+                        await my_page.goto(connection_url, { timeout: 0 });
+                        await my_page.waitForTimeout(5000);
+                    }
+
+                    await my_page.waitForTimeout(1000);
+                    const list_item = '.scaffold-finite-scroll__content .artdeco-list:nth-child(' + this.connection_count + ')';
+
+                    //check if there are more list items
+                    const is_more_item = await my_page.$(list_item) !== null
+                    if (!is_more_item) {
+                        this.more_connection = false;
+                        continue;
+                    }
+
+                    // get detail of the member start
+                    const avatar_tag = '.scaffold-finite-scroll__content .artdeco-list:nth-child(' + this.connection_count + ') .presence-entity__image'
+                    const imageUrl = await my_page.$eval(`${avatar_tag}`, (img: any) => img.src);
+                    const full_name = await my_page.$eval(`${avatar_tag}`, (img: any) => img.alt);
+
+                    const action_btn = '.scaffold-finite-scroll__content .artdeco-list:nth-child(' + this.connection_count + ') .artdeco-button';
+                    await my_page.waitForSelector(action_btn);
+                    await my_page.click(action_btn);
+                    await my_page.waitForTimeout(2000);
+
+                    // read message from message box
+                    await my_page.waitForTimeout(2000);
+                    const msgs = await my_page.$$('li.msg-s-message-list__event')
+
+                    var messages: MessageType[] = []
+                    var date = '';
+                    var time = '';
+                    var name = '';
+                    var user_name: any = '';
+                    const u_name = await my_page.$('.msg-overlay-bubble-header .msg-overlay-bubble-header__title span')
+                    if (u_name) {
+                        var n = await (await u_name.getProperty('textContent')).jsonValue()
+                        user_name = this.beautySpace(n);
+                    }
+
+                    const first_name = user_name.split(" ")[0];
+                    const last_name = user_name.split(" ")[1];
+
+                    for (const msg of msgs) {
+                        const date_ele = await msg.$('.msg-s-message-list__time-heading')
+                        if (date_ele) {
+                            date = await (await date_ele.getProperty('textContent')).jsonValue();
+                        }
+                        const time_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__timestamp')
+                        if (time_ele) {
+                            time = await (await time_ele.getProperty('textContent')).jsonValue()
+                        }
+                        const name_ele = await msg.$('.msg-s-event-listitem .msg-s-message-group__meta .msg-s-message-group__name')
+                        if (name_ele) {
+                            name = await (await name_ele.getProperty('textContent')).jsonValue()
+                        }
+                        const msg_body = await msg.$('.msg-s-event-listitem .msg-s-event__content .msg-s-event-listitem__body')
+                        const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
+
+                        const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
+                        const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
+
+                        const msg_data: MessageType = {
+                            createdAt: b_date['date'],
+                            role: this.beautySpace(name) == user_name ? 'user' : 'assistant',
+                            content: _msg
+                        }
+                        messages.push(msg_data);
+                    }
+
+                    console.log(">>msg", messages)
+
+                    // check message deliveryed state
+                    var replied = false;
+                    var f1_sent = false;
+                    var f2_sent = false;
+                    var f3_sent = false;
+                    var first_sent = false;
+                    messages.forEach((m: MessageType) => {
+                        if (m.role == 'user') {
+                            replied = true
+                        }
+                        if (m.role == 'assistant') {
+                            if (m.content == first_message) {
+                                first_sent = true;
+                            }
+                            if (m.content == f1_message) {
+                                f1_sent = true
+                            }
+                            if (m.content == f2_message) {
+                                f2_sent = true
+                            }
+                            if (m.content == f3_message) {
+                                f3_sent = true
+                            }
+                        }
+                    })
+
+                    // clear old placeholder message  
+                    await my_page.waitForSelector('.msg-form__contenteditable');
+                    await my_page.focus('.msg-form__contenteditable');
+                    await my_page.keyboard.down('Control');
+                    await my_page.keyboard.press('KeyA');
+                    await my_page.keyboard.up('Control');
+                    await my_page.keyboard.press('Backspace');
+                    await my_page.waitForTimeout(200);
+
+                    if (replied) {
+                        if (first_sent == false) {
+                            first_message = first_message.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
+                            await my_page.keyboard.type(first_message, { delay: 100 });
+                            await my_page.waitForTimeout(500);
+                            try {
+                                await my_page.click('button.msg-form__send-button');
+                            } catch (e) {
+                                await my_page.click('button.msg-form__send-btn');
+                            }
+                            console.log(">>send first msg action...", first_message)
+                        }
+                        await this.leadgendataService.update_status_by_name(full_name, 'replied', lg_id)
+                    } else {
+                        var msg = '';
+                        if (f1_sent == false) {
+                            if (messages.length == 0) {
+                                msg = f1_message;
+                            } else {
+                                if (this.isNowAfter(f1_delay * 24, messages[0].createdAt)) {
+                                    msg = f1_message;
+                                }
+                            }
+                        } else if (f2_sent == false) {
+                            if (this.isNowAfter(f2_delay * 24, messages[messages.length - 1].createdAt)) {
+                                msg = f2_message;
+                            }
+                        } else if (f3_sent == false) {
+                            if (this.isNowAfter(f3_dalay * 24, messages[messages.length - 1].createdAt)) {
+                                msg = f3_message;
+                            }
+                        } else {
+
+                        }
+                        if (msg != '') {
+                            msg = msg.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
+                            await my_page.keyboard.type(msg, { delay: 100 });
+                            await my_page.waitForTimeout(500);
+                            try {
+                                await my_page.click('button.msg-form__send-button');
+                            } catch (e) {
+                                await my_page.click('button.msg-form__send-btn');
+                            }
+                            console.log(">>>msg", msg)
+                        }
+                        await this.leadgendataService.update_status_by_name(full_name, 'accepted', lg_id)
+                    }
+
+                    // close message box for next
+                    try {
+                        const close_btn = '.msg-overlay-conversation-bubble .msg-overlay-bubble-header__controls button:last-child';
+                        await my_page.waitForSelector(close_btn);
+                        await my_page.click(close_btn);
+                    } catch (e) {
+
+                    }
+                    await my_page.waitForTimeout(500);
+                } catch (e) {
+                    console.log(">>err", e)
+                }
+            }
+            console.log(">>>>check connectioin end")
+        } catch (e) {
+            console.log(">>>error invitation", e)
+        }
+    }
+
+    // linkedin invitation pending withdraw mode
+    async goToPendingWithdrawMode(leadgen: Leadgen) {
+        const lk_id = Number(leadgen.linked_in_account_id);
+        const lk_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(lk_id);
+        const user_id = lk_account.user_id;
+        const lg_id = leadgen.id;
+
+        const mail = lk_account.email;
+        const pw = lk_account.password;
+
+        try {
+
+            var my_page: any = null;
+            if (this.cached_linked_browser.browser != null) {
+                const page = await this.cached_linked_browser.page;
+                await page.waitForTimeout(5000);
+                await page.goto(`https://www.linkedin.com/feed/`, { timeout: 0 });
+                await page.waitForTimeout(5000);
+                if (page.url().includes('/feed/') || page.url().includes('/in/') || page.url().includes('/search/')) {
+                    my_page = page;
+                } else {
+                    const browser_old = this.cached_linked_browser.browser;
+                    if (browser_old != null) {
+                        await browser_old.close();
+                    }
+                    this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
+                    const res = await this.internalLoginWithPw(mail, pw);
+                    if (res.success) {
+                        my_page = res.page
+                    } else {
+                        return;
+                    }
+                }
+            } else {
+                const res = await this.internalLoginWithPw(mail, pw);
+                if (res.success) {
+                    my_page = res.page
+                } else {
+                    return;
+                }
+            }
+
+            // check linkedin account language mode
+            const u_name = await my_page.$('.global-nav__nav .global-nav__primary-items li:nth-child(1) a span')
+            if (u_name) {
+                var n = await (await u_name.getProperty('textContent')).jsonValue()
+                const home = this.beautySpace(n);
+                if (home == 'Home') {
+                    this.lang = 0;
+                } else if (home == 'Inicio') {
+                    this.lang = 1;
+                } else {
+
+                }
+            }
+
+            // ---------- linkedin has already logged in and start to work from now ----------
+            // check the messages from the right sidebar and read new message one by one after click them. 
+            await my_page.setViewport({
+                width: 1920,
+                height: 880,
+                deviceScaleFactor: 1,
+            });
+
+            // checking withdraw state loop
+            const withdraw_url = 'https://www.linkedin.com/mynetwork/invitation-manager/sent/';
+            await my_page.goto(withdraw_url, { timeout: 0 });
+            await my_page.waitForTimeout(10000);
+
+            var withdarw_count = 0;
+            while (this.withdraw_state) {
+                withdarw_count++;
+                try {
+                    if (my_page.url() != withdraw_url) {
+                        await my_page.goto(withdraw_url, { timeout: 0 });
+                        await my_page.waitForTimeout(5000);
+                    }
+                    await my_page.waitForTimeout(1000);
+                    const list_item = '.mn-invitation-list .artdeco-list__item:nth-child(' + withdarw_count + ')';
+
+                    //check if there are more list items
+                    const is_more_item = await my_page.$(list_item) !== null
+                    if (!is_more_item) {
+                        this.withdraw_state = false;
+                        continue;
+                    }
+
+                    const name_sect = '.mn-invitation-list .artdeco-list__item:nth-child(' + withdarw_count + ') .app-aware-link .app-aware-link'
+                    const nm = await my_page.$eval(`${name_sect}`, (element: any) => element.innerHTML)
+                    const w_name = this.beautySpace(nm).slice(7, -7)
+
+                    const time_sect = '.mn-invitation-list .artdeco-list__item:nth-child(' + withdarw_count + ') .time-badge';
+                    const tm = await my_page.$eval(`${time_sect}`, (element: any) => element.innerHTML)
+                    if (this.lang == 0) {
+                        if (tm.split(' ')[2] == 'month' || tm.split(' ')[2] == 'months' || tm.split(' ')[2] == 'year') {
+                            // withdraw now
+                            const action_btn = '.mn-invitation-list .artdeco-list__item:nth-child(' + withdarw_count + ') .artdeco-button';
+                            await my_page.waitForSelector(action_btn);
+
+                            const withdarw_btn = '.artdeco-modal .artdeco-modal__actionbar .artdeco-button:nth-child(2)';
+                            const is_wbtn = await my_page.$(withdarw_btn) !== null
+                            if (is_wbtn) {
+                                await my_page.waitForSelector(withdarw_btn);
+                                await my_page.click(withdarw_btn);
+                                withdarw_count--;
+                                await this.leadgendataService.update_status_by_name(w_name, 'withdrawed', lg_id)
+                            }
+                        }
+                    } else {
+
+                    }
+                } catch (e) {
+
+                }
+            }
+            console.log(">>>>withdraw is ended for today...")
+        } catch (e) {
+            console.log(">>>error withdraw", e)
+        }
     }
 
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
@@ -900,7 +1584,7 @@ export class BotService {
                         if (linked_in_chat == null) {
                             console.log(">>open message")
                             // open message
-                            
+
                             var st = false;
                             messages.forEach((m) => {
                                 if (m.role == 'user') {
@@ -1348,7 +2032,7 @@ export class BotService {
                     content: sys_content
                 }
             ];
-            
+
             var is_contact = false;
             const outOfContext: any = await this.getChatGptAnswer(systemPrompt, 'gpt-4o', 0.3, timestamp, linked_in_account.apikey);
 
@@ -1366,7 +2050,7 @@ export class BotService {
                 }
 
                 if (outOfContext.content.trim() == 'CONTACT') {
-                     
+
                     // linked_in_chat.requires_human_intervention = true;
                     // linked_in_chat.automatic_answer = false;
                     // linked_in_chat.chat_history = JSON.stringify(lastestChat);
@@ -1376,7 +2060,7 @@ export class BotService {
                     // const reason = 'Petición de contacto detectada en campaña ' + ac.name;
                     // $linkedInAccount -> user -> notify(new ChatOutOfContext($reason, $lastMessage, $messages, $prospect));
                     //return; 
-                    
+
                     is_contact = true;
                     if (linked_in_chat.contact_count != 0) {
                         linked_in_chat.requires_human_intervention = true;
@@ -1417,9 +2101,9 @@ export class BotService {
             //const gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac, 'creative', user_id);
             var gen_core_prompt = '';
             if (is_contact) {
-              gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac,'contact', user_id, user_email);
+                gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac, 'contact', user_id, user_email);
             } else {
-              gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac,'creative', user_id, user_email);
+                gen_core_prompt = await this.promptService.generateCorePrompt(prospect, ac, 'creative', user_id, user_email);
             }
 
             const sysPrompt: GptMessageType = {
@@ -1643,6 +2327,133 @@ export class BotService {
             await my_page.waitForTimeout(500);
             amount--;
         }
+    }
+
+    async scrollDown(my_page: any) {
+        try {
+            await my_page.evaluate(async () => {
+                window.scrollBy(0, 500);
+            });
+        } catch (e) {
+        }
+    }
+
+    async scrollUp(my_page: any) {
+        try {
+            await my_page.evaluate(async () => {
+                window.scrollBy(0, -500);
+            });
+        } catch (e) {
+        }
+    }
+
+    async pageScrollToTop(my_page: any) {
+        try {
+            await my_page.evaluate(async () => {
+                await new Promise<void>((resolve, reject) => {
+                    let totalHeight = document.body.scrollHeight;
+                    const distance = 100;
+                    const timer = setInterval(() => {
+                        window.scrollBy(0, -distance);
+                        totalHeight -= distance;
+                        if (totalHeight <= 0) {
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            });
+        } catch (e) {
+        }
+    }
+
+    async pageScrollToBottom(my_page: any) {
+        try {
+            await my_page.evaluate(async () => {
+                await new Promise<void>((resolve, reject) => {
+                    let totalHeight = 0;
+                    const distance = 100;
+                    const timer = setInterval(() => {
+                        window.scrollBy(0, distance);
+                        totalHeight += distance;
+                        if (totalHeight >= document.body.scrollHeight - 1100) {
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            });
+        } catch (e) {
+        }
+    }
+
+    parseSearchUrl(setting: any, mode: string, page: number) {
+        var params = mode + '/?';
+        var page = 3;
+        if (setting.companysize.length > 0 && mode == 'companies') {
+            params = params + 'companySize=' + '%5B';
+            setting.companysize.forEach((p: any) => {
+                params = params + '%22' + p.value + '%22' + '%2C';
+            })
+            params = params.slice(0, -3);
+            params = params + '%5D' + '&';
+        }
+        if (setting.joblisting == 1 && mode == 'companies') {
+            params = params + 'hasJobs=' + '%5B%22' + setting.searchkey + '%22%5D&';
+        }
+
+        if (setting.opento.length > 0) {
+            params = params + 'contactInterest=' + '%5B';
+            setting.opento.forEach((p: any) => {
+                params = params + '"' + p.value + '"' + '%2C';
+            })
+            params = params.slice(0, -3);
+            params = params + '%5D' + '&';
+        }
+        if (setting.locations.length > 0) {
+            params = params + 'geoUrn=' + '%5B';
+            setting.locations.forEach((p: any) => {
+                params = params + '%22' + p.value + '%22' + '%2C';
+            })
+            params = params.slice(0, -3);
+            params = params + '%5D' + '&';
+        }
+        if (setting.industry.length > 0) {
+            params = params + 'industry=' + '%5B';
+            setting.industry.forEach((p: any) => {
+                params = params + '%22' + p.value + '%22' + '%2C';
+            })
+            params = params.slice(0, -3);
+            params = params + '%5D' + '&';
+        }
+        if (setting.searchkey != "") {
+            params = params + 'keywords=' + setting.searchkey + '&';
+        }
+        if (page > 0) {
+            params = params + 'page=' + page + '&';
+        }
+        if (setting.connections.length > 0) {
+            params = params + 'network=' + '%5B';
+            setting.connections.forEach((p: any) => {
+                params = params + '%22' + p.value + '%22' + '%2C';
+            })
+            params = params.slice(0, -3);
+            params = params + '%5D' + '&';
+        }
+        if (setting.language.length > 0) {
+            params = params + 'profileLanguage=' + '%5B';
+            setting.language.forEach((p: any) => {
+                params = params + '%22' + p.value + '%22' + '%2C';
+            })
+            params = params.slice(0, -3);
+            params = params + '%5D' + '&';
+        }
+        params = params.slice(0, -1);
+        params = params + '&origin=FACETED_SEARCH'
+
+        const url = 'https://www.linkedin.com/search/results/' + params;
+        console.log(url)
+        return url;
     }
 
     // ------------------------------------ ^_^ utils function ^_^ -------------------------------------------  
@@ -2057,7 +2868,7 @@ export class BotService {
     isLoginOn() {
         if (this.cached_linked_browser.page) {
             const url = this.cached_linked_browser.page.url()
-            if (url.includes('/feed/') || url.includes('/in/') || url.includes('/search/')) {
+            if (url.includes('/feed/') || url.includes('/in/') || url.includes('/search/') || url.includes('/mynetwork/')) {
                 return true;
             } else {
                 return false;
@@ -2128,7 +2939,7 @@ export class BotService {
                             return imgElement ? imgElement['src'] : null;
                         });
                         const img = src.substring(23);
-                        if(this.daily_max < 0){
+                        if (this.daily_max < 0) {
                             return
                         }
                         this.daily_max--;
