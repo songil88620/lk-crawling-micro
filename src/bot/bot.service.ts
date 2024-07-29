@@ -52,7 +52,7 @@ export class BotService {
 
     // captcha api key for bypassing captcha.... 
     private captcha_key = '';
-    private daily_max = 100;
+    private daily_max = 500;
 
     public login_fail = 0;
     public prs_read_idx = 0;
@@ -120,17 +120,18 @@ export class BotService {
             if (_h_now < 7 && this.invite_count < 100 && this.more_invitation == true) {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen.status == 'active' && !this.isLoginOn()) {
-                    this.goToInvitationSendingMode(leadgen)
+                   // this.goToInvitationSendingMode(leadgen)
                 }
             } else if (_h_now == 21 && _m_now > 25 && this.withdraw_state == true) {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen.status == 'active' && !this.isLoginOn()) {
-                    this.goToPendingWithdrawMode(leadgen)
+                   // this.goToPendingWithdrawMode(leadgen)
                 }
             } else {
                 this.people_btn = false;
                 const myCampaign = await this.prospectCampaignService.findMyCampaign(this.my_ip);
                 myCampaign.forEach((ac: any) => {
+                    console.log(",,,timer", this.isLoginOn(), this.isOver())
                     if (this.isOver() || !this.isLoginOn()) {
                         this.start_time = Date.now();
                         this.goToLinkedInFastMode(ac)
@@ -674,6 +675,7 @@ export class BotService {
     }
 
     async internalLogin(linked_in_account: LinkedInAccountType) {
+        console.log(">>>internal login...")
         const login_email = linked_in_account.email;
         const login_password = linked_in_account.password;
         const browser = await puppeteer.launch(this.conf());
@@ -709,7 +711,7 @@ export class BotService {
             page: page,
             browser: browser
         }
-
+        console.log(">>>internal login page 1...", page.url())
         await page.waitForTimeout(5000);
         if (page.url().includes('/feed/')) {
             // login success 
@@ -729,7 +731,7 @@ export class BotService {
             await this.linkedinAccountService.updateLinkedCookies(linked_in_account.id, li_at, session_id)
             return { page: page, success: true }
         } else {
-            // console.log(">>p..page.url()", page.url())
+            console.log(">>internal captcha", page.url())
             await page.waitForTimeout(45000);
             const frame_1 = await page.$("iframe[id='captcha-internal']");
             const contentFrame_1 = await frame_1.contentFrame();
@@ -777,8 +779,9 @@ export class BotService {
                     await page.waitForTimeout(4000);
                 }
             } catch (e) {
-                // console.log(">>bypass")
+               console.log(">>internal bypass", e)
             }
+            console.log(">>>internal login page 2...", page.url())
             await page.waitForTimeout(3000);
             if (page.url().includes('/feed/')) {
                 this.login_fail = 0;
@@ -841,8 +844,7 @@ export class BotService {
         var mode = 'people'; //companies 
         const setting: any = JSON.parse(leadgen.setting)
 
-        try {
-
+        try { 
             var my_page: any = null;
             if (this.cached_linked_browser.browser != null) {
                 const page = await this.cached_linked_browser.page;
@@ -1377,6 +1379,7 @@ export class BotService {
                     }
                     this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
                     const res = await this.internalLogin(linked_in_account);
+                    console.log(">>login res_1", res)
                     if (res.success) {
                         my_page = res.page
                     } else {
@@ -1385,6 +1388,7 @@ export class BotService {
                 }
             } else {
                 const res = await this.internalLogin(linked_in_account);
+                console.log(">>login res_2", res)
                 if (res.success) {
                     my_page = res.page
                 } else {
