@@ -33,5 +33,9 @@ export class LinkedInAccountsService {
     await this.linkedinAccountRepository.update({ id: account_id }, { li_at: li_at, jsession_id: jsession_id })
   }
 
+  async updateLinkedWarn(account_id: any, warn: any) {
+    await this.linkedinAccountRepository.update({ id: account_id }, { warn: warn })
+  }
+
 
 }

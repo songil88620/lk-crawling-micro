@@ -55,7 +55,7 @@ export class SocketService {
                 this.botService.logout(data)
             }
             if (data.mode == 'puzzle') {
-                this.botService.puzzleLinkedIn(data)
+                 
             }
         })
     }

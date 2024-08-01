@@ -35,6 +35,18 @@ export class ProspectionCampaignsEntity {
     @Column()
     extended_calendar: string;  
 
+    @Column()
+    uid: string;  
+
+    @Column()
+    is_ghl: boolean;  
+
+    @Column()
+    type: string;
+
+    @Column()
+    warn: boolean;  
+
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(20)" })
     created_at: Date;
 

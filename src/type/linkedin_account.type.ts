@@ -9,5 +9,8 @@ export interface LinkedInAccountType {
     country_ip: string,
     timezone: string,
     apikey: string,
-    country: string
+    country: string,
+    is_ghl: boolean,
+    type: string,
+    warn?: boolean
 }

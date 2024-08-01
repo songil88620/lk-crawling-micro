@@ -54,6 +54,7 @@ export class BotService {
     private captcha_key = '';
     private daily_max = 500;
 
+    public login_fail_notify = 0;
     public login_fail = 0;
     public prs_read_idx = 0;
     public prs_total_len = 0;
@@ -71,6 +72,7 @@ export class BotService {
     private connection_count = 0;
     private more_connection = true;
     private withdraw_state = true;
+
 
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
@@ -90,24 +92,21 @@ export class BotService {
 
     }
 
-    async onModuleInit() {
-
+    async onModuleInit() { 
         const sk = await this.systemService.findByKey('capkey');
         this.captcha_key = sk.value;
-        this.my_ip = ip.address();
+        this.my_ip = ip.address(); 
         const _now = new Date();
         const _h_now = _now.getHours();
-        const myCampaign = await this.prospectCampaignService.findMyCampaign(this.my_ip);
-        myCampaign && myCampaign.forEach((ac: any) => {
-            this.start_time = Date.now();
-            this.goToLinkedInFastMode(ac)
-        })
-        // this.beautyDate('Hoy', '6:45', 1)
+        const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip);
+        this.start_time = Date.now();
+        this.goToLinkedInFastMode(ac)   
     }
 
     // run bot every 30 mins
     @Cron(CronExpression.EVERY_10_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
+
         const _now = new Date();
         const _h_now = _now.getHours();
         const _m_now = _now.getMinutes();
@@ -129,17 +128,30 @@ export class BotService {
                 }
             } else {
                 this.people_btn = false;
-                const myCampaign = await this.prospectCampaignService.findMyCampaign(this.my_ip);
-                myCampaign.forEach((ac: any) => {
-                    console.log(",,,timer", this.isLoginOn(), this.isOver())
-                    if (this.isOver() || !this.isLoginOn()) {
-                        this.start_time = Date.now();
-                        this.goToLinkedInFastMode(ac)
-                    }
-                })
+                const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip);
+                console.log(",,,timer", this.isLoginOn(), this.isOver())
+                if (this.isOver() || !this.isLoginOn()) {
+                    this.start_time = Date.now();
+                    this.goToLinkedInFastMode(ac)
+                }
             }
+
         } else {
-            this.login_fail = 0;
+            if (this.login_fail == 6 && this.login_fail_notify < 2) {
+                const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip);
+                await this.prospectCampaignService.update({ c: { id: ac.id }, i: { warn: true } })
+                await this.linkedinAccountService.updateLinkedWarn(ac.linked_in_account_id, true)
+                const data = {
+                    id: ac.id,
+                    msg: {
+                        type: 'warn',
+                        data: ac.linked_in_account_id
+                    }
+                }
+                await this.linkedinAccountService.updateLinkedCookies(ac.linked_in_account_id, '', '')
+                this.socketService.messageToUser(data);
+                this.login_fail_notify++;
+            }
             const br = this.cached_linked_browser.browser;
             if (br) {
                 br.close()
@@ -779,9 +791,10 @@ export class BotService {
                     await page.waitForTimeout(4000);
                 }
             } catch (e) {
-               console.log(">>internal bypass", e)
+                console.log(">>internal bypass", e)
             }
             console.log(">>>internal login page 2...", page.url())
+
             await page.waitForTimeout(3000);
             if (page.url().includes('/feed/')) {
                 this.login_fail = 0;
@@ -844,7 +857,7 @@ export class BotService {
         var mode = 'people'; //companies 
         const setting: any = JSON.parse(leadgen.setting)
 
-        try { 
+        try {
             var my_page: any = null;
             if (this.cached_linked_browser.browser != null) {
                 const page = await this.cached_linked_browser.page;
@@ -1326,27 +1339,33 @@ export class BotService {
                     const w_name = this.beautySpace(nm).slice(7, -7)
 
                     const time_sect = '.mn-invitation-list .artdeco-list__item:nth-child(' + withdarw_count + ') .time-badge';
-                    const tm = await my_page.$eval(`${time_sect}`, (element: any) => element.innerHTML)
-                    if (this.lang == 0) {
-                        if (tm.split(' ')[2] == 'month' || tm.split(' ')[2] == 'months' || tm.split(' ')[2] == 'year') {
-                            // withdraw now
-                            const action_btn = '.mn-invitation-list .artdeco-list__item:nth-child(' + withdarw_count + ') .artdeco-button';
-                            await my_page.waitForSelector(action_btn);
+                    var tm = await my_page.$eval(`${time_sect}`, (element: any) => element.innerHTML)
+                    tm = this.beautySpace(tm)
+                    console.log(">>tm", tm, this.lang)
 
-                            const withdarw_btn = '.artdeco-modal .artdeco-modal__actionbar .artdeco-button:nth-child(2)';
-                            const is_wbtn = await my_page.$(withdarw_btn) !== null
-                            if (is_wbtn) {
-                                await my_page.waitForSelector(withdarw_btn);
-                                await my_page.click(withdarw_btn);
-                                withdarw_count--;
-                                await this.leadgendataService.update_status_by_name(w_name, 'withdrawed', lg_id)
-                            }
+                    const en_date = tm.split(' ')[2]
+                    const es_date = tm.split(' ')[tm.split(' ').length - 1];
+                    if (en_date == 'month' || en_date == 'months' || es_date == 'mes') {
+                        // withdraw now
+                        console.log(">>withdraw")
+                        const action_btn = '.mn-invitation-list .artdeco-list__item:nth-child(' + withdarw_count + ') .artdeco-button';
+                        await my_page.waitForSelector(action_btn);
+                        await my_page.click(action_btn);
+                        await my_page.waitForTimeout(500);
+
+                        const withdarw_btn = '.artdeco-modal .artdeco-modal__actionbar .artdeco-button:nth-child(2)';
+                        const is_wbtn = await my_page.$(withdarw_btn) !== null
+
+                        if (is_wbtn) {
+                            await my_page.waitForSelector(withdarw_btn);
+                            await my_page.click(withdarw_btn);
+                            withdarw_count--;
+                            await this.leadgendataService.update_status_by_name(w_name, 'withdrawed', lg_id)
                         }
-                    } else {
-
                     }
-                } catch (e) {
 
+                } catch (e) {
+                    console.log(">>er", e)
                 }
             }
             console.log(">>>>withdraw is ended for today...")
@@ -1358,7 +1377,8 @@ export class BotService {
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
     // long mode checks over 100 messages from the sidebar neither that has new message badge or not.
     async goToLinkedInFastMode(ac: CampaignType) {
-
+        await this.linkedinAccountService.updateLinkedWarn(ac.linked_in_account_id, true)
+        await this.prospectCampaignService.update({ c: { id: ac.id }, i: { warn: false } })
         const campaign_id = ac.id;
         const linked_in_account_id = ac.linked_in_account_id;
         try {
@@ -2880,395 +2900,6 @@ export class BotService {
         } else {
             return false;
         }
-    }
-
-    // this is for testing login process to check bypass puzzle
-    async loginTest() {
-        try {
-            const login_email = 'admin@aippointing.com';
-            const login_password = 'q7eDhhC9KfUqpa';
-            const browser = await puppeteer.launch(
-                {
-                    headless: false,
-                    args: [
-                        '--start-maximized',
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-gpu',
-                        '--disable-dev-shm-usage',
-                        '--disable-web-security',
-                        '--disable-infobars',
-                        '--ignore-certifcate-errors',
-                        '--ignore-certifcate-errors-spki-list'
-                    ],
-                    defaultViewport: null,
-                    ignoreDefaultArgs: ['--enable-automation']
-                }
-            );
-            const page = await browser.newPage();
-            await page.setExtraHTTPHeaders({
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
-            });
-            await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
-            await page.waitForTimeout(2000);
-            await page.type('#session_key', login_email);
-            await page.type('#session_password', login_password);
-            await page.click('button.sign-in-form__submit-btn--full-width');
-            await page.waitForTimeout(5000);
-
-            if (page.url().includes('checkpoint/challenge/')) {
-
-                await page.waitForTimeout(30000);
-                const frame_1 = await page.$("iframe[id='captcha-internal']");
-                const contentFrame_1 = await frame_1.contentFrame();
-                const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
-                const contentFrame_2 = await frame_2.contentFrame();
-                const frame_3 = await contentFrame_2.$("iframe[title='Verification challenge']");
-                const contentFrame_3 = await frame_3.contentFrame();
-                const frame_4 = await contentFrame_3.$("iframe[id='fc-iframe-wrap']");
-                const contentFrame_4 = await frame_4.contentFrame();
-                const frame_5 = await contentFrame_4.$("iframe[id='CaptchaFrame']");
-                const contentFrame_5 = await frame_5.contentFrame();
-                const acceptBtn = await contentFrame_5.$(`#home button`);
-                await acceptBtn.click();
-
-                //auto bypass for puzzle
-                await page.waitForTimeout(4000);
-                const loops = [1, 1, 1, 1, 1, 1, 1];
-                try {
-                    for (var l of loops) {
-                        await contentFrame_5.$(`#game_children_text`);
-                        const src = await contentFrame_5.evaluate(() => {
-                            const imgElement = document.querySelector('#game_challengeItem_image');
-                            return imgElement ? imgElement['src'] : null;
-                        });
-                        const img = src.substring(23);
-                        if (this.daily_max < 0) {
-                            return
-                        }
-                        this.daily_max--;
-                        const res = await axios.post('https://api.capsolver.com/createTask', {
-                            "clientKey": this.captcha_key,
-                            "task": {
-                                "type": "FunCaptchaClassification",
-                                "websiteURL": "https://www.linkedin.com",
-                                "images": [
-                                    img
-                                ],
-                                "question": "rotated"
-                            }
-                        });
-                        if (res.data.status == 'ready') {
-                            // console.log(">>>res", res.data)
-                            const idx = res.data.solution.objects[0] + 1;
-                            // console.log(">>idx", idx)
-                            await contentFrame_5.click('#image' + idx + ' > a');
-                        }
-                        await page.waitForTimeout(4000);
-                    }
-
-                } catch (e) {
-                    // console.log(">>passed")
-                }
-                // console.log(">>passed")
-
-            }
-        } catch (e) {
-            // console.log(">>errr", e)
-        }
-    }
-
-    // we don't use this manual puzzle to login
-    async puzzleLinkedIn(login_data: LinkedinLoginDataType) {
-        try {
-            // console.log(">>>puzzle", login_data)
-            const page = await this.cached_linked_browser.page;
-            await page.waitForTimeout(2000);
-            const frame_1 = await page.$("iframe[id='captcha-internal']");
-            const contentFrame_1 = await frame_1.contentFrame();
-            const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
-            const contentFrame_2 = await frame_2.contentFrame();
-            const frame_3 = await contentFrame_2.$("iframe[title='Verification challenge']");
-            const contentFrame_3 = await frame_3.contentFrame();
-            const frame_4 = await contentFrame_3.$("iframe[id='fc-iframe-wrap']");
-            const contentFrame_4 = await frame_4.contentFrame();
-            const frame_5 = await contentFrame_4.$("iframe[id='CaptchaFrame']");
-            const contentFrame_5 = await frame_5.contentFrame();
-
-            const idx = login_data.puzzle;
-            await contentFrame_5.click('#image' + idx + ' > a');
-
-            // console.log(">>>>do actioin")
-            await page.waitForTimeout(10000);
-            // console.log(">>>url do", page.url())
-            if (page.url().includes('checkpoint/challenge/')) {
-                const data = {
-                    id: login_data.id,
-                    msg: {
-                        type: 'vcode_request',
-                        data: ''
-                    }
-                }
-                this.socketService.messageToUser(data)
-            } else {
-                const data = {
-                    id: login_data.id,
-                    msg: {
-                        type: 'login_success',
-                        data: ''
-                    }
-                }
-                this.socketService.messageToUser(data)
-            }
-
-        } catch (e) {
-
-        }
-    }
+    } 
 
 }
-
-
-
-
-
-// ---------- this is for login with cookie ---------------
-// if (cache_page.length == 0) {
-//     try {
-//         const browser = await puppeteer.launch({ headless: false, args: [`--proxy-server=${proxy}`, '--start-maximized'], defaultViewport: null, ignoreDefaultArgs: ['--enable-automation'] });
-//         my_page = await browser.newPage();
-//         await my_page.setExtraHTTPHeaders({
-//             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'
-//         });
-
-//         await my_page.authenticate({ username, password });
-//         await my_page.setCookie({
-//             name: 'li_at',
-//             value: li_at,
-//             domain: 'www.linkedin.com'
-//         })
-//         await my_page.goto(`https://www.linkedin.com/`, { timeout: 0 });
-//         // console.log(">>>opened new page")
-
-//         const lkb = {
-//             id: linked_in_account_id,
-//             page: my_page,
-//             browser: browser
-//         }
-//         this.cached_linked_browser.push(lkb)
-//         await my_page.waitForTimeout(2000);
-//     } catch (e) {
-//         this.cached_linked_browser = this.cached_linked_browser.filter(item => item.id !== linked_in_account_id);
-//         return;
-//     }
-// } else {
-//     // console.log(">>here sec")
-
-// }
-
-
-
-// -------------- this is for login test --------------
-// async loginTest() {
-//     try {   
-//         const login_email = 'songil88620@gmail.com';
-//         const login_password = 'Gjrjdahsus88620@'; 
-//         const browser = await puppeteer.launch(
-//             {
-//                 headless: false,
-//                 args: [
-//                     '--start-maximized',
-//                     '--no-sandbox',
-//                     '--disable-setuid-sandbox',
-//                     // '--headless',
-//                     '--disable-gpu',
-//                     '--disable-dev-shm-usage',
-//                     '--disable-web-security',
-//                     '--disable-infobars',
-//                     '--ignore-certifcate-errors',
-//                     '--ignore-certifcate-errors-spki-list'
-//                 ],
-//                 //executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe',
-//                 defaultViewport: null,
-//                 ignoreDefaultArgs: ['--enable-automation']
-//             }
-//         );
-//         const page = await browser.newPage();
-//         await page.setExtraHTTPHeaders({
-//             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
-//         });
-//         await page.goto(`https://www.linkedin.com/`, { timeout: 0 });
-//         await page.waitForTimeout(2000);
-//         await page.type('#session_key', login_email);
-//         await page.type('#session_password', login_password);
-//         await page.click('button.sign-in-form__submit-btn--full-width');
-//         await page.waitForTimeout(5000); 
-//         // console.log(">>>", page.url()) 
-
-//         if (page.url().includes('checkpoint/challenge/')) {
-
-//             await page.waitForTimeout(30000);
-//             const frame_1 = await page.$("iframe[id='captcha-internal']");
-//             const contentFrame_1 = await frame_1.contentFrame();
-//             const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
-//             const contentFrame_2 = await frame_2.contentFrame();
-//             const frame_3 = await contentFrame_2.$("iframe[title='Verification challenge']");
-//             const contentFrame_3 = await frame_3.contentFrame();
-//             const frame_4 = await contentFrame_3.$("iframe[id='fc-iframe-wrap']");
-//             const contentFrame_4 = await frame_4.contentFrame();
-//             const frame_5 = await contentFrame_4.$("iframe[id='CaptchaFrame']");
-//             const contentFrame_5 = await frame_5.contentFrame();
-//             const acceptBtn = await contentFrame_5.$(`#home button`);
-//             await acceptBtn.click();  
-
-//             const pk = await page.$eval('input[name="captchaSiteKey"]', ({ value }) => value);
-//             const key = this.key;
-//             const siteurl = page.url();
-//             const url = 'http://2captcha.com/in.php?key=' + key + '&method=funcaptcha&publickey=' + pk + '&surl=https://client-api.arkoselabs.com&pageurl=' + siteurl
-
-//             const res = await axios.get(url)
-//             const id = res.data.split('|')[1];
-//             // console.log(">>ID", id)
-
-//             setTimeout(async () => {
-//                 const url = 'https://2captcha.com/res.php?key=' + key + '&action=get&id=' + id;
-//                 const res = await axios.get(url)
-//                 const code = res.data;
-//                 if (code == 'CAPCHA_NOT_READY') {
-
-//                 }
-//                 const v = code.substring(3);
-//                 // console.log(">>v", v)   
-//                 await page.evaluate((v) => {
-//                     const inputField = document.querySelector('input[name="captchaUserResponseToken"]');
-//                     if (inputField) {
-//                         inputField['value'] = v;
-//                     } 
-//                 }, v);  
-//                 const formId = 'captcha-challenge';   
-//                 await page.evaluate((formId: string) => {
-//                     const form = document.getElementById(formId) as HTMLFormElement | null;
-//                     if (form) {
-//                         form.submit();
-//                     }
-//                 }, formId);    
-//             }, 35000);
-
-//         }
-//     } catch (e) {
-//         // console.log(">>errr", e)
-//     }
-// }
-
-
-// manual solving puzzle
-// async puzzleLinkedIn(login_data: LinkedinLoginDataType) {
-//     try {
-//         // console.log(">>>puzzle", login_data)
-//         const cache_page_idx = this.cached_linked_browser.findIndex(item => item.id === login_data.id);
-//         const page = await this.cached_linked_browser[cache_page_idx].page;
-//         await page.waitForTimeout(2000);
-//         const frame_1 = await page.$("iframe[id='captcha-internal']");
-//         const contentFrame_1 = await frame_1.contentFrame();
-//         const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
-//         const contentFrame_2 = await frame_2.contentFrame();
-//         const frame_3 = await contentFrame_2.$("iframe[title='Verification challenge']");
-//         const contentFrame_3 = await frame_3.contentFrame();
-//         const frame_4 = await contentFrame_3.$("iframe[id='fc-iframe-wrap']");
-//         const contentFrame_4 = await frame_4.contentFrame();
-//         const frame_5 = await contentFrame_4.$("iframe[id='CaptchaFrame']");
-//         const contentFrame_5 = await frame_5.contentFrame();
-
-//         const idx = login_data.puzzle;
-//         await contentFrame_5.click('#image' + idx + ' > a');
-
-//         // console.log(">>>>do actioin")
-//         await page.waitForTimeout(10000);
-//         // console.log(">>>url do", page.url())
-//         if (page.url().includes('checkpoint/challenge/')) {
-//             const data = {
-//                 id: login_data.id,
-//                 msg: {
-//                     type: 'vcode_request',
-//                     data: ''
-//                 }
-//             }
-//             this.socketService.messageToUser(data)
-//         } else {
-//             const data = {
-//                 id: login_data.id,
-//                 msg: {
-//                     type: 'login_success',
-//                     data: ''
-//                 }
-//             }
-//             this.socketService.messageToUser(data)
-//             const cookiesSet = await page.cookies();
-//             var session_id = "";
-//             var li_at = "";
-//             cookiesSet.forEach((c: any) => {
-//                 if (c.name == 'JSESSIONID') {
-//                     session_id = c.value;
-//                     // console.log(">>session_id", session_id)
-//                 }
-//                 if (c.name == 'li_at') {
-//                     li_at = c.value;
-//                     // console.log(">>li_at", li_at)
-//                 }
-//             })
-//             await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
-//         }
-
-//     } catch (e) {
-
-//     }
-// }
-
-
-
-// 2captcha API using example
-// const pk = await page.$eval('input[name="captchaSiteKey"]', ({ value }) => value);
-// const key = this.key;
-// const siteurl = page.url();
-// const url = 'http://2captcha.com/in.php?key=' + key + '&method=funcaptcha&publickey=' + pk + '&surl=https://client-api.arkoselabs.com&pageurl=' + siteurl
-
-// const res = await axios.get(url)
-// const id = res.data.split('|')[1];
-// // console.log(">>ID", id)
-
-// await this.delay(40000);
-// var code = 'CAPCHA_NOT_READY';
-// const repeat = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5];
-// for (var t of repeat) {
-//     const url_res = 'https://2captcha.com/res.php?key=' + key + '&action=get&id=' + id;
-//     const res_res = await axios.get(url_res)
-//     code = res_res.data;
-//     // console.log(">>>code", code)
-//     await this.delay(10000);
-//     if (code != 'CAPCHA_NOT_READY') {
-//         break;
-//     }
-// }
-
-// if (code != 'CAPCHA_NOT_READY' && code != 'ERROR_CAPTCHA_UNSOLVABLE') {
-//     const v = code.substring(3);
-//     await page.evaluate((v: any) => {
-//         const inputField = document.querySelector('input[name="captchaUserResponseToken"]');
-//         if (inputField) {
-//             inputField['value'] = v;
-//         }
-//     }, v);
-//     const formId = 'captcha-challenge';
-//     await page.evaluate(async (formId: string) => {
-//         const form = document.getElementById(formId) as HTMLFormElement | null;
-//         if (form) {
-//             form.submit();
-//         }
-//     }, formId);
-//     await this.delay(2000);
-//     return { page: page, success: true }
-// } else {
-//     return { page: page, success: false }
-// }
-
-// https://dashboard.capsolver.com/dashboard/overview

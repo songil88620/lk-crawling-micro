@@ -35,6 +35,21 @@ export class LinkedInAccountEntity {
     @Column()
     country: string;
 
+    @Column()
+    location_id: string;
+
+    @Column()
+    is_ghl: boolean;
+
+    @Column()
+    is_deleted: boolean;
+
+    @Column()
+    type: string;
+
+    @Column()
+    warn: boolean;
+
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
     public created_at: Date;
 
