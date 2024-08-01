@@ -99,8 +99,10 @@ export class BotService {
         const _now = new Date();
         const _h_now = _now.getHours();
         const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip);
-        this.start_time = Date.now();
-        this.goToLinkedInFastMode(ac)   
+        if(ac){
+            this.start_time = Date.now();
+            this.goToLinkedInFastMode(ac)   
+        }
     }
 
     // run bot every 30 mins
@@ -130,7 +132,7 @@ export class BotService {
                 this.people_btn = false;
                 const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip);
                 console.log(",,,timer", this.isLoginOn(), this.isOver())
-                if (this.isOver() || !this.isLoginOn()) {
+                if (ac && this.isOver() || !this.isLoginOn()) {
                     this.start_time = Date.now();
                     this.goToLinkedInFastMode(ac)
                 }
