@@ -275,6 +275,8 @@ export class BotService {
                 page: page,
                 browser: browser
             }
+            await page.waitForTimeout(1000);
+            console.log(">>here", page.url())
 
             if (page.url().includes('/feed/')) {
                 const data = {
