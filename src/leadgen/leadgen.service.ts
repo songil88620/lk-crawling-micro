@@ -22,4 +22,17 @@ export class LeadgenService {
         return await this.leadgenRepository.findOne({ where: { proxy: ip } })
     }
 
+    async increase_quee(id: number, m: number) {
+        const leadgen = await this.leadgenRepository.findOne({ where: { id } });
+        if (m == 0) {
+            await this.leadgenRepository.update({ id }, { quee_0: leadgen.quee_0 + 1 })
+        } else if (m == 1) {
+            await this.leadgenRepository.update({ id }, { quee_1: leadgen.quee_1 + 1 })
+        } else if (m == 2) {
+            await this.leadgenRepository.update({ id }, { quee_2: leadgen.quee_2 + 1 })
+        } else {
+            await this.leadgenRepository.update({ id }, { quee_3: leadgen.quee_3 + 1 })
+        }
+    }
+
 }

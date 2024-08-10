@@ -73,6 +73,10 @@ export class BotService {
     private more_connection = true;
     private withdraw_state = true;
 
+    private collect_req = false;
+    private collect_cpage = 0;
+    private more_collect = true;
+    private collect_count = 0;
 
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
@@ -92,16 +96,26 @@ export class BotService {
 
     }
 
-    async onModuleInit() { 
+    async onModuleInit() {
         const sk = await this.systemService.findByKey('capkey');
         this.captcha_key = sk.value;
-        this.my_ip = ip.address(); 
+        this.my_ip = ip.address();
         const _now = new Date();
         const _h_now = _now.getHours();
         const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip);
-        if(ac){
+        if (ac) {
             this.start_time = Date.now();
-            this.goToLinkedInFastMode(ac)   
+            this.goToLinkedInFastMode(ac)
+        }
+    }
+
+    handleCollect() {
+        if (this.collect_req == false && this.more_collect == true && this.collect_count < 100) {
+            this.collect_req = true;
+            setTimeout(async () => {
+                const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
+                this.goToCollectMode(leadgen);
+            }, 30000)
         }
     }
 
@@ -112,21 +126,28 @@ export class BotService {
         const _now = new Date();
         const _h_now = _now.getHours();
         const _m_now = _now.getMinutes();
+
+        if (this.collect_req == true && this.more_collect == true && this.collect_count < 100) {
+            const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
+            this.goToCollectMode(leadgen);
+            return
+        }
+
         if ((_h_now >= 6 && _h_now < 22 && this.login_fail <= 5)) {
 
-            // 6:00~7:00 send invitation
+            // 6:00~7:00 send invitation & follow message
             // 7:00~21:30 normal working
             // 21:30~22:00 withdraw invitation checking
 
             if (_h_now < 7 && this.invite_count < 100 && this.more_invitation == true) {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen.status == 'active' && !this.isLoginOn()) {
-                   // this.goToInvitationSendingMode(leadgen)
+                    // this.goToInvitationSendingMode(leadgen)
                 }
             } else if (_h_now == 21 && _m_now > 25 && this.withdraw_state == true) {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen.status == 'active' && !this.isLoginOn()) {
-                   // this.goToPendingWithdrawMode(leadgen)
+                    // this.goToPendingWithdrawMode(leadgen)
                 }
             } else {
                 this.people_btn = false;
@@ -335,7 +356,7 @@ export class BotService {
 
                     //auto bypass for puzzle
                     await page.waitForTimeout(1000);
-                    const loops = [1, 2, 3, 4, 5, 6, 7];
+                    const loops = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
                     try {
                         for (var l of loops) {
                             await contentFrame_5.$(`#game_children_text`);
@@ -828,6 +849,165 @@ export class BotService {
         console.log(">>>opened new page")
     }
 
+    async goToCollectMode(leadgen: Leadgen) {
+        const lk_id = Number(leadgen.linked_in_account_id);
+        const lk_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(lk_id);
+        const user_id = lk_account.user_id;
+        const lg_id = leadgen.id;
+        const mail = lk_account.email;
+        const pw = lk_account.password;
+
+        var mode = 'people'; //companies 
+        const setting: any = JSON.parse(leadgen.setting)
+
+        try {
+            var my_page: any = null;
+            if (this.cached_linked_browser.browser != null) {
+                const page = await this.cached_linked_browser.page;
+                await page.waitForTimeout(5000);
+                await page.goto(`https://www.linkedin.com/feed/`, { timeout: 0 });
+                await page.waitForTimeout(5000);
+                if (page.url().includes('/feed/') || page.url().includes('/in/') || page.url().includes('/search/')) {
+                    my_page = page;
+                } else {
+                    const browser_old = this.cached_linked_browser.browser;
+                    if (browser_old != null) {
+                        await browser_old.close();
+                    }
+                    this.cached_linked_browser = { id: this.cached_linked_browser.id, page: null, browser: null };
+                    const res = await this.internalLoginWithPw(mail, pw);
+                    if (res.success) {
+                        my_page = res.page
+                    } else {
+                        return;
+                    }
+                }
+            } else {
+                const res = await this.internalLoginWithPw(mail, pw);
+                if (res.success) {
+                    my_page = res.page
+                } else {
+                    return;
+                }
+            }
+
+            // linkedin account language check
+            const u_name = await my_page.$('.global-nav__nav .global-nav__primary-items li:nth-child(1) a span')
+            if (u_name) {
+                var n = await (await u_name.getProperty('textContent')).jsonValue()
+                const home = this.beautySpace(n);
+                if (home == 'Home') {
+                    this.lang = 0;
+                } else if (home == 'Inicio') {
+                    this.lang = 1;
+                } else {
+
+                }
+            }
+
+            await my_page.setViewport({
+                width: 1920,
+                height: 880,
+                deviceScaleFactor: 1,
+            });
+
+            // const first_search_url = 'https://www.linkedin.com/search/results/people/?keywords=software engineer&network=["F","S","O"]&origin=FACETED_SEARCH';
+            var first_search_url = this.parseSearchUrl(setting, mode, 1)
+
+            await my_page.goto(first_search_url, { timeout: 0 });
+            await my_page.waitForTimeout(5000);
+
+            // sending invitation loop
+            while (this.collect_count < 100 && this.more_collect && this.isLoginOn) {
+                var sid = 0;
+                while (sid < 10) {
+                    sid++;
+                    try {
+                        const list_item = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ')';
+
+                        const is_more_item = await my_page.$(list_item) !== null
+                        if (!is_more_item) {
+                            this.more_collect = false;
+                            this.collect_req = false;
+                            continue;
+                        }
+
+                        await my_page.waitForSelector(list_item);
+                        const has_btn = await my_page.evaluate((selector) => {
+                            const div = document.querySelector(selector);
+                            if (div) {
+                                return div.querySelector('.artdeco-button') !== null;
+                            }
+                            return false;
+                        }, list_item);
+
+                        if (has_btn) {
+
+                            // get detail of the member start
+                            const avatar_tag = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .presence-entity__image'
+                            const imageUrl = await my_page.$eval(`${avatar_tag}`, (img: any) => img.src);
+
+                            const profile_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') div';
+                            const member_urn = await my_page.$eval(profile_sect, (el: any) => {
+                                return el.getAttribute("data-chameleon-result-urn")
+                            });
+                            const member_id = member_urn.split(":")[3]
+
+                            const subtitle_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .entity-result__primary-subtitle'
+                            const st = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerHTML)
+                            const subtitle = this.beautySpace(st).slice(7, -7)
+
+                            const name_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .app-aware-link span span:nth-child(1)'
+                            const nm = await my_page.$eval(`${name_sect}`, (element: any) => element.innerHTML)
+                            const full_name = this.beautySpace(nm).slice(7, -7)
+                            // get detail of the member end
+
+
+                            // message, connect, follow button
+                            const action_btn = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .artdeco-button';
+                            await my_page.waitForSelector(action_btn);
+
+                            // Message/Enviar mensaje, Connect/Conectar, 
+                            const button_name = await my_page.evaluate((selector) => {
+                                const button = document.querySelector(selector);
+                                return button ? button.textContent.trim() : null;
+                            }, action_btn);
+
+                            if (button_name == 'Connect' || button_name == 'Conectar') {
+                                const leadgendata: Leadgendata = {
+                                    member_id,
+                                    name: full_name,
+                                    avatar: imageUrl,
+                                    data: JSON.stringify({ subtitle }),
+                                    status: 'collecting',
+                                    f_stage: 0,
+                                    updated_at: this.getTimestamp(),
+                                    user_id,
+                                    lg_id
+                                }
+                                await this.leadgendataService.create_new(leadgendata);
+                                this.collect_count++;
+                            }
+                        }
+                    } catch (e) {
+                        console.log("...err", e)
+                    }
+                }
+                this.collect_cpage++;
+                const next_page_url = this.parseSearchUrl(setting, mode, this.collect_cpage);
+                await my_page.goto(next_page_url, { timeout: 0 });
+                await my_page.waitForTimeout(2000);
+                sid = 0;
+                console.log(">>>page number", this.collect_cpage);
+            }
+            this.collect_req = false;
+            console.log(">>cant collect more...")
+
+        } catch (e) {
+            console.log(">>>error collecting", e)
+        }
+    }
+
     // linkedin invitation and follow up message mode
     async goToInvitationSendingMode(leadgen: Leadgen) {
         const lk_id = Number(leadgen.linked_in_account_id);
@@ -1024,6 +1204,7 @@ export class BotService {
                                     }
                                     await this.leadgendataService.create_new(leadgendata);
                                     this.invite_count++;
+                                    await this.leadgenService.increase_quee(lg_id, 0)
                                     continue;
                                 }
 
@@ -1053,6 +1234,7 @@ export class BotService {
                                 }
                                 await this.leadgendataService.create_new(leadgendata);
                                 this.invite_count++;
+                                await this.leadgenService.increase_quee(lg_id, 0)
                                 console.log(">>invit", this.invite_count)
                             }
                         }
@@ -1202,18 +1384,22 @@ export class BotService {
                         if (f1_sent == false) {
                             if (messages.length == 0) {
                                 msg = f1_message;
+                                await this.leadgenService.increase_quee(lg_id, 1)
                             } else {
                                 if (this.isNowAfter(f1_delay * 24, messages[0].createdAt)) {
                                     msg = f1_message;
+                                    await this.leadgenService.increase_quee(lg_id, 1)
                                 }
                             }
                         } else if (f2_sent == false) {
                             if (this.isNowAfter(f2_delay * 24, messages[messages.length - 1].createdAt)) {
                                 msg = f2_message;
+                                await this.leadgenService.increase_quee(lg_id, 2)
                             }
                         } else if (f3_sent == false) {
                             if (this.isNowAfter(f3_dalay * 24, messages[messages.length - 1].createdAt)) {
                                 msg = f3_message;
+                                await this.leadgenService.increase_quee(lg_id, 3)
                             }
                         } else {
 
@@ -1449,7 +1635,7 @@ export class BotService {
             // scroll down to get the last 80 messages
             var time_out = false;
             var new_msg_count = 0;
-            while (!time_out) {
+            while (!time_out && this.collect_req == false) {
                 if (this.isOver() || !this.isLoginOn()) {
                     time_out = true
                     console.log(">>time out or logout")
@@ -2904,6 +3090,6 @@ export class BotService {
         } else {
             return false;
         }
-    } 
+    }
 
 }

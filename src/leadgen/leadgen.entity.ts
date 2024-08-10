@@ -69,4 +69,19 @@ export class LeadgenEntity {
     @Column({ type: "longtext" })
     setting: string;
 
+    @Column()
+    updated_at: string;
+
+    @Column()
+    quee_0: number;
+
+    @Column()
+    quee_1: number
+
+    @Column()
+    quee_2: number
+
+    @Column()
+    quee_3: number
+
 }

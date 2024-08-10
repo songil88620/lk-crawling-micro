@@ -19,5 +19,9 @@ export type Leadgen = {
     relation: string,
     proxy: string,
     user_id: number,
-    setting: string
+    setting: string,
+    quee_0:number,
+    quee_1:number,
+    quee_2:number,
+    quee_3:number
 }
