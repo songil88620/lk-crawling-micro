@@ -26,6 +26,8 @@ export class LeadgendataService {
         if (!leadgen_data) {
             const c = this.leadgendataRepository.create(data);
             await this.leadgendataRepository.save(c)
+        } else {
+            await this.leadgendataRepository.update({ member_id: member_id, lg_id: data.lg_id }, { status: 'pending' })
         }
     }
 
