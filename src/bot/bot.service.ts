@@ -142,12 +142,12 @@ export class BotService {
             if (_h_now < 7 && this.invite_count < 100 && this.more_invitation == true) {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen.status == 'active' && !this.isLoginOn()) {
-                    // this.goToInvitationSendingMode(leadgen)
+                      this.goToInvitationSendingMode(leadgen)
                 }
             } else if (_h_now == 21 && _m_now > 25 && this.withdraw_state == true) {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen.status == 'active' && !this.isLoginOn()) {
-                    // this.goToPendingWithdrawMode(leadgen)
+                      this.goToPendingWithdrawMode(leadgen)
                 }
             } else {
                 this.people_btn = false;
