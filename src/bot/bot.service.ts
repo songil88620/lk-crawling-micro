@@ -2615,7 +2615,7 @@ export class BotService {
 
     parseSearchUrl(setting: any, mode: string, page: number) {
         var params = mode + '/?';
-        var page = 3;
+        
         if (setting.companysize.length > 0 && mode == 'companies') {
             params = params + 'companySize=' + '%5B';
             setting.companysize.forEach((p: any) => {
