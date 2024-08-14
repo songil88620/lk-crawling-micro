@@ -115,7 +115,7 @@ export class BotService {
             setTimeout(async () => {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 this.goToCollectMode(leadgen);
-            }, 30000)
+            }, 10000)
         }
     }
 
@@ -142,12 +142,12 @@ export class BotService {
             if (_h_now < 7 && this.invite_count < 100 && this.more_invitation == true) {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen.status == 'active' && !this.isLoginOn()) {
-                      this.goToInvitationSendingMode(leadgen)
+                    this.goToInvitationSendingMode(leadgen)
                 }
             } else if (_h_now == 21 && _m_now > 25 && this.withdraw_state == true) {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen.status == 'active' && !this.isLoginOn()) {
-                      this.goToPendingWithdrawMode(leadgen)
+                    this.goToPendingWithdrawMode(leadgen)
                 }
             } else {
                 this.people_btn = false;
@@ -850,6 +850,7 @@ export class BotService {
     }
 
     async goToCollectMode(leadgen: Leadgen) {
+        console.log(">>>>collect mode")
         const lk_id = Number(leadgen.linked_in_account_id);
         const lk_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(lk_id);
         const user_id = lk_account.user_id;
@@ -917,7 +918,7 @@ export class BotService {
             await my_page.goto(first_search_url, { timeout: 0 });
             await my_page.waitForTimeout(5000);
 
-            // sending invitation loop
+            // scraping loop
             while (this.collect_count < 100 && this.more_collect && this.isLoginOn) {
                 var sid = 0;
                 while (sid < 10) {
@@ -985,9 +986,11 @@ export class BotService {
                                     user_id,
                                     lg_id
                                 }
+                                console.log(">>AA", leadgendata)
                                 await this.leadgendataService.create_new(leadgendata);
                                 this.collect_count++;
                             }
+                            console.log(">>>collect cnt", this.collect_count)
                         }
                     } catch (e) {
                         console.log("...err", e)
@@ -1010,6 +1013,7 @@ export class BotService {
 
     // linkedin invitation and follow up message mode
     async goToInvitationSendingMode(leadgen: Leadgen) {
+        console.log(">>inv mode")
         const lk_id = Number(leadgen.linked_in_account_id);
         const lk_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(lk_id);
         const user_id = lk_account.user_id;
