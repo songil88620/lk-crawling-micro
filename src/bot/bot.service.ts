@@ -919,7 +919,7 @@ export class BotService {
             await my_page.waitForTimeout(5000);
 
             // scraping loop
-            while (this.collect_count < 100 && this.more_collect && this.isLoginOn) {
+            while (this.collect_count <= 100 && this.more_collect && this.isLoginOn) {
                 var sid = 0;
                 while (sid < 10) {
                     sid++;
@@ -985,20 +985,25 @@ export class BotService {
                                     updated_at: this.getTimestamp(),
                                     user_id,
                                     lg_id
-                                }
-                                console.log(">>AA", leadgendata)
-                                await this.leadgendataService.create_new(leadgendata);
-                                this.collect_count++;
-                                const data = {
-                                    id: lg_id,
-                                    msg: {
-                                        type: 'collecting',
-                                        data: this.collect_count
+                                } 
+                                const res = await this.leadgendataService.create_new(leadgendata, 'collecting');
+                                if (res) {
+                                    this.collect_count++;
+                                    const data = {
+                                        id: lg_id,
+                                        msg: {
+                                            type: 'collecting',
+                                            data: this.collect_count
+                                        }
                                     }
+                                    this.socketService.messageToUser(data)
                                 }
-                                this.socketService.messageToUser(data)
                             }
                             console.log(">>>collect cnt", this.collect_count)
+                        }
+                    
+                        if(this.connection_count == 101){
+                            break;
                         }
                     } catch (e) {
                         console.log("...err", e)
@@ -1214,7 +1219,7 @@ export class BotService {
                                         user_id,
                                         lg_id
                                     }
-                                    await this.leadgendataService.create_new(leadgendata);
+                                    await this.leadgendataService.create_new(leadgendata, 'pending');
                                     this.invite_count++;
                                     await this.leadgenService.increase_quee(lg_id, 0)
                                     continue;
@@ -1244,7 +1249,7 @@ export class BotService {
                                     user_id,
                                     lg_id
                                 }
-                                await this.leadgendataService.create_new(leadgendata);
+                                await this.leadgendataService.create_new(leadgendata, 'pending');
                                 this.invite_count++;
                                 await this.leadgenService.increase_quee(lg_id, 0)
                                 console.log(">>invit", this.invite_count)
@@ -2615,7 +2620,7 @@ export class BotService {
 
     parseSearchUrl(setting: any, mode: string, page: number) {
         var params = mode + '/?';
-        
+
         if (setting.companysize.length > 0 && mode == 'companies') {
             params = params + 'companySize=' + '%5B';
             setting.companysize.forEach((p: any) => {

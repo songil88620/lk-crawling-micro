@@ -20,19 +20,22 @@ export class LeadgendataService {
 
     }
 
-    async create_new(data: Leadgendata) {
-        try{
+    async create_new(data: Leadgendata, st: string) {
+        try {
             const member_id = data.member_id;
             const leadgen_data = await this.leadgendataRepository.findOne({ where: { member_id } });
             if (!leadgen_data) {
                 const c = this.leadgendataRepository.create(data);
                 await this.leadgendataRepository.save(c)
+                return true
             } else {
-                await this.leadgendataRepository.update({ member_id: member_id, lg_id: data.lg_id }, { status: 'pending' })
+                await this.leadgendataRepository.update({ member_id: member_id, lg_id: data.lg_id }, { status: st })
+                return false
             }
 
-        }catch(e){
+        } catch (e) {
             console.log(">>erro", e)
+            return false
         }
     }
 
