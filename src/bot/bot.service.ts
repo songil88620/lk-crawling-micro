@@ -989,6 +989,14 @@ export class BotService {
                                 console.log(">>AA", leadgendata)
                                 await this.leadgendataService.create_new(leadgendata);
                                 this.collect_count++;
+                                const data = {
+                                    id: lg_id,
+                                    msg: {
+                                        type: 'collecting',
+                                        data: this.collect_count
+                                    }
+                                }
+                                this.socketService.messageToUser(data)
                             }
                             console.log(">>>collect cnt", this.collect_count)
                         }
