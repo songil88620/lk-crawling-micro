@@ -1699,11 +1699,11 @@ export class BotService {
                     // click item from list  
                     try {
 
-                        const elementHandle = await my_page.$('.msg-overlay-list-bubble__default-conversation-container');  
+                        const elementHandle = await my_page.$('.msg-overlay-list-bubble__content');  
 
                         if (elementHandle) {
                             // Check if the class exists
-                            const hasClass = await my_page.evaluate(element => element.classList.contains('msg-conversation-listitem__link'), elementHandle);
+                            const hasClass = await my_page.evaluate(element => element.classList.contains('msg-overlay-list-bubble__default-conversation-container'), elementHandle);
 
                             if (hasClass) {
                             console.log('The element has the class "myClass".');
