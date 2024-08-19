@@ -1702,12 +1702,12 @@ export class BotService {
                         const elementHandle = await my_page.$('.msg-overlay-list-bubble__default-conversation-container'); // Replace with your component's selector
 
                         // Get the outer HTML of the component
-                        const componentHTML = await my_page.evaluate(element => element.outerHTML, elementHandle);
+                        const componentHTML = await my_page.evaluate((element:any) => element.outerHTML, elementHandle);
 
                         // Get the class name of the component
-                        const componentClass = await my_page.evaluate(element => element.className, elementHandle);
+                        const componentClass = await my_page.evaluate((element:any) => element.className, elementHandle);
 
-                        console.log('Component HTML:', componentHTML);
+                        console.log('Component HTML:', componentClass);
 
 
                         // const item = '.msg-overlay-list-bubble__default-conversation-container .msg-conversation-listitem__link:nth-child(' + sid + ')';
