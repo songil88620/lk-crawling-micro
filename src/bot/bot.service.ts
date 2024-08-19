@@ -1714,6 +1714,8 @@ export class BotService {
                             console.log('Element not found');
                         }
 
+                        this.delay(50000)
+
                         // const elementHandle = await my_page.$('.msg-overlay-list-bubble__content'); // Replace with your component's selector
 
                          
