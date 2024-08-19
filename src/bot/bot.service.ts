@@ -1627,6 +1627,7 @@ export class BotService {
             if (u_name) {
                 var n = await (await u_name.getProperty('textContent')).jsonValue()
                 const home = this.beautySpace(n);
+                console.log(">>>HOMe", home)
                 if (home == 'Home') {
                     this.lang = 0;
                 } else if (home == 'Inicio') {
