@@ -1699,15 +1699,30 @@ export class BotService {
                     // click item from list  
                     try {
 
-                        const elementHandle = await my_page.$('.msg-overlay-list-bubble__content'); // Replace with your component's selector
+                        const elementHandle = await my_page.$('.msg-overlay-list-bubble__default-conversation-container');  
 
-                        // Get the outer HTML of the component
-                        const componentHTML = await my_page.evaluate((element:any) => element.outerHTML, elementHandle);
+                        if (elementHandle) {
+                            // Check if the class exists
+                            const hasClass = await my_page.evaluate(element => element.classList.contains('msg-conversation-listitem__link'), elementHandle);
 
-                        // Get the class name of the component
-                        const componentClass = await my_page.evaluate((element:any) => element.className, elementHandle);
+                            if (hasClass) {
+                            console.log('The element has the class "myClass".');
+                            } else {
+                            console.log('The element does NOT have the class "myClass".');
+                            }
+                        } else {
+                            console.log('Element not found');
+                        }
 
-                        console.log('Component HTML:', componentClass);
+                        // const elementHandle = await my_page.$('.msg-overlay-list-bubble__content'); // Replace with your component's selector
+
+                         
+                        // const componentHTML = await my_page.evaluate((element:any) => element.outerHTML, elementHandle);
+
+                  
+                        // const componentClass = await my_page.evaluate((element:any) => element.className, elementHandle);
+
+                        // console.log('Component HTML:', componentClass);
 
 
                         // const item = '.msg-overlay-list-bubble__default-conversation-container .msg-conversation-listitem__link:nth-child(' + sid + ')';
