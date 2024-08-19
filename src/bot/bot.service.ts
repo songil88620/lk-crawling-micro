@@ -1699,7 +1699,7 @@ export class BotService {
                     // click item from list  
                     try {
 
-                        const elementHandle = await my_page.$('.msg-overlay-list-bubble__default-conversation-container'); // Replace with your component's selector
+                        const elementHandle = await my_page.$('.msg-overlay-list-bubble__content'); // Replace with your component's selector
 
                         // Get the outer HTML of the component
                         const componentHTML = await my_page.evaluate((element:any) => element.outerHTML, elementHandle);
