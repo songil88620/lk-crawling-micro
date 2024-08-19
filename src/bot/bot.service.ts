@@ -1650,18 +1650,31 @@ export class BotService {
 
 
 
-            const elementHandle = await my_page.$('.msg-overlay-list-bubble__default-conversation-container');
+            const elementHandle = await my_page.$('.msg-overlay-list-bubble-search');
             if (elementHandle) {
-                console.log(">>>no element")
+                console.log(">>is here")
             } else {
+                console.log(">>isnt here")
                 try{
                     const close_btn_msgbox = '.msg-overlay-bubble-header__controls button:last-child';
                     await my_page.waitForSelector(close_btn_msgbox);
                     await my_page.click(close_btn_msgbox);
                     await this.delay(1500)
-
+                    console.log(">>>clicked....")
                 }catch(e){
                     console.log(">>>err 1664:", e)
+                }
+
+                try{                     
+                    const elementHandle2 = await my_page.$('.msg-overlay-list-bubble-search');
+                    if(elementHandle2){
+                        console.log(">>>here")
+                    }else{
+                        console.log(">>>no here")
+                    }
+
+                }catch(e){
+
                 }
             }
 
