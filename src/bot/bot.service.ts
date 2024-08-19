@@ -1626,7 +1626,7 @@ export class BotService {
             const u_name = await my_page.$('.global-nav__nav .global-nav__primary-items li:nth-child(1) a span')
             if (u_name) {
                 var n = await (await u_name.getProperty('textContent')).jsonValue()
-                const home = this.beautySpace(n); 
+                const home = this.beautySpace(n);
                 if (home == 'Home') {
                     this.lang = 0;
                 } else if (home == 'Inicio') {
@@ -1647,6 +1647,18 @@ export class BotService {
             await my_page.mouse.move(1800, 750);
             await my_page.waitForTimeout(500);
             // await this.sideListScroll(my_page, 1500); 
+
+
+
+            const elementHandle = await my_page.$('.msg-overlay-list-bubble__default-conversation-container');
+            if (elementHandle) {
+                
+            } else {
+                const close_btn_msgbox = '.msg-overlay-bubble-header__controls button:last-child';
+                await my_page.waitForSelector(close_btn_msgbox);
+                await my_page.click(close_btn_msgbox);
+                await this.delay(500)
+            }
 
 
             // scroll down to get the last 80 messages
@@ -1696,43 +1708,17 @@ export class BotService {
                         // console.log(">>>error on close message boxes")
                     }
 
+
+
                     // click item from list  
-                    try {
-
-                        const elementHandle = await my_page.$('.msg-overlay-bubble-header__controls');  
-
-                        if (elementHandle) {
-                            // Check if the class exists
-                            const hasClass = await my_page.evaluate(element => element.classList.contains('msg-overlay-list-bubble__default-conversation-container'), elementHandle);
-
-                            if (hasClass) {
-                            console.log('The element has the class "myClass".');
-                            } else {
-                            console.log('The element does NOT have the class "myClass".');
-                            }
-                        } else {
-                            console.log('Element not found');
-                        }
-
-                        this.delay(50000)
-
-                        // const elementHandle = await my_page.$('.msg-overlay-list-bubble__content'); // Replace with your component's selector
-
-                         
-                        // const componentHTML = await my_page.evaluate((element:any) => element.outerHTML, elementHandle);
-
-                  
-                        // const componentClass = await my_page.evaluate((element:any) => element.className, elementHandle);
-
-                        // console.log('Component HTML:', componentClass);
-
+                    try {  
 
                         // const item = '.msg-overlay-list-bubble__default-conversation-container .msg-conversation-listitem__link:nth-child(' + sid + ')';
-                        //const item = '.msg-overlay-list-bubble__default-conversation-container .entry-point:nth-child(' + sid + ')';
+                        const item = '.msg-overlay-list-bubble__default-conversation-container .entry-point:nth-child(' + sid + ')';
                         // const item = '.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link:nth-child(' + sid + ')';
 
-                        //await my_page.waitForSelector(item);
-                        //await my_page.click(item);
+                        await my_page.waitForSelector(item);
+                        await my_page.click(item);
                     } catch (e) {
                         console.log(">>here 784", e)
                         var sc_count = Math.floor(this.side_idx / 10);
