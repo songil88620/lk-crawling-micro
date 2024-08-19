@@ -1711,11 +1711,11 @@ export class BotService {
 
 
                         // const item = '.msg-overlay-list-bubble__default-conversation-container .msg-conversation-listitem__link:nth-child(' + sid + ')';
-                        const item = '.msg-overlay-list-bubble__default-conversation-container .entry-point:nth-child(' + sid + ')';
+                        //const item = '.msg-overlay-list-bubble__default-conversation-container .entry-point:nth-child(' + sid + ')';
                         // const item = '.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link:nth-child(' + sid + ')';
 
-                        await my_page.waitForSelector(item);
-                        await my_page.click(item);
+                        //await my_page.waitForSelector(item);
+                        //await my_page.click(item);
                     } catch (e) {
                         console.log(">>here 784", e)
                         var sc_count = Math.floor(this.side_idx / 10);
