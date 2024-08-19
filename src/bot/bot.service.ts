@@ -1731,6 +1731,13 @@ export class BotService {
                     // click item from list  
                     try {  
 
+                        const elementHandle3 = await my_page.$('.msg-overlay-list-bubble__content--scrollable');
+                        if(elementHandle3){
+                            console.log(">>>>333 here")
+                        }else{
+                            console.log(">>>333 not exist")
+                        }
+
                         // const item = '.msg-overlay-list-bubble__default-conversation-container .msg-conversation-listitem__link:nth-child(' + sid + ')';
                         const item = '.msg-overlay-list-bubble__default-conversation-container .entry-point:nth-child(' + sid + ')';
                         // const item = '.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link:nth-child(' + sid + ')';
