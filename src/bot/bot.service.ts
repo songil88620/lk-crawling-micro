@@ -1699,7 +1699,7 @@ export class BotService {
                     // click item from list  
                     try {
 
-                        const elementHandle = await my_page.$('.msg-overlay-list-bubble__content');  
+                        const elementHandle = await my_page.$('.scrollable');  
 
                         if (elementHandle) {
                             // Check if the class exists
