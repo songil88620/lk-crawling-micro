@@ -1626,8 +1626,7 @@ export class BotService {
             const u_name = await my_page.$('.global-nav__nav .global-nav__primary-items li:nth-child(1) a span')
             if (u_name) {
                 var n = await (await u_name.getProperty('textContent')).jsonValue()
-                const home = this.beautySpace(n);
-                console.log(">>>HOMe", home)
+                const home = this.beautySpace(n); 
                 if (home == 'Home') {
                     this.lang = 0;
                 } else if (home == 'Inicio') {
@@ -1700,7 +1699,7 @@ export class BotService {
                     // click item from list  
                     try {
 
-                        const elementHandle = await my_page.$('.scrollable');  
+                        const elementHandle = await my_page.$('.msg-overlay-bubble-header__controls');  
 
                         if (elementHandle) {
                             // Check if the class exists
