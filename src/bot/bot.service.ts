@@ -1652,29 +1652,26 @@ export class BotService {
 
             const elementHandle = await my_page.$('.msg-overlay-list-bubble-search');
             if (elementHandle) {
-                console.log(">>is here")
+                // console.log(">>message list is openned state")
             } else {
-                console.log(">>isnt here")
-                try{
+                // console.log(">>need to open the message list")
+                try {
                     const close_btn_msgbox = '.msg-overlay-bubble-header__controls button:last-child';
                     await my_page.waitForSelector(close_btn_msgbox);
                     await my_page.click(close_btn_msgbox);
-                    await this.delay(1500)
-                    console.log(">>>clicked....")
-                }catch(e){
-                    console.log(">>>err 1664:", e)
-                }
-
-                try{                     
+                    await this.delay(1500) 
+                } catch (e) {
+                    console.log(">>>component error 1664:", e)
+                } 
+                try {
                     const elementHandle2 = await my_page.$('.msg-overlay-list-bubble-search');
-                    if(elementHandle2){
-                        console.log(">>>here")
-                    }else{
-                        console.log(">>>no here")
+                    if (elementHandle2) {
+                        console.log(">>>openned message list")
+                    } else {
+                        console.log(">>>can't open message list")
                     }
-
-                }catch(e){
-
+                } catch (e) {
+                    console.log(">>>component error 1674")
                 }
             }
 
@@ -1729,30 +1726,32 @@ export class BotService {
 
 
                     // click item from list  
-                    try {  
+                    try {
 
-                        const elementHandle3 = await my_page.$('.msg-overlay-list-bubble__content--scrollable');
-                        if(elementHandle3){
-                            //console.log(">>>>333 here") 
-                            //const componentHTML = await my_page.evaluate(element => element.outerHTML, elementHandle3); 
-                           //const componentClass = await my_page.evaluate(element => element.className, elementHandle3);
+                        // to debug class
+                        // const elementHandle3 = await my_page.$('.msg-overlay-list-bubble__content--scrollable');
+                        // if (elementHandle3) {
+                        //     console.log(">>>>333 here")
+                        //     const componentHTML = await my_page.evaluate(element => element.outerHTML, elementHandle3);
+                        //     const componentClass = await my_page.evaluate(element => element.className, elementHandle3);
+                        //     console.log('Component HTML:', componentHTML);
+                        //     console.log('Component Class:', componentClass);
 
-                            //console.log('Component HTML:', componentHTML);
-                            //console.log('Component Class:', componentClass);
+                        // } else {
+                        //     console.log(">>>333 not exist")
+                        // }
 
+                        const new_comp = await my_page.$('.msg-overlay-list-bubble__default-conversation-container .entry-point:nth-child(' + sid + ')');
+                        if (new_comp) {
+                            const item = '.msg-overlay-list-bubble__default-conversation-container .entry-point:nth-child(' + sid + ')';
+                            await my_page.waitForSelector(item);
+                            await my_page.click(item);
+                        } else {
+                            const item = '.msg-overlay-list-bubble__default-conversation-container .msg-conversation-listitem__link:nth-child(' + sid + ')';
+                            await my_page.waitForSelector(item);
+                            await my_page.click(item);
+                        }   
 
-                        }else{
-                            console.log(">>>333 not exist")
-                        }
-
-                       
-
-                        const item = '.msg-overlay-list-bubble__default-conversation-container .msg-conversation-listitem__link:nth-child(' + sid + ')';
-                        // const item = '.msg-overlay-list-bubble__default-conversation-container .entry-point:nth-child(' + sid + ')';
-                        // const item = '.msg-overlay-list-bubble__conversations-list .msg-conversation-listitem__link:nth-child(' + sid + ')';
-
-                        await my_page.waitForSelector(item);
-                        await my_page.click(item);
                     } catch (e) {
                         console.log(">>here 784", e)
                         var sc_count = Math.floor(this.side_idx / 10);
