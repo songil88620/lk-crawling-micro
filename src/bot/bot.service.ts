@@ -1584,7 +1584,7 @@ export class BotService {
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
     // long mode checks over 100 messages from the sidebar neither that has new message badge or not.
     async goToLinkedInFastMode(ac: CampaignType) {
-        await this.linkedinAccountService.updateLinkedWarn(ac.linked_in_account_id, true)
+        await this.linkedinAccountService.updateLinkedWarn(ac.linked_in_account_id, false)
         await this.prospectCampaignService.update({ c: { id: ac.id }, i: { warn: false } })
         const campaign_id = ac.id;
         const linked_in_account_id = ac.linked_in_account_id;
@@ -1646,9 +1646,7 @@ export class BotService {
 
             await my_page.mouse.move(1800, 750);
             await my_page.waitForTimeout(500);
-            // await this.sideListScroll(my_page, 1500); 
-
-
+            // await this.sideListScroll(my_page, 1500);   
 
             const elementHandle = await my_page.$('.msg-overlay-list-bubble-search');
             if (elementHandle) {
@@ -1674,7 +1672,6 @@ export class BotService {
                     console.log(">>>component error 1674")
                 }
             }
-
 
             // scroll down to get the last 80 messages
             var time_out = false;
