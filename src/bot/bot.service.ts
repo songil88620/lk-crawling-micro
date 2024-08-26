@@ -110,7 +110,7 @@ export class BotService {
     }
 
     handleCollect() {
-        if (this.collect_req == false && this.more_collect == true && this.collect_count < 100) {
+        if (this.collect_req == false && this.more_collect == true && this.collect_count < 150) {
             this.collect_req = true;
             setTimeout(async () => {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
@@ -127,7 +127,7 @@ export class BotService {
         const _h_now = _now.getHours();
         const _m_now = _now.getMinutes();
 
-        if (this.collect_req == true && this.more_collect == true && this.collect_count < 100) {
+        if (this.collect_req == true && this.more_collect == true && this.collect_count < 150) {
             const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
             this.goToCollectMode(leadgen);
             return
@@ -919,7 +919,7 @@ export class BotService {
             await my_page.waitForTimeout(5000);
 
             // scraping loop
-            while (this.collect_count <= 100 && this.more_collect && this.isLoginOn) {
+            while (this.collect_count <= 150 && this.more_collect && this.isLoginOn) {
                 var sid = 0;
                 while (sid < 10) {
                     sid++;
@@ -961,6 +961,9 @@ export class BotService {
                             const name_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .app-aware-link span span:nth-child(1)'
                             const nm = await my_page.$eval(`${name_sect}`, (element: any) => element.innerHTML)
                             const full_name = this.beautySpace(nm).slice(7, -7)
+
+                            const href = await my_page.$eval('.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .app-aware-link', (element: any) => element.href);
+                            
                             // get detail of the member end
 
 
