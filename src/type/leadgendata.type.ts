@@ -9,6 +9,6 @@ export type Leadgendata = {
     f_stage: number;
     user_id:number;
     lg_id:number;
-    url:string; 
+    urls:string; 
     btn?: string;
 }

@@ -36,7 +36,7 @@ export class LeadgendataEntity {
     lg_id: number;  
 
     @Column()
-    url: string;
+    urls: string;
 
     @Column()
     btn: string;

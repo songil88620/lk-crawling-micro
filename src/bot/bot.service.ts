@@ -963,7 +963,7 @@ export class BotService {
                             const full_name = this.beautySpace(nm).slice(7, -7)
 
                             const href = await my_page.$eval('.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .app-aware-link', (element: any) => element.href);
-                            
+
                             // get detail of the member end
 
 
@@ -977,7 +977,11 @@ export class BotService {
                                 return button ? button.textContent.trim() : null;
                             }, action_btn);
 
-                            if (button_name == 'Connect' || button_name == 'Conectar') {
+                            if (button_name == 'Connect' || button_name == 'Conectar' || button_name == 'Follow' || button_name == 'Seguir' ) {
+                                var btn = 'connect';
+                                if(button_name == 'Follow' || button_name == 'Seguir'){
+                                    btn = 'follow'
+                                } 
                                 const leadgendata: Leadgendata = {
                                     member_id,
                                     name: full_name,
@@ -987,7 +991,9 @@ export class BotService {
                                     f_stage: 0,
                                     updated_at: this.getTimestamp(),
                                     user_id,
-                                    lg_id
+                                    lg_id,
+                                    urls: href,
+                                    btn: btn
                                 }
                                 const res = await this.leadgendataService.create_new(leadgendata, 'collecting');
                                 if (res) {
@@ -1220,7 +1226,9 @@ export class BotService {
                                         f_stage: 0,
                                         updated_at: this.getTimestamp(),
                                         user_id,
-                                        lg_id
+                                        lg_id,
+                                        urls:'',
+                                        btn:''
                                     }
                                     await this.leadgendataService.create_new(leadgendata, 'pending');
                                     this.invite_count++;
@@ -1250,7 +1258,9 @@ export class BotService {
                                     f_stage: 0,
                                     updated_at: this.getTimestamp(),
                                     user_id,
-                                    lg_id
+                                    lg_id,
+                                    urls:'',
+                                    btn:''
                                 }
                                 await this.leadgendataService.create_new(leadgendata, 'pending');
                                 this.invite_count++;
