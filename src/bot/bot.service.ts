@@ -274,7 +274,8 @@ export class BotService {
                 await page.type('#session_password', login_password);
                 await page.click('button.sign-in-form__submit-btn--full-width');
             } catch (e) {
-                await page.goto(`https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin`, { timeout: 0 });
+                // await page.goto(`https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin`, { timeout: 0 });
+                await page.goto(`https://www.linkedin.com/checkpoint/lg/sign-in-another-account`, { timeout: 0 });
                 await page.waitForTimeout(2000);
                 await page.type('#username', login_email);
                 await page.type('#password', login_password);
