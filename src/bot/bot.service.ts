@@ -435,11 +435,16 @@ export class BotService {
                         })
                         await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
                     } else {
+                        const url = 'https://www.linkedin.com/checkpoint/lg/login-submit'
+                        var msg = 'Something unexpected happened. Please contact support team.'
+                        if(page.url() == url){
+                            msg = 'It seems you provide wrong email or password, Please check it.'
+                        }
                         const data = {
                             id: login_data.id,
                             msg: {
                                 type: 'login_failed',
-                                data: 'Something unexpected happened. Please contact support team.'
+                                data: msg
                             }
                         }
                         this.socketService.messageToUser(data)
