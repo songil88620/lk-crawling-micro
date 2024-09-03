@@ -102,6 +102,7 @@ export class BotService {
         this.my_ip = ip.address();
         const _now = new Date();
         const _h_now = _now.getHours();
+        await this.initCollectCount()
         const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip);
         if (ac) {
             this.start_time = Date.now();
@@ -109,12 +110,26 @@ export class BotService {
         }
     }
 
+    async initCollectCount() {
+        const lg: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
+        if (lg) {
+            const ld_id = lg.id;
+            const ld_cnt = await this.leadgendataService.get_collect_cnt(ld_id);
+            this.collect_count = ld_cnt;
+            if (ld_cnt >= 2500) {
+                this.more_collect = false;
+            }
+        }
+    }
+
     handleCollect() {
-        if (this.collect_req == false && this.more_collect == true && this.collect_count < 150) {
+        if (this.collect_req == false && this.more_collect == true && this.collect_count < 2500) {
             this.collect_req = true;
             setTimeout(async () => {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
-                this.goToCollectMode(leadgen);
+                if (leadgen) {
+                    this.goToCollectMode(leadgen);
+                }
             }, 10000)
         }
     }
@@ -123,11 +138,13 @@ export class BotService {
     @Cron(CronExpression.EVERY_10_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
 
+        await this.initCollectCount()
+
         const _now = new Date();
         const _h_now = _now.getHours();
         const _m_now = _now.getMinutes();
 
-        if (this.collect_req == true && this.more_collect == true && this.collect_count < 150) {
+        if (this.collect_req == true && this.more_collect == true && this.collect_count < 2500) {
             const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
             this.goToCollectMode(leadgen);
             return
@@ -151,8 +168,7 @@ export class BotService {
                 }
             } else {
                 this.people_btn = false;
-                const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip);
-                console.log(",,,timer", this.isLoginOn(), this.isOver())
+                const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip); 
                 if (ac && this.isOver() || !this.isLoginOn()) {
                     this.start_time = Date.now();
                     this.goToLinkedInFastMode(ac)
@@ -437,7 +453,7 @@ export class BotService {
                     } else {
                         const url = 'https://www.linkedin.com/checkpoint/lg/login-submit'
                         var msg = 'Something unexpected happened. Please contact support team.'
-                        if(page.url() == url){
+                        if (page.url() == url) {
                             msg = 'It seems you provide wrong email or password, Please check it.'
                         }
                         const data = {
@@ -924,7 +940,7 @@ export class BotService {
             await my_page.waitForTimeout(5000);
 
             // scraping loop
-            while (this.collect_count <= 150 && this.more_collect && this.isLoginOn) {
+            while (this.collect_count <= 2500 && this.more_collect && this.isLoginOn) {
                 var sid = 0;
                 while (sid < 10) {
                     sid++;
@@ -982,11 +998,11 @@ export class BotService {
                                 return button ? button.textContent.trim() : null;
                             }, action_btn);
 
-                            if (button_name == 'Connect' || button_name == 'Conectar' || button_name == 'Follow' || button_name == 'Seguir' ) {
+                            if (button_name == 'Connect' || button_name == 'Conectar' || button_name == 'Follow' || button_name == 'Seguir') {
                                 var btn = 'connect';
-                                if(button_name == 'Follow' || button_name == 'Seguir'){
+                                if (button_name == 'Follow' || button_name == 'Seguir') {
                                     btn = 'follow'
-                                } 
+                                }
                                 const leadgendata: Leadgendata = {
                                     member_id,
                                     name: full_name,
@@ -1232,8 +1248,8 @@ export class BotService {
                                         updated_at: this.getTimestamp(),
                                         user_id,
                                         lg_id,
-                                        urls:'',
-                                        btn:''
+                                        urls: '',
+                                        btn: ''
                                     }
                                     await this.leadgendataService.create_new(leadgendata, 'pending');
                                     this.invite_count++;
@@ -1264,8 +1280,8 @@ export class BotService {
                                     updated_at: this.getTimestamp(),
                                     user_id,
                                     lg_id,
-                                    urls:'',
-                                    btn:''
+                                    urls: '',
+                                    btn: ''
                                 }
                                 await this.leadgendataService.create_new(leadgendata, 'pending');
                                 this.invite_count++;
@@ -1675,10 +1691,10 @@ export class BotService {
                     const close_btn_msgbox = '.msg-overlay-bubble-header__controls button:last-child';
                     await my_page.waitForSelector(close_btn_msgbox);
                     await my_page.click(close_btn_msgbox);
-                    await this.delay(1500) 
+                    await this.delay(1500)
                 } catch (e) {
                     console.log(">>>component error 1664:", e)
-                } 
+                }
                 try {
                     const elementHandle2 = await my_page.$('.msg-overlay-list-bubble-search');
                     if (elementHandle2) {
@@ -1765,7 +1781,7 @@ export class BotService {
                             const item = '.msg-overlay-list-bubble__default-conversation-container .msg-conversation-listitem__link:nth-child(' + sid + ')';
                             await my_page.waitForSelector(item);
                             await my_page.click(item);
-                        }   
+                        }
 
                     } catch (e) {
                         console.log(">>here 784", e)

@@ -47,6 +47,14 @@ export class LeadgendataService {
         await this.leadgendataRepository.update({ name, lg_id }, { status })
     }
 
+    async get_collect_cnt(id: number) {
+        const ld = await this.leadgendataRepository.find({ where: { lg_id: id } })
+        if (id) {
+            return ld.length
+        } else {
+            return 0
+        }
+    }
 
     async update_data(data: any, user_id: number, id: number) {
         // const leadgen = await this.leadgenRepository.findOne({ where: { id: id, user_id: user_id } });
