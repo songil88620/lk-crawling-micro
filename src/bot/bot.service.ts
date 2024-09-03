@@ -118,6 +118,7 @@ export class BotService {
             const ld_id = lg.id;
             const ld_cnt = await this.leadgendataService.get_collect_cnt(ld_id);
             this.collect_count = ld_cnt;
+            this.collect_cpage = Math.floor(ld_cnt / 10);
             if (ld_cnt >= 2500) {
                 this.more_collect = false;
             }
