@@ -873,8 +873,7 @@ export class BotService {
     }
 
     async goToCollectMode(leadgen: Leadgen) {
-        console.log(">>>>collect mode")
-        this.now_collecting = true;
+        console.log(">>>>collect mode") 
         const lk_id = Number(leadgen.linked_in_account_id);
         const lk_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(lk_id);
         const user_id = lk_account.user_id;
