@@ -77,7 +77,7 @@ export class BotService {
     private collect_cpage = 0;
     private more_collect = true;
     private collect_count = 0;
-    
+
 
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
@@ -112,6 +112,7 @@ export class BotService {
     }
 
     async initCollectCount() {
+        this.more_collect = true;
         const lg: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
         if (lg) {
             const ld_id = lg.id;
@@ -123,7 +124,10 @@ export class BotService {
         }
     }
 
-    handleCollect() {
+    async handleCollect() {
+        if (this.collect_req == false) {
+            await this.initCollectCount();
+        }
         if (this.collect_req == false && this.more_collect == true && this.collect_count < 2500) {
             this.collect_req = true;
             setTimeout(async () => {
@@ -145,7 +149,7 @@ export class BotService {
         const _h_now = _now.getHours();
         const _m_now = _now.getMinutes();
 
-        if ( this.more_collect == true && this.collect_count < 2500) {
+        if (this.more_collect == true && this.collect_count < 2500) {
             this.collect_req = true;
             const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
             this.goToCollectMode(leadgen);
@@ -170,7 +174,7 @@ export class BotService {
                 }
             } else {
                 this.people_btn = false;
-                const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip); 
+                const ac: any = await this.prospectCampaignService.findMyCampaign(this.my_ip);
                 if (ac && this.isOver() || !this.isLoginOn()) {
                     this.start_time = Date.now();
                     this.goToLinkedInFastMode(ac)
@@ -873,7 +877,7 @@ export class BotService {
     }
 
     async goToCollectMode(leadgen: Leadgen) {
-        console.log(">>>>collect mode") 
+        console.log(">>>>collect mode")
         const lk_id = Number(leadgen.linked_in_account_id);
         const lk_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(lk_id);
         const user_id = lk_account.user_id;
@@ -1049,11 +1053,11 @@ export class BotService {
                 console.log(">>>page number", this.collect_cpage);
             }
             this.collect_req = false;
-            console.log(">>cant collect more...") 
+            console.log(">>cant collect more...")
 
         } catch (e) {
             console.log(">>>error collecting", e)
-            
+
         }
     }
 
