@@ -77,6 +77,7 @@ export class BotService {
     private collect_cpage = 0;
     private more_collect = true;
     private collect_count = 0;
+    
 
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
@@ -145,6 +146,7 @@ export class BotService {
         const _m_now = _now.getMinutes();
 
         if ( this.more_collect == true && this.collect_count < 2500) {
+            this.collect_req = true;
             const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
             this.goToCollectMode(leadgen);
             return
@@ -872,6 +874,7 @@ export class BotService {
 
     async goToCollectMode(leadgen: Leadgen) {
         console.log(">>>>collect mode")
+        this.now_collecting = true;
         const lk_id = Number(leadgen.linked_in_account_id);
         const lk_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(lk_id);
         const user_id = lk_account.user_id;
@@ -1047,10 +1050,11 @@ export class BotService {
                 console.log(">>>page number", this.collect_cpage);
             }
             this.collect_req = false;
-            console.log(">>cant collect more...")
+            console.log(">>cant collect more...") 
 
         } catch (e) {
             console.log(">>>error collecting", e)
+            
         }
     }
 
