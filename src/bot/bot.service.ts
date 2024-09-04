@@ -888,7 +888,7 @@ export class BotService {
 
         var mode = 'people'; //companies 
         const setting: any = JSON.parse(leadgen.setting)
-
+        console.log(">>set", leadgen)
         try {
             var my_page: any = null;
             if (this.cached_linked_browser.browser != null) {
@@ -919,7 +919,7 @@ export class BotService {
                     return;
                 }
             }
-
+            console.log(">>purl922", my_page.url())
             // linkedin account language check
             const u_name = await my_page.$('.global-nav__nav .global-nav__primary-items li:nth-child(1) a span')
             if (u_name) {
@@ -1636,6 +1636,9 @@ export class BotService {
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
     // long mode checks over 100 messages from the sidebar neither that has new message badge or not.
     async goToLinkedInFastMode(ac: CampaignType) {
+        if(this.collect_req){
+            return
+        }
         await this.linkedinAccountService.updateLinkedWarn(ac.linked_in_account_id, false)
         await this.prospectCampaignService.update({ c: { id: ac.id }, i: { warn: false } })
         const campaign_id = ac.id;
