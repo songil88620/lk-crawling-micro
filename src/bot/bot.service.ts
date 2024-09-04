@@ -1067,6 +1067,19 @@ export class BotService {
             this.collect_req = false;
             console.log(">>cant collect more...")
 
+            const page_screen = await my_page.screenshot();
+            const screenshotBase64 = page_screen.toString('base64');
+
+            const data = {
+                id: lg_id,
+                msg: {
+                    type: 'collecting',
+                    data: 'err_' + screenshotBase64,
+
+                }
+            }
+            this.socketService.messageToUser(data)
+
         } catch (e) {
             console.log(">>>error collecting", e)
 
