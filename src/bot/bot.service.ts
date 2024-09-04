@@ -958,7 +958,8 @@ export class BotService {
                     console.log(">>sss url", my_page.url())
                     sid++;
                     try {
-                        const list_item = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ')';
+                        // .reusable-search__result-container
+                        const list_item = '.reusable-search__entity-result-list li:nth-child(' + sid + ')';
 
                         const is_more_item = await my_page.$(list_item) !== null
                         if (!is_more_item) {
@@ -966,7 +967,7 @@ export class BotService {
                             error_cnt++;
                             if(error_cnt > 5){
                                 this.more_collect = false;
-                                this.collect_req = false;
+                                this.collect_req  = false;
                             }
                             continue;
                         }
@@ -983,30 +984,30 @@ export class BotService {
                         if (has_btn) {
 
                             // get detail of the member start
-                            const avatar_tag = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .presence-entity__image'
+                            const avatar_tag = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .presence-entity__image'
                             const imageUrl = await my_page.$eval(`${avatar_tag}`, (img: any) => img.src);
 
-                            const profile_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') div';
+                            const profile_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') div';
                             const member_urn = await my_page.$eval(profile_sect, (el: any) => {
                                 return el.getAttribute("data-chameleon-result-urn")
                             });
                             const member_id = member_urn.split(":")[3]
 
-                            const subtitle_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .entity-result__primary-subtitle'
+                            const subtitle_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .entity-result__primary-subtitle'
                             const st = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerHTML)
                             const subtitle = this.beautySpace(st).slice(7, -7)
 
-                            const name_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .app-aware-link span span:nth-child(1)'
+                            const name_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .app-aware-link span span:nth-child(1)'
                             const nm = await my_page.$eval(`${name_sect}`, (element: any) => element.innerHTML)
                             const full_name = this.beautySpace(nm).slice(7, -7)
 
-                            const href = await my_page.$eval('.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .app-aware-link', (element: any) => element.href);
+                            const href = await my_page.$eval('.reusable-search__entity-result-list li:nth-child(' + sid + ') .app-aware-link', (element: any) => element.href);
 
                             // get detail of the member end
 
 
                             // message, connect, follow button
-                            const action_btn = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .artdeco-button';
+                            const action_btn = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .artdeco-button';
                             await my_page.waitForSelector(action_btn);
 
                             // Message/Enviar mensaje, Connect/Conectar, 
@@ -1169,7 +1170,7 @@ export class BotService {
                 while (sid < 10) {
                     sid++;
                     try {
-                        const list_item = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ')';
+                        const list_item = '.reusable-search__entity-result-list li:nth-child(' + sid + ')';
 
                         const is_more_item = await my_page.$(list_item) !== null
                         if (!is_more_item) {
@@ -1190,27 +1191,27 @@ export class BotService {
                             console.log("has btn")
 
                             // get detail of the member start
-                            const avatar_tag = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .presence-entity__image'
+                            const avatar_tag = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .presence-entity__image'
                             const imageUrl = await my_page.$eval(`${avatar_tag}`, (img: any) => img.src);
 
-                            const profile_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') div';
+                            const profile_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') div';
                             const member_urn = await my_page.$eval(profile_sect, (el: any) => {
                                 return el.getAttribute("data-chameleon-result-urn")
                             });
                             const member_id = member_urn.split(":")[3]
 
-                            const subtitle_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .entity-result__primary-subtitle'
+                            const subtitle_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .entity-result__primary-subtitle'
                             const st = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerHTML)
                             const subtitle = this.beautySpace(st).slice(7, -7)
 
-                            const name_sect = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .app-aware-link span span:nth-child(1)'
+                            const name_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .app-aware-link span span:nth-child(1)'
                             const nm = await my_page.$eval(`${name_sect}`, (element: any) => element.innerHTML)
                             const full_name = this.beautySpace(nm).slice(7, -7)
                             // get detail of the member end
 
 
                             // message, connect, follow button
-                            const action_btn = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ') .artdeco-button';
+                            const action_btn = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .artdeco-button';
                             await my_page.waitForSelector(action_btn);
 
                             // Message/Enviar mensaje, Connect/Conectar, 
