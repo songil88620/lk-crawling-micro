@@ -940,15 +940,17 @@ export class BotService {
                 deviceScaleFactor: 1,
             });
 
-            // const first_search_url = 'https://www.linkedin.com/search/results/people/?keywords=software engineer&network=["F","S","O"]&origin=FACETED_SEARCH';
+            
             var first_search_url = this.parseSearchUrl(setting, mode, 1)
 
             await my_page.goto(first_search_url, { timeout: 0 });
             await my_page.waitForTimeout(5000);
 
             // scraping loop
+            var error_cnt = 0;
             while (this.collect_count <= 2500 && this.more_collect && this.isLoginOn) {
                 var sid = 0;
+                error_cnt = 0;
                 while (sid < 10) {
                     sid++;
                     try {
@@ -956,8 +958,11 @@ export class BotService {
 
                         const is_more_item = await my_page.$(list_item) !== null
                         if (!is_more_item) {
-                            this.more_collect = false;
-                            this.collect_req = false;
+                            error_cnt++;
+                            if(error_cnt > 5){
+                                this.more_collect = false;
+                                this.collect_req = false;
+                            }
                             continue;
                         }
 
