@@ -945,8 +945,8 @@ export class BotService {
 
             console.log(">>s url", first_search_url)
 
-            await my_page.goto(first_search_url, { timeout: 10 });
-            await my_page.waitForTimeout(5000);
+            await my_page.goto(first_search_url, { timeout: 0});
+            await my_page.waitForTimeout(10000);
             console.log(">>purl", my_page.url())
 
             // scraping loop
