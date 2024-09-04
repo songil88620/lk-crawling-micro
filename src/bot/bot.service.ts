@@ -940,12 +940,12 @@ export class BotService {
                 deviceScaleFactor: 1,
             });
 
-            
+
             var first_search_url = this.parseSearchUrl(setting, mode, 1)
 
             console.log(">>s url", first_search_url)
 
-            await my_page.goto(first_search_url, { timeout: 0});
+            await my_page.goto(first_search_url, { timeout: 0 });
             await my_page.waitForTimeout(10000);
             console.log(">>purl", my_page.url())
 
@@ -965,9 +965,9 @@ export class BotService {
                         if (!is_more_item) {
                             console.log(">>nth err", error_cnt)
                             error_cnt++;
-                            if(error_cnt > 5){
+                            if (error_cnt > 5) {
                                 this.more_collect = false;
-                                this.collect_req  = false;
+                                this.collect_req = false;
                             }
                             continue;
                         }
@@ -1067,18 +1067,29 @@ export class BotService {
             this.collect_req = false;
             console.log(">>cant collect more...")
 
-            const page_screen = await my_page.screenshot();
-            const screenshotBase64 = page_screen.toString('base64');
+            if (this.collect_count >= 2500) {
+                const data = {
+                    id: lg_id,
+                    msg: {
+                        type: 'collecting',
+                        data: 'max_limit',
 
-            const data = {
-                id: lg_id,
-                msg: {
-                    type: 'collecting',
-                    data: 'err_' + screenshotBase64,
-
+                    }
                 }
+                this.socketService.messageToUser(data)
+            } else {
+                const page_screen = await my_page.screenshot();
+                const screenshotBase64 = page_screen.toString('base64');
+                const data = {
+                    id: lg_id,
+                    msg: {
+                        type: 'collecting',
+                        data: 'err_' + screenshotBase64,
+
+                    }
+                }
+                this.socketService.messageToUser(data)
             }
-            this.socketService.messageToUser(data)
 
         } catch (e) {
             console.log(">>>error collecting", e)
@@ -1650,7 +1661,7 @@ export class BotService {
     // if (page.url().includes('/feed/') || page.url().includes('/in/')) {
     // long mode checks over 100 messages from the sidebar neither that has new message badge or not.
     async goToLinkedInFastMode(ac: CampaignType) {
-        if(this.collect_req){
+        if (this.collect_req) {
             return
         }
         await this.linkedinAccountService.updateLinkedWarn(ac.linked_in_account_id, false)
