@@ -943,8 +943,11 @@ export class BotService {
             
             var first_search_url = this.parseSearchUrl(setting, mode, 1)
 
-            await my_page.goto(first_search_url, { timeout: 0 });
+            console.log(">>s url", first_search_url)
+
+            await my_page.goto(first_search_url, { timeout: 10 });
             await my_page.waitForTimeout(5000);
+            console.log(">>purl", my_page.url())
 
             // scraping loop
             var error_cnt = 0;
@@ -952,6 +955,7 @@ export class BotService {
                 var sid = 0;
                 error_cnt = 0;
                 while (sid < 10) {
+                    console.log(">>sss url", my_page.url())
                     sid++;
                     try {
                         const list_item = '.reusable-search__entity-result-list .reusable-search__result-container:nth-child(' + sid + ')';
