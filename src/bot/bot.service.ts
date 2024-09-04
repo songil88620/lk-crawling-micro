@@ -958,6 +958,7 @@ export class BotService {
 
                         const is_more_item = await my_page.$(list_item) !== null
                         if (!is_more_item) {
+                            console.log(">>nth err", error_cnt)
                             error_cnt++;
                             if(error_cnt > 5){
                                 this.more_collect = false;
