@@ -29,6 +29,7 @@ import { LeadgenService } from 'src/leadgen/leadgen.service';
 import { LeadgendataService } from 'src/leadgendata/leadgendata.service';
 import { Leadgen } from 'src/type/leadgen.type';
 import { Leadgendata } from 'src/type/leadgendata.type';
+import e from 'express';
 
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -114,6 +115,7 @@ export class BotService {
     async initCollectCount() {
         this.more_collect = true;
         const lg: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
+        console.log(">>init collect count", lg)
         if (lg) {
             const ld_id = lg.id;
             const ld_cnt = await this.leadgendataService.get_collect_cnt(ld_id);
@@ -135,7 +137,7 @@ export class BotService {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen) {
                     this.goToCollectMode(leadgen);
-                }
+                } 
             }, 10000)
         }
     }
@@ -153,8 +155,11 @@ export class BotService {
         if (this.more_collect == true && this.collect_count < 2500) {
             this.collect_req = true;
             const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
-            this.goToCollectMode(leadgen);
-            return
+            if(leadgen){
+                this.goToCollectMode(leadgen);
+            } else{
+                this.collect_req = false;
+            }
         }
 
         if ((_h_now >= 6 && _h_now < 22 && this.login_fail <= 5)) {
