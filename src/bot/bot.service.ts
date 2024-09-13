@@ -351,7 +351,7 @@ export class BotService {
                 return
             } else if (page.url().includes('checkpoint/challenge/')) {
                 this.msg_to_user(login_data.id, 'Verification page loading...');
-                // await page.waitForTimeout(5000);
+                await page.waitForTimeout(5000);
                 var vcode = null;
                 try {
                     vcode = await page.waitForSelector('#input__email_verification_pin');
