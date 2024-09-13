@@ -369,6 +369,17 @@ export class BotService {
                     this.msg_to_user(login_data.id, 'Requiring verification code...');
                 } else {
                     this.msg_to_user(login_data.id, 'Trying to solve the image puzzle...');
+                    const page_screen = await page.screenshot();
+                    const screenshotBase64 = page_screen.toString('base64');
+                    const data = {
+                        id: login_data.id,
+                        msg: {
+                            type: 'collecting',
+                            data: 'err_' + screenshotBase64,
+
+                        }
+                    }
+                    this.socketService.messageToUser(data)
                     const frame_1 = await page.$("iframe[id='captcha-internal']");
                     const contentFrame_1 = await frame_1.contentFrame();
                     const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
