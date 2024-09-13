@@ -352,6 +352,7 @@ export class BotService {
             } else if (page.url().includes('checkpoint/challenge/')) {
                 this.msg_to_user(login_data.id, 'Verification page loading...');
                 await page.waitForTimeout(5000);
+                console.log(">>debug 355")
                 var vcode = null;
                 try {
                     vcode = await page.waitForSelector('#input__email_verification_pin');
@@ -368,6 +369,7 @@ export class BotService {
                     this.socketService.messageToUser(data)
                     this.msg_to_user(login_data.id, 'Requiring verification code...');
                 } else {
+                    console.log(">>debug 372")
                     this.msg_to_user(login_data.id, 'Trying to solve the image puzzle...');
                     const page_screen = await page.screenshot();
                     const screenshotBase64 = page_screen.toString('base64');
