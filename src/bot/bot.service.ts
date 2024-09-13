@@ -382,6 +382,7 @@ export class BotService {
                         }
                     }
                     this.socketService.messageToUser(data)
+                    console.log(">>debug 385")
                     const frame_1 = await page.$("iframe[id='captcha-internal']");
                     const contentFrame_1 = await frame_1.contentFrame();
                     const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
