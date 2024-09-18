@@ -12,5 +12,6 @@ export interface LinkedInAccountType {
     country: string,
     is_ghl: boolean,
     type: string,
-    warn?: boolean
+    warn?: boolean,
+    i_ver?: string
 }

@@ -37,5 +37,8 @@ export class LinkedInAccountsService {
     await this.linkedinAccountRepository.update({ id: account_id }, { warn: warn })
   }
 
+  async update_version(proxy: string, v: string) {
+    await this.linkedinAccountRepository.update({ proxy }, { i_ver: v })
+  }
 
 }

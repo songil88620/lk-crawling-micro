@@ -50,6 +50,9 @@ export class LinkedInAccountEntity {
     @Column()
     warn: boolean;
 
+    @Column()
+    i_ver: string;
+
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
     public created_at: Date;
 

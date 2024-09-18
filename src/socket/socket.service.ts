@@ -9,6 +9,7 @@ import { Server } from 'socket.io';
 import { io, Socket } from 'socket.io-client';
 import { BotService } from 'src/bot/bot.service';
 import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';
+import { LinkedInAccountsService } from 'src/linked_in_accounts/linked_in_accounts.service';
 var ip = require('ip');
 const { exec } = require('child_process');
 
@@ -20,30 +21,28 @@ export class SocketService {
 
     constructor(
         @Inject(forwardRef(() => BotService)) private botService: BotService,
+        @Inject(forwardRef(() => LinkedInAccountsService)) private lkService: LinkedInAccountsService,
     ) { }
 
     async onModuleInit() {
         this.connectSocket();
         this.readEvent();
-        this.git_check()
     }
 
-    git_check() { 
-        console.log("??")
-        exec('git add . && git commit -m "update" && git push', (err, stdout, stderr) => {
+    git_check() {
+        exec('cd /var/lk-crawling-micro/ && git pull && npm run build && pm2 restart 0', (err, stdout, stderr) => {
             if (err) {
                 console.error(`Error executing command: ${err}`);
                 return;
             }
-
-            // Output the stdout and stderr
             if (stdout) {
                 console.log(`STDOUT: ${stdout}`);
             }
-
             if (stderr) {
                 console.log(`STDERR: ${stderr}`);
             }
+            const v = this.getTimestamp() + '__v';
+            this.lkService.update_version(ip.address(), v)
         });
     }
 
@@ -82,6 +81,11 @@ export class SocketService {
             console.log(">>dadta", data)
             this.botService.handleCollect()
         })
+
+        this.socket.on('update_source_', (data: any) => {
+            console.log(">>dadta", data)
+            this.git_check()
+        })
     }
 
     async messageToUser(data: any) {
@@ -90,6 +94,17 @@ export class SocketService {
 
     async loginstateToMother(data: any) {
         this.socket.emit('loginstate_from_micro_sever', data)
+    }
+
+    getTimestamp() {
+        const currentDate = new Date();
+        const padZero = (num) => (num < 10 ? `0${num}` : num);
+        const month = padZero(currentDate.getMonth() + 1);
+        const day = padZero(currentDate.getDate());
+        const year = currentDate.getFullYear();
+        const hours = padZero(currentDate.getHours());
+        const minutes = padZero(currentDate.getMinutes());
+        return year + "-" + month + "-" + day + " " + hours + ":" + minutes;
     }
 
 }
