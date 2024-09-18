@@ -10,14 +10,14 @@ import { io, Socket } from 'socket.io-client';
 import { BotService } from 'src/bot/bot.service';
 import { LinkedinLoginDataType } from 'src/type/linkedlogin.type';
 var ip = require('ip');
-
+const { exec } = require('child_process');
 
 @Injectable()
 export class SocketService {
 
 
     public socket = io('https://api.aippointing.com/')
-    
+
     constructor(
         @Inject(forwardRef(() => BotService)) private botService: BotService,
     ) { }
@@ -25,6 +25,26 @@ export class SocketService {
     async onModuleInit() {
         this.connectSocket();
         this.readEvent();
+        this.git_check()
+    }
+
+    git_check() { 
+        console.log("??")
+        exec('git add . && git commit -m "update" && git push', (err, stdout, stderr) => {
+            if (err) {
+                console.error(`Error executing command: ${err}`);
+                return;
+            }
+
+            // Output the stdout and stderr
+            if (stdout) {
+                console.log(`STDOUT: ${stdout}`);
+            }
+
+            if (stderr) {
+                console.log(`STDERR: ${stderr}`);
+            }
+        });
     }
 
     connectSocket() {

@@ -37,6 +37,8 @@
     "axios": "^1.6.2",
     "bcrypt": "^5.1.0",
     "bcryptjs": "^2.4.3",
+    "child_process": "^1.0.2",
+    "child-process-ext": "^3.0.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
     "code-config": "^1.0.55",

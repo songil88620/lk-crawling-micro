@@ -29,7 +29,7 @@ import { LeadgenService } from 'src/leadgen/leadgen.service';
 import { LeadgendataService } from 'src/leadgendata/leadgendata.service';
 import { Leadgen } from 'src/type/leadgen.type';
 import { Leadgendata } from 'src/type/leadgendata.type';
-import e from 'express';
+
 
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -137,7 +137,7 @@ export class BotService {
                 const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
                 if (leadgen) {
                     this.goToCollectMode(leadgen);
-                } 
+                }
             }, 10000)
         }
     }
@@ -155,9 +155,9 @@ export class BotService {
         if (this.more_collect == true && this.collect_count < 2500) {
             this.collect_req = true;
             const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
-            if(leadgen){
+            if (leadgen) {
                 this.goToCollectMode(leadgen);
-            } else{
+            } else {
                 this.collect_req = false;
             }
         }
@@ -368,72 +368,75 @@ export class BotService {
                     }
                     this.socketService.messageToUser(data)
                     this.msg_to_user(login_data.id, 'Requiring verification code...');
-                } else {
-                    console.log(">>debug 372")
-                    this.msg_to_user(login_data.id, 'Trying to solve the image puzzle...');
-                    const page_screen = await page.screenshot();
-                    const screenshotBase64 = page_screen.toString('base64');
-                    const data = {
-                        id: login_data.id,
-                        msg: {
-                            type: 'collecting',
-                            data: 'err_' + screenshotBase64,
+                } else { 
+                    if (page.url().includes('checkpoint/challengesV2/')) {
+                        this.msg_to_user(login_data.id, 'Check your Linkedin app');
+                        const page_screen = await page.screenshot();
+                        const screenshotBase64 = page_screen.toString('base64');
+                        const data = {
+                            id: login_data.id,
+                            msg: {
+                                type: 'collecting',
+                                data: 'err_' + screenshotBase64,
 
-                        }
-                    }
-                    this.socketService.messageToUser(data)
-                    console.log(">>debug 385")
-                    const frame_1 = await page.$("iframe[id='captcha-internal']");
-                    const contentFrame_1 = await frame_1.contentFrame();
-                    const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
-                    const contentFrame_2 = await frame_2.contentFrame();
-                    const frame_3 = await contentFrame_2.$("iframe[title='Verification challenge']");
-                    const contentFrame_3 = await frame_3.contentFrame();
-                    const frame_4 = await contentFrame_3.$("iframe[id='fc-iframe-wrap']");
-                    const contentFrame_4 = await frame_4.contentFrame();
-                    const frame_5 = await contentFrame_4.$("iframe[id='CaptchaFrame']");
-                    const contentFrame_5 = await frame_5.contentFrame();
-                    const acceptBtn = await contentFrame_5.$(`#home button`);
-                    await acceptBtn.click();
-
-                    //auto bypass for puzzle
-                    await page.waitForTimeout(1000);
-                    const loops = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-                    try {
-                        for (var l of loops) {
-                            await contentFrame_5.$(`#game_children_text`);
-                            const src = await contentFrame_5.evaluate(() => {
-                                const imgElement = document.querySelector('#game_challengeItem_image');
-                                return imgElement ? imgElement['src'] : null;
-                            });
-                            const img = src.substring(23);
-                            if (this.daily_max < 0) {
-                                return
                             }
-                            this.daily_max--;
-                            const res = await axios.post('https://api.capsolver.com/createTask', {
-                                "clientKey": this.captcha_key,
-                                "task": {
-                                    "type": "FunCaptchaClassification",
-                                    "websiteURL": "https://www.linkedin.com",
-                                    "images": [
-                                        img
-                                    ],
-                                    "question": "rotated"
+                        }
+                        this.socketService.messageToUser(data)
+                    } else {
+                        this.msg_to_user(login_data.id, 'Trying to solve the image puzzle...');   
+                        try {
+                            const frame_1 = await page.$("iframe[id='captcha-internal']");
+                            const contentFrame_1 = await frame_1.contentFrame();
+                            const frame_2 = await contentFrame_1.$("iframe[id='arkoseframe']");
+                            const contentFrame_2 = await frame_2.contentFrame();
+                            const frame_3 = await contentFrame_2.$("iframe[title='Verification challenge']");
+                            const contentFrame_3 = await frame_3.contentFrame();
+                            const frame_4 = await contentFrame_3.$("iframe[id='fc-iframe-wrap']");
+                            const contentFrame_4 = await frame_4.contentFrame();
+                            const frame_5 = await contentFrame_4.$("iframe[id='CaptchaFrame']");
+                            const contentFrame_5 = await frame_5.contentFrame();
+                            const acceptBtn = await contentFrame_5.$(`#home button`);
+                            await acceptBtn.click();
+                            //auto bypass for puzzle
+                            await page.waitForTimeout(1000);
+                            const loops = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+                            for (var l of loops) {
+                                await contentFrame_5.$(`#game_children_text`);
+                                const src = await contentFrame_5.evaluate(() => {
+                                    const imgElement = document.querySelector('#game_challengeItem_image');
+                                    return imgElement ? imgElement['src'] : null;
+                                });
+                                const img = src.substring(23);
+                                if (this.daily_max < 0) {
+                                    return
                                 }
-                            });
-                            if (res.data.status == 'ready') {
-                                // console.log(">>>res", res.data)
-                                const idx = res.data.solution.objects[0] + 1;
-                                // console.log(">>idx", idx)
-                                await contentFrame_5.click('#image' + idx + ' > a');
+                                this.daily_max--;
+                                const res = await axios.post('https://api.capsolver.com/createTask', {
+                                    "clientKey": this.captcha_key,
+                                    "task": {
+                                        "type": "FunCaptchaClassification",
+                                        "websiteURL": "https://www.linkedin.com",
+                                        "images": [
+                                            img
+                                        ],
+                                        "question": "rotated"
+                                    }
+                                });
+                                if (res.data.status == 'ready') {
+                                    // console.log(">>>res", res.data)
+                                    const idx = res.data.solution.objects[0] + 1;
+                                    // console.log(">>idx", idx)
+                                    await contentFrame_5.click('#image' + idx + ' > a');
+                                }
+                                await page.waitForTimeout(2000);
+                                this.msg_to_user(login_data.id, 'Solved puzzle No.' + l + "...");
                             }
-                            await page.waitForTimeout(2000);
-                            this.msg_to_user(login_data.id, 'Solved puzzle No.' + l + "...");
+                        } catch (e) {
+                             
                         }
-                    } catch (e) {
-                        // console.log(">>bypass")
                     }
+
                     await page.waitForTimeout(3000);
                     if (page.url().includes('checkpoint/challenge/')) {
                         this.msg_to_user(login_data.id, 'Verification page loading...');
@@ -1880,7 +1883,7 @@ export class BotService {
                     const first_name = user_name.split(" ")[0];
                     const last_name = user_name.split(" ")[1];
 
-                  
+
 
                     const f_msgs = await this.firstmsgService.get_first_msg(ac.id)
 
@@ -1912,8 +1915,8 @@ export class BotService {
                             const msg_text = await (await msg_body.getProperty('textContent')).jsonValue()
 
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
-                            const _msg = this.beautySpace(msg_text.replace(/\+/g, '')); 
-                           
+                            const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
+
                             if (first_msgs.includes(_msg)) {
                                 campaign_msg = true;
                             }
@@ -1952,7 +1955,7 @@ export class BotService {
                     await this.prospectsService.checkProspect(member_id, first_name, last_name, profile_url);
 
                     // check message state for next step   
-                  
+
 
                     // if (messages.length > 0 && first_msg == messages[0].content) {
                     if (messages.length > 0 && first_msgs.includes(messages[0].content)) {
