@@ -83,7 +83,7 @@ export class SocketService {
         })
 
         this.socket.on('update_source_', (data: any) => {
-            console.log(">>dadta", data)
+            console.log(">>update cmd", data)
             this.git_check()
         })
     }
