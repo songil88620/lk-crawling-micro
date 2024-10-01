@@ -69,6 +69,9 @@ export class LeadgenEntity {
     @Column({ type: "longtext" })
     setting: string;
 
+    @Column({ type: "longtext" })
+    netting: string;
+
     @Column()
     updated_at: string;
 
@@ -83,5 +86,8 @@ export class LeadgenEntity {
 
     @Column()
     quee_3: number
+
+    @Column()
+    smode: number
 
 }

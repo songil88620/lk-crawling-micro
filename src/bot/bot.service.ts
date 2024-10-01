@@ -79,6 +79,8 @@ export class BotService {
     private more_collect = true;
     private collect_count = 0;
 
+    // daily total free actions exclude core action, hi action
+    private total_action = 150;
 
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
@@ -96,9 +98,13 @@ export class BotService {
         @Inject(forwardRef(() => LeadgendataService)) private leadgendataService: LeadgendataService,
     ) {
 
-    }
+    } 
+ 
 
     async onModuleInit() {
+        // this.my_ip = '1.1.1.1'
+        // this.test()
+        // return
         const sk = await this.systemService.findByKey('capkey');
         this.captcha_key = sk.value;
         this.my_ip = ip.address();
@@ -115,7 +121,6 @@ export class BotService {
     async initCollectCount() {
         this.more_collect = true;
         const lg: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
-        console.log(">>init collect count", lg)
         if (lg) {
             const ld_id = lg.id;
             const ld_cnt = await this.leadgendataService.get_collect_cnt(ld_id);
@@ -142,10 +147,126 @@ export class BotService {
         }
     }
 
+    async test() {
+        const leadgen: Leadgen = await this.leadgenService.get_one_ip(this.my_ip);
+        this.goToCollectMode(leadgen);
+        // const smode = leadgen.smode;
+        //const netting: any = JSON.parse(leadgen.netting)
+
+        // this.parseSalesUrl(netting, 'people', 1)
+    }
+
+
+
+    parseSalesUrl(netting: any, mode: string, page: number) {
+        var params = mode + '?page=' + page + '&query=(filters%3AList(';
+        if (netting.scompanytype.length > 0) {
+            var type_f = '(type%3ACOMPANY_TYPE%2Cvalues%3AList(';
+            netting.scompanytype.forEach((p: any) => {
+                type_f = type_f + '(id%3A' + p.value + '%2Ctext%3A' + this.replaceSpec(p.label) + '%2CselectionType%3AINCLUDED)%2C'
+            })
+            type_f = type_f.slice(0, -3);
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.scompanysize.length > 0) {
+            var type_f = '(type%3ACOMPANY_HEADCOUNT%2Cvalues%3AList(';
+            netting.scompanysize.forEach((p: any) => {
+                type_f = type_f + '(id%3A' + p.value + '%2Ctext%3A' + this.replaceSpec(p.label) + '%2CselectionType%3AINCLUDED)%2C'
+            })
+            type_f = type_f.slice(0, -3);
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.scompanyloc.length > 0) {
+            var type_f = '(type%3ACOMPANY_HEADQUARTERS%2Cvalues%3AList(';
+            netting.scompanyloc.forEach((p: any) => {
+                type_f = type_f + '(id%3A' + p.value + '%2Ctext%3A' + this.replaceSpec(p.label) + '%2CselectionType%3AINCLUDED)%2C'
+            })
+            type_f = type_f.slice(0, -3);
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.srole.length > 0) {
+            var type_f = '(type%3AFUNCTION%2Cvalues%3AList(';
+            netting.srole.forEach((p: any) => {
+                type_f = type_f + '(id%3A' + p.value + '%2Ctext%3A' + this.replaceSpec(p.label) + '%2CselectionType%3AINCLUDED)%2C'
+            })
+            type_f = type_f.slice(0, -3);
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.seniority.length > 0) {
+            var type_f = '(type%3ASENIORITY_LEVEL%2Cvalues%3AList(';
+            netting.seniority.forEach((p: any) => {
+                type_f = type_f + '(id%3A' + p.value + '%2Ctext%3A' + this.replaceSpec(p.label) + '%2CselectionType%3AINCLUDED)%2C'
+            })
+            type_f = type_f.slice(0, -3);
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.sregion.length > 0) {
+            var type_f = '(type%3AREGION%2Cvalues%3AList(';
+            netting.sregion.forEach((p: any) => {
+                type_f = type_f + '(id%3A' + p.value + '%2Ctext%3A' + this.replaceSpec(p.label) + '%2CselectionType%3AINCLUDED)%2C'
+            })
+            type_f = type_f.slice(0, -3);
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.sindustry.length > 0) {
+            var type_f = '(type%3AINDUSTRY%2Cvalues%3AList(';
+            netting.sindustry.forEach((p: any) => {
+                type_f = type_f + '(id%3A' + p.value + '%2Ctext%3A' + this.replaceSpec(p.label) + '%2CselectionType%3AINCLUDED)%2C'
+            })
+            type_f = type_f.slice(0, -3);
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.slanguage.length > 0) {
+            var type_f = '(type%3APROFILE_LANGUAGE%2Cvalues%3AList(';
+            netting.slanguage.forEach((p: any) => {
+                type_f = type_f + '(id%3A' + p.value + '%2Ctext%3A' + this.replaceSpec(p.label) + '%2CselectionType%3AINCLUDED)%2C'
+            })
+            type_f = type_f.slice(0, -3);
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.sconnections.length > 0) {
+            var type_f = '(type%3ARELATIONSHIP%2Cvalues%3AList(';
+            netting.sconnections.forEach((p: any) => {
+                type_f = type_f + '(id%3A' + p.value + '%2Ctext%3A' + this.replaceSpec(p.label) + '%2CselectionType%3AINCLUDED)%2C'
+            })
+            type_f = type_f.slice(0, -3);
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.sfname != '') {
+            var type_f = '(type%3AFIRST_NAME%2Cvalues%3AList(';
+            type_f = type_f + '(text%3A' + this.replaceSpec(netting.sfname) + '%2CselectionType%3AINCLUDED)'
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        if (netting.slname != '') {
+            var type_f = '(type%3ALAST_NAME%2Cvalues%3AList(';
+            type_f = type_f + '(text%3A' + this.replaceSpec(netting.slname) + '%2CselectionType%3AINCLUDED)'
+            type_f = type_f + '))%2C';
+            params = params + type_f;
+        }
+        params = params.slice(0, -3);
+        params = params + ')%2Ckeywords%3A'
+        if (netting.ssearchkey != '') {
+            params = params + netting.ssearchkey
+        }
+        params = params + ')'
+        const url = 'https://www.linkedin.com/sales/search/' + params;
+        return url;
+    }
+
     // run bot every 30 mins
     @Cron(CronExpression.EVERY_10_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
-
+       // return
         await this.initCollectCount()
 
         const _now = new Date();
@@ -242,7 +363,7 @@ export class BotService {
     conf() {
         return {
             headless: 'new',
-            // headless: false,
+            //headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
@@ -368,7 +489,7 @@ export class BotService {
                     }
                     this.socketService.messageToUser(data)
                     this.msg_to_user(login_data.id, 'Requiring verification code...');
-                } else { 
+                } else {
                     if (page.url().includes('checkpoint/challengesV2/')) {
                         this.msg_to_user(login_data.id, 'Check your Linkedin app');
                         const page_screen = await page.screenshot();
@@ -383,7 +504,7 @@ export class BotService {
                         }
                         this.socketService.messageToUser(data)
                     } else {
-                        this.msg_to_user(login_data.id, 'Trying to solve the image puzzle...');   
+                        this.msg_to_user(login_data.id, 'Trying to solve the image puzzle...');
                         try {
                             const frame_1 = await page.$("iframe[id='captcha-internal']");
                             const contentFrame_1 = await frame_1.contentFrame();
@@ -433,7 +554,7 @@ export class BotService {
                                 this.msg_to_user(login_data.id, 'Solved puzzle No.' + l + "...");
                             }
                         } catch (e) {
-                             
+
                         }
                     }
 
@@ -908,9 +1029,14 @@ export class BotService {
         const mail = lk_account.email;
         const pw = lk_account.password;
 
+
         var mode = 'people'; //companies 
+        const smode = leadgen.smode;
         const setting: any = JSON.parse(leadgen.setting)
-        console.log(">>set", leadgen)
+        const netting: any = JSON.parse(leadgen.netting)
+
+        console.log(">>>net", mail, pw)
+
         try {
             var my_page: any = null;
             if (this.cached_linked_browser.browser != null) {
@@ -941,7 +1067,7 @@ export class BotService {
                     return;
                 }
             }
-            console.log(">>purl922", my_page.url())
+
             // linkedin account language check
             const u_name = await my_page.$('.global-nav__nav .global-nav__primary-items li:nth-child(1) a span')
             if (u_name) {
@@ -962,130 +1088,210 @@ export class BotService {
                 deviceScaleFactor: 1,
             });
 
+            if (smode == 1) {
+                var first_search_url = this.parseSearchUrl(setting, mode, 1)
+                await my_page.goto(first_search_url, { timeout: 0 });
+                await my_page.waitForTimeout(10000);
+                // scraping loop
+                var error_cnt = 0;
+                while (this.collect_count <= 2500 && this.more_collect && this.isLoginOn) {
+                    var sid = 0;
+                    error_cnt = 0;
+                    while (sid < 10) {
+                        console.log(">>sss url", my_page.url())
+                        sid++;
+                        try {
+                            // .reusable-search__result-container
+                            const list_item = '.reusable-search__entity-result-list li:nth-child(' + sid + ')';
 
-            var first_search_url = this.parseSearchUrl(setting, mode, 1)
-
-            console.log(">>s url", first_search_url)
-
-            await my_page.goto(first_search_url, { timeout: 0 });
-            await my_page.waitForTimeout(10000);
-            console.log(">>purl", my_page.url())
-
-            // scraping loop
-            var error_cnt = 0;
-            while (this.collect_count <= 2500 && this.more_collect && this.isLoginOn) {
-                var sid = 0;
-                error_cnt = 0;
-                while (sid < 10) {
-                    console.log(">>sss url", my_page.url())
-                    sid++;
-                    try {
-                        // .reusable-search__result-container
-                        const list_item = '.reusable-search__entity-result-list li:nth-child(' + sid + ')';
-
-                        const is_more_item = await my_page.$(list_item) !== null
-                        if (!is_more_item) {
-                            console.log(">>nth err", error_cnt)
-                            error_cnt++;
-                            if (error_cnt > 5) {
-                                this.more_collect = false;
-                                this.collect_req = false;
-                            }
-                            continue;
-                        }
-
-                        await my_page.waitForSelector(list_item);
-                        const has_btn = await my_page.evaluate((selector) => {
-                            const div = document.querySelector(selector);
-                            if (div) {
-                                return div.querySelector('.artdeco-button') !== null;
-                            }
-                            return false;
-                        }, list_item);
-
-                        if (has_btn) {
-
-                            // get detail of the member start
-                            const avatar_tag = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .presence-entity__image'
-                            const imageUrl = await my_page.$eval(`${avatar_tag}`, (img: any) => img.src);
-
-                            const profile_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') div';
-                            const member_urn = await my_page.$eval(profile_sect, (el: any) => {
-                                return el.getAttribute("data-chameleon-result-urn")
-                            });
-                            const member_id = member_urn.split(":")[3]
-
-                            const subtitle_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .entity-result__primary-subtitle'
-                            const st = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerHTML)
-                            const subtitle = this.beautySpace(st).slice(7, -7)
-
-                            const name_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .app-aware-link span span:nth-child(1)'
-                            const nm = await my_page.$eval(`${name_sect}`, (element: any) => element.innerHTML)
-                            const full_name = this.beautySpace(nm).slice(7, -7)
-
-                            const href = await my_page.$eval('.reusable-search__entity-result-list li:nth-child(' + sid + ') .app-aware-link', (element: any) => element.href);
-
-                            // get detail of the member end
-
-
-                            // message, connect, follow button
-                            const action_btn = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .artdeco-button';
-                            await my_page.waitForSelector(action_btn);
-
-                            // Message/Enviar mensaje, Connect/Conectar, 
-                            const button_name = await my_page.evaluate((selector) => {
-                                const button = document.querySelector(selector);
-                                return button ? button.textContent.trim() : null;
-                            }, action_btn);
-
-                            if (button_name == 'Connect' || button_name == 'Conectar' || button_name == 'Follow' || button_name == 'Seguir') {
-                                var btn = 'connect';
-                                if (button_name == 'Follow' || button_name == 'Seguir') {
-                                    btn = 'follow'
+                            const is_more_item = await my_page.$(list_item) !== null
+                            if (!is_more_item) {
+                                console.log(">>nth err", error_cnt)
+                                error_cnt++;
+                                if (error_cnt > 5) {
+                                    this.more_collect = false;
+                                    this.collect_req = false;
                                 }
-                                const leadgendata: Leadgendata = {
-                                    member_id,
-                                    name: full_name,
-                                    avatar: imageUrl,
-                                    data: JSON.stringify({ subtitle }),
-                                    status: 'collecting',
-                                    f_stage: 0,
-                                    updated_at: this.getTimestamp(),
-                                    user_id,
-                                    lg_id,
-                                    urls: href,
-                                    btn: btn
+                                continue;
+                            }
+
+                            await my_page.waitForSelector(list_item);
+                            const has_btn = await my_page.evaluate((selector) => {
+                                const div = document.querySelector(selector);
+                                if (div) {
+                                    return div.querySelector('.artdeco-button') !== null;
                                 }
-                                const res = await this.leadgendataService.create_new(leadgendata, 'collecting');
-                                if (res) {
-                                    this.collect_count++;
-                                    const data = {
-                                        id: lg_id,
-                                        msg: {
-                                            type: 'collecting',
-                                            data: this.collect_count
-                                        }
+                                return false;
+                            }, list_item);
+
+                            if (has_btn) {
+
+                                // get detail of the member start
+                                const avatar_tag = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .presence-entity__image'
+                                const imageUrl = await my_page.$eval(`${avatar_tag}`, (img: any) => img.src);
+
+                                const profile_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') div';
+                                const member_urn = await my_page.$eval(profile_sect, (el: any) => {
+                                    return el.getAttribute("data-chameleon-result-urn")
+                                });
+                                const member_id = member_urn.split(":")[3]
+
+                                const subtitle_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .entity-result__primary-subtitle'
+                                const st = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerHTML)
+                                const subtitle = this.beautySpace(st).slice(7, -7)
+
+                                const name_sect = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .app-aware-link span span:nth-child(1)'
+                                const nm = await my_page.$eval(`${name_sect}`, (element: any) => element.innerHTML)
+                                const full_name = this.beautySpace(nm).slice(7, -7)
+
+                                const href = await my_page.$eval('.reusable-search__entity-result-list li:nth-child(' + sid + ') .app-aware-link', (element: any) => element.href);
+
+                                // get detail of the member end
+
+
+                                // message, connect, follow button
+                                const action_btn = '.reusable-search__entity-result-list li:nth-child(' + sid + ') .artdeco-button';
+                                await my_page.waitForSelector(action_btn);
+
+                                // Message/Enviar mensaje, Connect/Conectar, 
+                                const button_name = await my_page.evaluate((selector) => {
+                                    const button = document.querySelector(selector);
+                                    return button ? button.textContent.trim() : null;
+                                }, action_btn);
+
+                                if (button_name == 'Connect' || button_name == 'Conectar' || button_name == 'Follow' || button_name == 'Seguir') {
+                                    var btn = 'connect';
+                                    if (button_name == 'Follow' || button_name == 'Seguir') {
+                                        btn = 'follow'
                                     }
-                                    this.socketService.messageToUser(data)
+                                    const leadgendata: Leadgendata = {
+                                        member_id,
+                                        name: full_name,
+                                        avatar: imageUrl,
+                                        data: JSON.stringify({ subtitle }),
+                                        status: 'collecting',
+                                        f_stage: 0,
+                                        updated_at: this.getTimestamp(),
+                                        user_id,
+                                        lg_id,
+                                        urls: href,
+                                        btn: btn
+                                    }
+                                    const res = await this.leadgendataService.create_new(leadgendata, 'collecting');
+                                    if (res) {
+                                        this.collect_count++;
+                                        const data = {
+                                            id: lg_id,
+                                            msg: {
+                                                type: 'collecting',
+                                                data: this.collect_count
+                                            }
+                                        }
+                                        this.socketService.messageToUser(data)
+                                    }
                                 }
+                                console.log(">>>collect cnt", this.collect_count)
                             }
-                            console.log(">>>collect cnt", this.collect_count)
-                        }
 
-                        if (this.connection_count == 101) {
-                            break;
+                            if (this.connection_count == 101) {
+                                break;
+                            }
+                        } catch (e) {
+                            console.log("...err", e)
                         }
-                    } catch (e) {
-                        console.log("...err", e)
                     }
+                    this.collect_cpage++;
+                    const next_page_url = this.parseSearchUrl(setting, mode, this.collect_cpage);
+                    await my_page.goto(next_page_url, { timeout: 0 });
+                    await my_page.waitForTimeout(2000);
+                    sid = 0;
+                    console.log(">>>page number", this.collect_cpage);
                 }
-                this.collect_cpage++;
-                const next_page_url = this.parseSearchUrl(setting, mode, this.collect_cpage);
-                await my_page.goto(next_page_url, { timeout: 0 });
-                await my_page.waitForTimeout(2000);
-                sid = 0;
-                console.log(">>>page number", this.collect_cpage);
-            }
+            } else {
+                var first_search_url = this.parseSalesUrl(netting, mode, 1)
+                await my_page.goto(first_search_url, { timeout: 0 });
+                await my_page.waitForTimeout(3000);
+
+                // scraping loop
+                var error_cnt = 0;
+                while (this.collect_count <= 2500 && this.more_collect && this.isLoginOn) {
+                    var sid = 0;
+                    error_cnt = 0;
+                    while (sid < 25) {
+                        sid++;
+                        try {
+                            console.log(">>sid,,,", sid)
+                            const list_item = '#search-results-container .artdeco-list li:nth-child(' + sid + ')';
+                            const is_more_item = await my_page.$(list_item) !== null
+                            if (!is_more_item) {
+                                console.log(">>nth err", error_cnt)
+                                error_cnt++;
+                                if (error_cnt > 5) {
+                                    this.more_collect = false;
+                                    this.collect_req = false;
+                                }
+                                continue;
+                            }
+                            await my_page.waitForSelector(list_item);
+
+                            const avatar_tag = '#search-results-container .artdeco-list li:nth-child(' + sid + ') .artdeco-entity-lockup__image .circle-entity-4';
+                            const imageUrl = await my_page.$eval(`${avatar_tag}`, (img: any) => img.src);
+                            const full_name_sect = '#search-results-container .artdeco-list li:nth-child(' + sid + ') .artdeco-entity-lockup__content .artdeco-entity-lockup__title a span'
+                            const full_name = await my_page.$eval(`${full_name_sect}`, (element: any) => element.innerText)
+                            const subtitle_sect = '#search-results-container .artdeco-list li:nth-child(' + sid + ') .artdeco-entity-lockup__content .artdeco-entity-lockup__subtitle span:nth-child(1)'
+                            const subtitle = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerText)
+                            const href = await my_page.$eval('#search-results-container .artdeco-list li:nth-child(' + sid + ') .artdeco-entity-lockup__content .artdeco-entity-lockup__title a', (element: any) => element.href);
+
+                            if (sid % 4 == 0 || true) {
+                                await my_page.mouse.move(1000, 500);
+                                await my_page.waitForTimeout(200);
+                                await my_page.mouse.wheel({ deltaY: 800 });
+                                await my_page.waitForTimeout(500);
+                            }
+
+                            const leadgendata: Leadgendata = {
+                                member_id: 0,
+                                name: full_name,
+                                avatar: imageUrl,
+                                data: JSON.stringify({ subtitle }),
+                                status: 'collecting',
+                                f_stage: 0,
+                                updated_at: this.getTimestamp(),
+                                user_id,
+                                lg_id,
+                                urls: href,
+                                btn: btn,
+                                smode: 1
+                            }
+                            const res = await this.leadgendataService.create_new(leadgendata, 'collecting');
+                            if (res) {
+                                this.collect_count++;
+                                const data = {
+                                    id: lg_id,
+                                    msg: {
+                                        type: 'collecting',
+                                        data: this.collect_count
+                                    }
+                                }
+                                this.socketService.messageToUser(data)
+                            }
+
+
+                        } catch (e) {
+
+                        }
+                    }
+                    this.collect_cpage++;
+                    const next_page_url = this.parseSalesUrl(netting, mode, this.collect_cpage);
+                    await my_page.goto(next_page_url, { timeout: 0 });
+                    await my_page.waitForTimeout(2000);
+                    sid = 0;
+                    console.log(">>>page number", this.collect_cpage);
+                }
+
+
+            }  
+
             this.collect_req = false;
             console.log(">>cant collect more...")
 
@@ -1115,7 +1321,6 @@ export class BotService {
 
         } catch (e) {
             console.log(">>>error collecting", e)
-
         }
     }
 
@@ -2071,7 +2276,7 @@ export class BotService {
                                         hi_chats = JSON.parse(linked_in_chat.hi_chats);
                                     }
 
-                                    if (linked_in_chat.automatic_answer) {
+                                    if (linked_in_chat.automatic_answer && this.total_action > 0) {
                                         if (linked_in_chat.chat_status == ChatStatus.OPENING || linked_in_chat.chat_status == ChatStatus.INQUIRING || linked_in_chat.chat_status == ChatStatus.UNANSWERED || linked_in_chat.chat_status == ChatStatus.NOANSWERED) {
                                             // inquiring and follow type 4 message section
                                             const prospect_id = linked_in_chat.prospect_id;
@@ -2573,7 +2778,7 @@ export class BotService {
             } catch (e) {
                 await my_page.click('button.msg-form__send-btn');
             }
-
+            this.total_action--;
             return true;
         } catch (e) {
             console.log("<>>>err...", e)
@@ -2838,6 +3043,10 @@ export class BotService {
     }
 
     // ------------------------------------ ^_^ utils function ^_^ -------------------------------------------  
+
+    replaceSpec(l: string) {
+        return l.replace(/ /g, '%2520').replace(/,/g, '%252C')
+    }
 
     beautySpace(str: any) {
         return str.trim().replace(/^\n+|\n+$/g, '');

@@ -24,21 +24,24 @@ export class LeadgendataEntity {
     status: string;
 
     @Column()
-    updated_at: string;  
+    updated_at: string;
 
     @Column()
-    f_stage: number;  
+    f_stage: number;
 
     @Column()
-    user_id: number;  
+    user_id: number;
 
     @Column()
-    lg_id: number;  
+    lg_id: number;
 
     @Column()
     urls: string;
 
     @Column()
     btn: string;
+
+    @Column()
+    smode: number;
 
 }

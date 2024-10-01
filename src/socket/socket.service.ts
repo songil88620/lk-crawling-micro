@@ -51,6 +51,7 @@ export class SocketService {
             const engine = this.socket.io.engine;
             engine.on("close", (reason) => {
                 console.log(">>>closed.....", reason)
+                
             });
 
         });

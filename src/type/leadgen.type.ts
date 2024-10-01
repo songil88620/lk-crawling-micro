@@ -20,8 +20,10 @@ export type Leadgen = {
     proxy: string,
     user_id: number,
     setting: string,
-    quee_0:number,
-    quee_1:number,
-    quee_2:number,
-    quee_3:number
+    netting: string,
+    quee_0: number,
+    quee_1: number,
+    quee_2: number,
+    quee_3: number,
+    smode: number
 }

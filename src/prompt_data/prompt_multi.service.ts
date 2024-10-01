@@ -184,7 +184,7 @@ export class PromptMultiService {
         } 
 
         if (followUpCount == 1) {
-            prompt =
+            prompt = prompt +
                 "###" +
                 "Ejemplo: Hola " + prospect.first_name + ", sigues activo por aquí?" +
                 "###" +
@@ -246,7 +246,7 @@ export class PromptMultiService {
         } 
 
         if (followUpCount == 2) {
-            prompt =
+            prompt = prompt +
                 "###" +
                 "Ejemplo: Muy buenas" + prospect.first_name + ", pudiste encontrar un horario en la agenda que te venga bien?" +
                 "###" +

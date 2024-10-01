@@ -1,14 +1,15 @@
 export type Leadgendata = {
     id?: number,
     member_id: number;
-    name: string; 
+    name: string;
     avatar: string;
-    data: string; 
+    data: string;
     status: string;
     updated_at: string;
     f_stage: number;
-    user_id:number;
-    lg_id:number;
-    urls:string; 
+    user_id: number;
+    lg_id: number;
+    urls: string;
     btn?: string;
+    smode?: number;
 }
