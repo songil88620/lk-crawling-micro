@@ -1956,6 +1956,17 @@ export class BotService {
             // await this.sideListScroll(my_page, 1500);   
 
             const elementHandle = await my_page.$('.msg-overlay-list-bubble-search__input-container');
+                        const elementHandle3 = await my_page.$('.msg-overlay-bubble-header');
+                        if (elementHandle3) {
+                            console.log(">>>>333 here")
+                            const componentHTML = await my_page.evaluate(element => element.outerHTML, elementHandle3);
+                            const componentClass = await my_page.evaluate(element => element.className, elementHandle3);
+                            console.log('Component HTML:', componentHTML);
+                            console.log('Component Class:', componentClass);
+
+                        } else {
+                            console.log(">>>tt not exist")
+                        }
             if (elementHandle) {
                  console.log(">>message list is openned state")
             } else {
@@ -2024,7 +2035,7 @@ export class BotService {
                             await this.delay(500)
                         }
                     } catch (e) {
-                        // console.log(">>>error on close message boxes")
+                       console.log(">>>error2027", e)
                     }
 
 
@@ -2033,17 +2044,17 @@ export class BotService {
                     try {
 
                         // to debug class
-                        const elementHandle3 = await my_page.$('.scrollable msg-overlay-list-bubble__content');
-                        if (elementHandle3) {
-                            console.log(">>>>333 here")
-                            const componentHTML = await my_page.evaluate(element => element.outerHTML, elementHandle3);
-                            const componentClass = await my_page.evaluate(element => element.className, elementHandle3);
-                            console.log('Component HTML:', componentHTML);
-                            console.log('Component Class:', componentClass);
+                        // const elementHandle3 = await my_page.$('.scrollable msg-overlay-list-bubble__content');
+                        // if (elementHandle3) {
+                        //     console.log(">>>>333 here")
+                        //     const componentHTML = await my_page.evaluate(element => element.outerHTML, elementHandle3);
+                        //     const componentClass = await my_page.evaluate(element => element.className, elementHandle3);
+                        //     console.log('Component HTML:', componentHTML);
+                        //     console.log('Component Class:', componentClass);
 
-                        } else {
-                            console.log(">>>333 not exist")
-                        }
+                        // } else {
+                        //     console.log(">>>333 not exist")
+                        // }
 
                         const new_comp = await my_page.$('.msg-overlay-list-bubble__default-conversation-container .entry-point:nth-child(' + sid + ')');
                         if (new_comp) {
