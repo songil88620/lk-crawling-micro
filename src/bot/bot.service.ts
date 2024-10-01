@@ -1957,9 +1957,9 @@ export class BotService {
 
             const elementHandle = await my_page.$('.msg-overlay-list-bubble-search');
             if (elementHandle) {
-                // console.log(">>message list is openned state")
+                 console.log(">>message list is openned state")
             } else {
-                // console.log(">>need to open the message list")
+                 console.log(">>need to open the message list")
                 try {
                     const close_btn_msgbox = '.msg-overlay-bubble-header__controls button:last-child';
                     await my_page.waitForSelector(close_btn_msgbox);
