@@ -1956,26 +1956,17 @@ export class BotService {
             // await this.sideListScroll(my_page, 1500);   
 
             const elementHandle = await my_page.$('.msg-overlay-list-bubble-search__input-container');
-                        const elementHandle3 = await my_page.$('.msg-overlay-bubble-header');
-                        if (elementHandle3) {
-                            console.log(">>>>333 here")
-                            const componentHTML = await my_page.evaluate(element => element.outerHTML, elementHandle3);
-                            const componentClass = await my_page.evaluate(element => element.className, elementHandle3);
-                            console.log('Component HTML:', componentHTML);
-                            console.log('Component Class:', componentClass);
-
-                        } else {
-                            console.log(">>>tt not exist")
-                        }
+                        
             if (elementHandle) {
                  console.log(">>message list is openned state")
             } else {
                  console.log(">>need to open the message list")
                 try {
-                    const close_btn_msgbox = '.msg-overlay-bubble-header__controls button:last-child';
+                    const close_btn_msgbox = '.msg-overlay-bubble-header .msg-overlay-bubble-header__controls button:last-child';
                     await my_page.waitForSelector(close_btn_msgbox);
-                   // await my_page.click(close_btn_msgbox);
+                    await my_page.click(close_btn_msgbox);
                     await this.delay(1500)
+                    console.log(">>sopend")
                 } catch (e) {
                     console.log(">>>component error 1664:", e)
                 }
