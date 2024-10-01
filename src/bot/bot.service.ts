@@ -1955,7 +1955,7 @@ export class BotService {
             await my_page.waitForTimeout(500);
             // await this.sideListScroll(my_page, 1500);   
 
-            const elementHandle = await my_page.$('.msg-overlay-list-bubble-search');
+            const elementHandle = await my_page.$('.msg-overlay-list-bubble-search__input-container');
             if (elementHandle) {
                  console.log(">>message list is openned state")
             } else {
@@ -1969,7 +1969,7 @@ export class BotService {
                     console.log(">>>component error 1664:", e)
                 }
                 try {
-                    const elementHandle2 = await my_page.$('.msg-overlay-list-bubble-search');
+                    const elementHandle2 = await my_page.$('.msg-overlay-list-bubble-search__input-container');
                     if (elementHandle2) {
                         console.log(">>>openned message list")
                     } else {
