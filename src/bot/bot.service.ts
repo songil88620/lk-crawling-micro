@@ -1963,7 +1963,7 @@ export class BotService {
                 try {
                     const close_btn_msgbox = '.msg-overlay-bubble-header__controls button:last-child';
                     await my_page.waitForSelector(close_btn_msgbox);
-                    await my_page.click(close_btn_msgbox);
+                   // await my_page.click(close_btn_msgbox);
                     await this.delay(1500)
                 } catch (e) {
                     console.log(">>>component error 1664:", e)
