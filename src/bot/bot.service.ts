@@ -1962,11 +1962,12 @@ export class BotService {
             } else {
                  console.log(">>need to open the message list")
                 try {
-                    const close_btn_msgbox = '.msg-overlay-bubble-header .msg-overlay-bubble-header__controls button:last-child';
-                    await my_page.waitForSelector(close_btn_msgbox);
-                    await my_page.click(close_btn_msgbox);
-                    await this.delay(1500)
-                    console.log(">>sopend")
+                    // const close_btn_msgbox = '.msg-overlay-bubble-header .msg-overlay-bubble-header__controls button:last-child';
+                    // await my_page.waitForSelector(close_btn_msgbox);
+                    // await my_page.click(close_btn_msgbox);
+                    await my_page.mouse.move(1890, 860);
+                    await my_page.mouse.click(1890, 860);
+                    await this.delay(1500) 
                 } catch (e) {
                     console.log(">>>component error 1664:", e)
                 }
