@@ -605,6 +605,9 @@ export class BotService {
                         var msg = 'Something unexpected happened. Please contact support team.'
                         if (page.url() == url) {
                             msg = 'It seems you provide wrong email or password, Please check it.'
+                        } 
+                        if(page.url().includes('checkpoint/challengesV2/')){
+                            return
                         }
                         const data = {
                             id: login_data.id,
