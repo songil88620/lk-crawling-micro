@@ -80,7 +80,7 @@ export class BotService {
     private collect_count = 0;
 
     // daily total free actions exclude core action, hi action
-    private total_action = 150;
+    private total_action = 750;
 
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
@@ -98,8 +98,8 @@ export class BotService {
         @Inject(forwardRef(() => LeadgendataService)) private leadgendataService: LeadgendataService,
     ) {
 
-    } 
- 
+    }
+
 
     async onModuleInit() {
         // this.my_ip = '1.1.1.1'
@@ -266,7 +266,7 @@ export class BotService {
     // run bot every 30 mins
     @Cron(CronExpression.EVERY_10_MINUTES, { name: 'campaign bot' })
     async runCampaign() {
-       // return
+        // return
         await this.initCollectCount()
 
         const _now = new Date();
@@ -363,7 +363,7 @@ export class BotService {
     conf() {
         return {
             headless: 'new',
-            //headless: false,
+            // headless: false,
             args: [
                 '--start-maximized',
                 '--no-sandbox',
@@ -470,7 +470,7 @@ export class BotService {
                 })
                 await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
                 return
-            } else if (page.url().includes('checkpoint/challenge/')) {
+            } else if (page.url().includes('checkpoint/challenge/') || page.url().includes('checkpoint/challengesV2/')) {
                 this.msg_to_user(login_data.id, 'Verification page loading...');
                 await page.waitForTimeout(5000);
                 console.log(">>debug 355")
@@ -1021,6 +1021,7 @@ export class BotService {
     }
 
     async goToCollectMode(leadgen: Leadgen) {
+        this.collect_cpage = 1;
         console.log(">>>>collect mode")
         const lk_id = Number(leadgen.linked_in_account_id);
         const lk_account: LinkedInAccountType = await this.linkedinAccountService.findOneLinkdinAccountById(lk_id);
@@ -1210,7 +1211,7 @@ export class BotService {
             } else {
                 var first_search_url = this.parseSalesUrl(netting, mode, 1)
                 await my_page.goto(first_search_url, { timeout: 0 });
-                await my_page.waitForTimeout(3000);
+                await my_page.waitForTimeout(15000);
 
                 // scraping loop
                 var error_cnt = 0;
@@ -1238,59 +1239,68 @@ export class BotService {
                             const imageUrl = await my_page.$eval(`${avatar_tag}`, (img: any) => img.src);
                             const full_name_sect = '#search-results-container .artdeco-list li:nth-child(' + sid + ') .artdeco-entity-lockup__content .artdeco-entity-lockup__title a span'
                             const full_name = await my_page.$eval(`${full_name_sect}`, (element: any) => element.innerText)
+
+                            var subtitle = ''
                             const subtitle_sect = '#search-results-container .artdeco-list li:nth-child(' + sid + ') .artdeco-entity-lockup__content .artdeco-entity-lockup__subtitle span:nth-child(1)'
-                            const subtitle = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerText)
+                            const element = await my_page.$(subtitle_sect);                            
+                            if (element) {                                 
+                                subtitle = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerText)
+                            }  
                             const href = await my_page.$eval('#search-results-container .artdeco-list li:nth-child(' + sid + ') .artdeco-entity-lockup__content .artdeco-entity-lockup__title a', (element: any) => element.href);
 
-                            if (sid % 4 == 0 || true) {
+                            // const save_btn = '#search-results-container .artdeco-list li:nth-child(' + sid + ') ul li:nth-child(3) button';
+                            // await my_page.waitForSelector(save_btn);
+                            // await my_page.click(save_btn);
+                            // await my_page.waitForTimeout(100);
+
+                            if (sid % 3 == 0 ) {
                                 await my_page.mouse.move(1000, 500);
+                                await my_page.mouse.wheel({ deltaY: 600 });
                                 await my_page.waitForTimeout(200);
-                                await my_page.mouse.wheel({ deltaY: 800 });
-                                await my_page.waitForTimeout(500);
                             }
 
-                            const leadgendata: Leadgendata = {
-                                member_id: 0,
-                                name: full_name,
-                                avatar: imageUrl,
-                                data: JSON.stringify({ subtitle }),
-                                status: 'collecting',
-                                f_stage: 0,
-                                updated_at: this.getTimestamp(),
-                                user_id,
-                                lg_id,
-                                urls: href,
-                                btn: btn,
-                                smode: 1
-                            }
-                            const res = await this.leadgendataService.create_new(leadgendata, 'collecting');
-                            if (res) {
-                                this.collect_count++;
-                                const data = {
-                                    id: lg_id,
-                                    msg: {
-                                        type: 'collecting',
-                                        data: this.collect_count
-                                    }
+                            if (href != '') {
+                                const p = href.split('/');
+                                const m_id = p[5].split(',')[0];
+                                const leadgendata: Leadgendata = {
+                                    member_id: m_id,
+                                    name: full_name,
+                                    avatar: imageUrl,
+                                    data: JSON.stringify({ subtitle }),
+                                    status: 'collecting',
+                                    f_stage: 0,
+                                    updated_at: this.getTimestamp(),
+                                    user_id,
+                                    lg_id,
+                                    urls: href,
+                                    btn: btn,
+                                    smode: 1
                                 }
-                                this.socketService.messageToUser(data)
+                                const res = await this.leadgendataService.create_new(leadgendata, 'collecting');
+                                if (res) {
+                                    this.collect_count++;
+                                    const data = {
+                                        id: lg_id,
+                                        msg: {
+                                            type: 'collecting',
+                                            data: this.collect_count
+                                        }
+                                    }
+                                    this.socketService.messageToUser(data)
+                                }
                             }
-
-
                         } catch (e) {
-
+                            console.log(">>ere 1287", e)
                         }
                     }
                     this.collect_cpage++;
                     const next_page_url = this.parseSalesUrl(netting, mode, this.collect_cpage);
                     await my_page.goto(next_page_url, { timeout: 0 });
-                    await my_page.waitForTimeout(2000);
+                    await my_page.waitForTimeout(10000);
                     sid = 0;
                     console.log(">>>page number", this.collect_cpage);
-                }
-
-
-            }  
+                } 
+            }
 
             this.collect_req = false;
             console.log(">>cant collect more...")
@@ -1956,18 +1966,18 @@ export class BotService {
             // await this.sideListScroll(my_page, 1500);   
 
             const elementHandle = await my_page.$('.msg-overlay-list-bubble-search__input-container');
-                        
+
             if (elementHandle) {
-                 console.log(">>message list is openned state")
+                console.log(">>message list is openned state")
             } else {
-                 console.log(">>need to open the message list")
+                console.log(">>need to open the message list")
                 try {
                     // const close_btn_msgbox = '.msg-overlay-bubble-header .msg-overlay-bubble-header__controls button:last-child';
                     // await my_page.waitForSelector(close_btn_msgbox);
                     // await my_page.click(close_btn_msgbox);
                     await my_page.mouse.move(1890, 860);
                     await my_page.mouse.click(1890, 860);
-                    await this.delay(1500) 
+                    await this.delay(1500)
                 } catch (e) {
                     console.log(">>>component error 1664:", e)
                 }
@@ -2027,7 +2037,7 @@ export class BotService {
                             await this.delay(500)
                         }
                     } catch (e) {
-                       console.log(">>>error2027", e)
+                        console.log(">>>error2027", e)
                     }
 
 
@@ -2741,12 +2751,12 @@ export class BotService {
             const send_success = await this.sendMessageAtLinkedIn(prospect, linked_in_account, answer.content);
 
             if (send_success) {
+                if (answer.content.includes(link) || answer.content.includes(extendedLink)) {
+                    newChatStatus = ChatStatus.ONHOLD;
+                }
                 if (answer.content.includes(rejectedLink)) {
                     newChatStatus = ChatStatus.REJECTED;
                     linked_in_chat.automatic_answer = false;
-                }
-                if (answer.content.includes(link) || answer.content.includes(extendedLink)) {
-                    newChatStatus = ChatStatus.ONHOLD;
                 }
                 messages.push(answer);
                 linked_in_chat.chat_status = newChatStatus;

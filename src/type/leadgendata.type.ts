@@ -1,6 +1,6 @@
 export type Leadgendata = {
     id?: number,
-    member_id: number;
+    member_id: string;
     name: string;
     avatar: string;
     data: string;

@@ -39,7 +39,7 @@ export class LeadgendataService {
         }
     }
 
-    async update_status(member_id: number, status: string, lg_id: number) {
+    async update_status(member_id: string, status: string, lg_id: number) {
         await this.leadgendataRepository.update({ member_id, lg_id }, { status, updated_at: this.getTimestamp() })
     }
 

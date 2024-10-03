@@ -9,7 +9,7 @@ export class LeadgendataEntity {
     id: number;
 
     @Column()
-    member_id: number;
+    member_id: string;
 
     @Column()
     name: string;
