@@ -3069,7 +3069,7 @@ export class BotService {
     }
 
     beautySpace(str: any) {
-        return str.trim().replace(/^\n+|\n+$/g, ' ');
+        return str.trim().replace(/^\n+|\n+$/g, '');
     }
 
     beautyDateEs(date_in: any, time_in: any) {
