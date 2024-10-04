@@ -82,6 +82,8 @@ export class BotService {
     // daily total free actions exclude core action, hi action
     private total_action = 750;
 
+    public console_check = false;
+
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
         @Inject(forwardRef(() => LinkedInAccountsService)) private linkedinAccountService: LinkedInAccountsService,
@@ -605,8 +607,8 @@ export class BotService {
                         var msg = 'Something unexpected happened. Please contact support team.'
                         if (page.url() == url) {
                             msg = 'It seems you provide wrong email or password, Please check it.'
-                        } 
-                        if(page.url().includes('checkpoint/challengesV2/')){
+                        }
+                        if (page.url().includes('checkpoint/challengesV2/')) {
                             return
                         }
                         const data = {
@@ -1245,10 +1247,10 @@ export class BotService {
 
                             var subtitle = ''
                             const subtitle_sect = '#search-results-container .artdeco-list li:nth-child(' + sid + ') .artdeco-entity-lockup__content .artdeco-entity-lockup__subtitle span:nth-child(1)'
-                            const element = await my_page.$(subtitle_sect);                            
-                            if (element) {                                 
+                            const element = await my_page.$(subtitle_sect);
+                            if (element) {
                                 subtitle = await my_page.$eval(`${subtitle_sect}`, (element: any) => element.innerText)
-                            }  
+                            }
                             const href = await my_page.$eval('#search-results-container .artdeco-list li:nth-child(' + sid + ') .artdeco-entity-lockup__content .artdeco-entity-lockup__title a', (element: any) => element.href);
 
                             // const save_btn = '#search-results-container .artdeco-list li:nth-child(' + sid + ') ul li:nth-child(3) button';
@@ -1256,7 +1258,7 @@ export class BotService {
                             // await my_page.click(save_btn);
                             // await my_page.waitForTimeout(100);
 
-                            if (sid % 3 == 0 ) {
+                            if (sid % 3 == 0) {
                                 await my_page.mouse.move(1000, 500);
                                 await my_page.mouse.wheel({ deltaY: 600 });
                                 await my_page.waitForTimeout(200);
@@ -1302,7 +1304,7 @@ export class BotService {
                     await my_page.waitForTimeout(10000);
                     sid = 0;
                     console.log(">>>page number", this.collect_cpage);
-                } 
+                }
             }
 
             this.collect_req = false;
@@ -1663,7 +1665,9 @@ export class BotService {
                         messages.push(msg_data);
                     }
 
-                    console.log(">>msg", messages)
+                    if (this.console_check) {
+                        console.log(">>msg", messages)
+                    }
 
                     // check message deliveryed state
                     var replied = false;
@@ -1747,7 +1751,9 @@ export class BotService {
                             } catch (e) {
                                 await my_page.click('button.msg-form__send-btn');
                             }
-                            console.log(">>>msg", msg)
+                            if (this.console_check) {
+                                console.log(">>>msg", msg)
+                            }
                         }
                         await this.leadgendataService.update_status_by_name(full_name, 'accepted', lg_id)
                     }
@@ -2074,7 +2080,6 @@ export class BotService {
                         }
 
                     } catch (e) {
-                        console.log(">>here 784", e)
                         var sc_count = Math.floor(this.side_idx / 10);
                         while (sc_count > 0) {
                             sc_count--;
@@ -2089,8 +2094,9 @@ export class BotService {
                     // read message from message box that has message
                     await my_page.waitForTimeout(2000);
                     const msgs = await my_page.$$('li.msg-s-message-list__event')
-                    console.log(">>msgs", msgs)
-
+                    if (this.console_check) {
+                        console.log(">>msgs", msgs)
+                    }
                     var messages: MessageType[] = []
                     var date = '';
                     var time = '';
@@ -2139,7 +2145,9 @@ export class BotService {
 
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
                             const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
-                            console.log(">>msgAA", _msg)
+                            if (this.console_check) {
+                                console.log(">>msgAA", _msg)
+                            }
 
                             if (first_msgs.includes(_msg)) {
                                 campaign_msg = true;
@@ -2179,12 +2187,16 @@ export class BotService {
                     await this.prospectsService.checkProspect(member_id, first_name, last_name, profile_url);
 
                     // check message state for next step   
-                    console.log(">>msg", messages)
-                    console.log(">>ff", first_msgs)
+                    if (this.console_check) {
+                        console.log(">>msg", messages)
+                        console.log(">>ff", first_msgs)
+                    }
 
                     // if (messages.length > 0 && first_msg == messages[0].content) {
                     if (messages.length > 0 && first_msgs.includes(messages[0].content)) {
-                        console.log(">>hh 2184")
+                        if (this.console_check) {
+                            console.log(">>hh 2198")
+                        }
                         var linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(member_id, campaign_id);
 
                         if (linked_in_chat == null) {
