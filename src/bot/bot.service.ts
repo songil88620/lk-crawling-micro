@@ -2176,11 +2176,12 @@ export class BotService {
                     await this.prospectsService.checkProspect(member_id, first_name, last_name, profile_url);
 
                     // check message state for next step   
-
+                    console.log(">>msg", messages)
+                    console.log(">>ff", first_msgs)
 
                     // if (messages.length > 0 && first_msg == messages[0].content) {
                     if (messages.length > 0 && first_msgs.includes(messages[0].content)) {
-
+                        console.log(">>hh 2184")
                         var linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(member_id, campaign_id);
 
                         if (linked_in_chat == null) {

@@ -16,8 +16,7 @@ export class ProspectsService {
 
   async checkProspect(member_id: string, first_name: string, last_name: string, url: string) {
     try {
-      const ps = await this.prospectsRepository.findOne({ where: { linked_in_member_id: member_id } })
-      console.log(">>>ps", ps)
+      const ps = await this.prospectsRepository.findOne({ where: { linked_in_member_id: member_id } }) 
       if (ps == null) {
         const new_ps = {
           linked_in_member_id: member_id,
