@@ -2089,6 +2089,7 @@ export class BotService {
                     // read message from message box that has message
                     await my_page.waitForTimeout(2000);
                     const msgs = await my_page.$$('li.msg-s-message-list__event')
+                    console.log(">>msgs", msgs)
 
                     var messages: MessageType[] = []
                     var date = '';
@@ -2138,6 +2139,7 @@ export class BotService {
 
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
                             const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
+                            console.log(">>msgAA", _msg)
 
                             if (first_msgs.includes(_msg)) {
                                 campaign_msg = true;
