@@ -365,7 +365,7 @@ export class BotService {
     conf() {
         return {
             headless: 'new',
-            // headless: false, 
+            /// headless: false, 
             args: [
                 '--start-maximized',
                 '--no-sandbox',
