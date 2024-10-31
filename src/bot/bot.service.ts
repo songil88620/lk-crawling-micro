@@ -2119,7 +2119,7 @@ export class BotService {
                     var first_msgs = [];
                     f_msgs.forEach((f: any) => {
                         const fm = f.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
-                        first_msgs.push(fm)
+                        first_msgs.push(fm.replace(/\s+/g, ''))
                     })
 
                     // const first_msg = ac.first_message.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")  
@@ -2146,10 +2146,10 @@ export class BotService {
                             const b_date = this.beautyDate(this.beautySpace(date), this.beautySpace(time), this.lang);
                             const _msg = this.beautySpace(msg_text.replace(/\+/g, ''));
                             if (this.console_check) {
-                                console.log(">>msgAA", _msg)
+                                console.log(">>msg...AA", _msg)
                             }
 
-                            if (first_msgs.includes(_msg)) {
+                            if (first_msgs.includes(_msg.replace(/\s+/g, ''))) {
                                 campaign_msg = true;
                             }
                             if (campaign_msg) {
@@ -2189,11 +2189,11 @@ export class BotService {
                     // check message state for next step   
                     if (this.console_check) {
                         console.log(">>msg", messages)
-                        console.log(">>ff", first_msgs)
+                        console.log(">>fisrt msg", first_msgs)
                     }
 
                     // if (messages.length > 0 && first_msg == messages[0].content) {
-                    if (messages.length > 0 && first_msgs.includes(messages[0].content)) {
+                    if (messages.length > 0 && first_msgs.includes(messages[0].content.replace(/\s+/g, ''))) {
                         if (this.console_check) {
                             console.log(">>hh 2198")
                         }
