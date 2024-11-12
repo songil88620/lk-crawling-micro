@@ -667,6 +667,7 @@ export class BotService {
             })
             await this.linkedinAccountService.updateLinkedCookies(login_data.id, li_at, session_id)
         } else {
+            console.log(">>code", login_data)
             if (page.url().includes('checkpoint/challenge/')) {
                 var vcode = null;
                 try {

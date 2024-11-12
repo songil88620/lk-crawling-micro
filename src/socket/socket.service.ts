@@ -65,6 +65,7 @@ export class SocketService {
     async readEvent() {
         const my_ip = ip.address();
         this.socket.on('linkedin_login_request_micro_' + my_ip, (data: LinkedinLoginDataType) => {
+            console.log(">>socket", data)
             if (data.mode == 'login') {
                 this.botService.loginLinkedIn(data)
             }
