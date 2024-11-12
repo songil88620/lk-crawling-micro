@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable no-var */
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { LinkedInAccountsService } from 'src/linked_in_accounts/linked_in_accounts.service';
@@ -669,7 +671,9 @@ export class BotService {
                 var vcode = null;
                 try {
                     vcode = await page.waitForSelector('#input__email_verification_pin');
-                } catch (e) { }
+                } catch (e) { 
+                    console.log(">>>EE675", e)
+                }
                 if (vcode) {
                     const data = {
                         id: login_data.id,
