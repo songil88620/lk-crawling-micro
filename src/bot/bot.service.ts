@@ -84,7 +84,7 @@ export class BotService {
     // daily total free actions exclude core action, hi action
     private total_action = 750;
 
-    public console_check = false;
+    public console_check = true;
 
     constructor(
         @Inject(forwardRef(() => ProspectionCampaignsService)) private prospectCampaignService: ProspectionCampaignsService,
