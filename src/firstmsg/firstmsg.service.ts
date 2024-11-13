@@ -15,23 +15,25 @@ export class FirstmsgService {
     ) { }
 
     async onModuleInit() {
-        this.sync_first_msg()
+        //this.sync_first_msg()
     }
 
     @Cron(CronExpression.EVERY_10_MINUTES, { name: 'first_msg_bot' })
     async run_bot() {
-        this.sync_first_msg();
+        //this.sync_first_msg();
     }
 
     async sync_first_msg() {
         const campaigns = await this.campaignService.findAll();
         const first_msgs = await this.model.find();
         var msgs = [];
+        var cids = [];
         first_msgs.forEach((m: any) => {
             msgs.push(m.msg)
+            cids.push(m.cid)
         })
-        for (var c of campaigns) {
-            if (!msgs.includes(c.first_message)) {
+        for (var c of campaigns) { 
+            if (!msgs.includes(c.first_message) || !cids.includes(c.id)) {
                 const data = {
                     cid: c.id,
                     msg: c.first_message,
