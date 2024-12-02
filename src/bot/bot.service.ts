@@ -2099,9 +2099,9 @@ export class BotService {
                     // read message from message box that has message
                     await my_page.waitForTimeout(2000);
                     const msgs = await my_page.$$('li.msg-s-message-list__event')
-                    if (this.console_check) {
-                        console.log(">>msgs", msgs)
-                    }
+                    // if (this.console_check) {
+                    //     console.log(">>msgs", msgs)
+                    // }
                     var messages: MessageType[] = []
                     var date = '';
                     var time = '';
@@ -2120,7 +2120,7 @@ export class BotService {
 
 
                     const f_msgs = await this.firstmsgService.get_first_msg(ac.id)
-
+                    console.log(">>name", first_name);
                     var first_msgs = [];
                     f_msgs.forEach((f: any) => {
                         const fm = f.replace('{FirstName}', first_name).replace(/(\r\n|\n|\r)/gm, " ").replace(/ {2,}/g, " ")
