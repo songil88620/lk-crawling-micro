@@ -2108,7 +2108,7 @@ export class BotService {
                     var name = '';
                     var my_name: any = '';
                     var user_name: any = '';
-                    const u_name = await my_page.$('.msg-overlay-bubble-header .msg-overlay-bubble-header__title span')
+                    const u_name = await my_page.$('.msg-overlay-conversation-bubble-header .msg-overlay-bubble-header__title span')
                     if (u_name) {
                         var n = await (await u_name.getProperty('textContent')).jsonValue()
                         user_name = this.beautySpace(n);
