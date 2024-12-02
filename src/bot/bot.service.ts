@@ -2200,7 +2200,7 @@ export class BotService {
                     // if (messages.length > 0 && first_msg == messages[0].content) {
                     if (messages.length > 0 && first_msgs.includes(messages[0].content.replace(/\s+/g, ''))) {
                         if (this.console_check) {
-                            console.log(">>hh 2198")
+                            console.log(">>hh our chat")
                         }
                         var linked_in_chat: LinkedInChatType = await this.getChat_mid_c_id(member_id, campaign_id);
 
