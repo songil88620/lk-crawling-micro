@@ -2117,8 +2117,6 @@ export class BotService {
                     const first_name = user_name.split(" ")[0];
                     const last_name = user_name.split(" ")[1];
 
-
-
                     const f_msgs = await this.firstmsgService.get_first_msg(ac.id)
                     console.log(">>name", first_name);
                     var first_msgs = [];
@@ -2178,11 +2176,11 @@ export class BotService {
 
                         // wait and get member id
                         await my_page.waitForTimeout(2000);
-                        const profile_sect = '.scaffold-layout__main .artdeco-card:nth-child(1)';
+                        const profile_sect = '.scaffold-layout__content--main-aside .artdeco-card:nth-child(1)';
                         member_id = await my_page.$eval(profile_sect, (el: any) => {
                             return el.getAttribute("data-member-id")
                         });
-                        // console.log(">>member id", member_id)
+                        console.log(">>member id", member_id)
                     } catch (e) {
                         // console.log("sth went wrong 777")
                     }
